@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 devel/
 build/
 bin/
@@ -48,3 +49,7 @@ qtcreator-*
 
 # Catkin custom files
 CATKIN_IGNORE
+=======
+devel/*
+build/*
+>>>>>>> arm1/yousif_action_server
