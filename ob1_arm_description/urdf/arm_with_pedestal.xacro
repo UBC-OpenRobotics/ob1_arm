@@ -1,0 +1,138 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="arm_with_pedestal">
+
+    <xacro:property name="arm_name" value="arm1" />
+    <xacro:property name="width" value="0.5" />
+    <xacro:property name="height" value="1.7" />
+    
+    <xacro:include filename="$(find ob1_arm_description)/urdf/ob1_arm.xacro"/>
+    
+    <xacro:macro name="pedestal">
+        <link name="base_link">
+            <visual>
+            <origin rpy="0 0 0" xyz="0 0 ${height/2}"/>
+            <geometry>
+                <box size="${width} ${width} ${height}"/>
+            </geometry>
+            </visual>
+
+            <collision>
+            <origin rpy="0 0 0" xyz="0 0 0.4"/>
+            <geometry>
+                <box size="${width} ${width} ${height}"/>
+            </geometry>
+            </collision>
+        </link>
+
+        <joint name="base_link_base_joint" type="continuous">
+            <origin rpy="${-pi/2} 0 0" xyz="0 ${width/2} ${height*2/3}"/>
+            <axis xyz="0 0 1"/>
+            <!-- <limit effort="1000.0" lower="${radians(-180)}" upper="${radians(180)}" velocity="0.5"/> -->
+            <parent link="base_link" />
+            <child link="${arm_name}_base_link" />
+            <!-- <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/> -->
+        </joint>
+
+        <!-- <joint name="base_to_right_wheel" type="continuous">
+            <parent link="base_link"/>
+            <child link="${arm_name}_base_link"/>
+            <origin xyz="0.35 0.35 -0.9"/>
+        </joint> -->
+
+        <link name="right_wheel">
+            <visual>
+            <geometry>
+                <cylinder length="0.1" radius="0.3"/>
+            </geometry>
+            <origin rpy="0 ${pi/2} 0" xyz="0.05 0 0"/>
+            </visual>
+        </link>
+
+        <joint name="base_to_right_wheel" type="continuous">
+            <parent link="base_link"/>
+            <child link="right_wheel"/>
+            <origin xyz="${width/2} 0 0.10"/>
+        </joint>
+
+        <link name="left_wheel">
+            <visual>
+            <geometry>
+                <cylinder length="0.1" radius="0.3"/>
+            </geometry>
+            <origin rpy="0 ${pi/2} 0" xyz="-0.05 0 0"/>
+            </visual>
+        </link>
+        <joint name="base_to_left_wheel" type="continuous">
+            <parent link="base_link"/>
+            <child link="left_wheel"/>
+            <origin xyz="${-width/2} 0 0.10"/>
+        </joint>
+
+
+        <link name="camera_link">
+            <visual>
+            <origin rpy="${pi/4} 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size="0.1 0.1 0.1"/>
+            </geometry>
+            </visual>
+        </link>
+
+        <joint name="base_link_camera_link_joint" type="fixed">
+            <origin rpy="0 0 0" xyz="0 ${width/2} ${height+0.1}"/>
+            <parent link="base_link" />
+            <child link="camera_link" />
+        </joint>
+
+        <gazebo>
+            <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so"/>
+        </gazebo>
+
+        <!-- camera description adapted from http://gazebosim.org/tutorials?tut=ros_gzplugins#Pluginsavailableingazebo_plugins -->
+        <gazebo reference="$camera_link">
+            <sensor name="depth_camera" type="depth">
+                <update_rate>20</update_rate>
+                <camera>
+                <horizontal_fov>1.047198</horizontal_fov>
+                <image>
+                    <width>640</width>
+                    <height>480</height>
+                    <format>R8G8B8</format>
+                </image>
+                <clip>
+                    <near>0.05</near>
+                    <far>3</far>
+                </clip>
+                </camera>
+                <plugin name="$kinetic_camera_controller" filename="libgazebo_ros_openni_kinect.so">
+                <baseline>0.2</baseline>
+                <alwaysOn>true</alwaysOn>
+                <updateRate>1.0</updateRate>
+                <cameraName>placeholder_camera_ir</cameraName>
+                <imageTopicName>/placeholder_camera/color/image_raw</imageTopicName>
+                <cameraInfoTopicName>/placeholder_camera/color/camera_info</cameraInfoTopicName>
+                <depthImageTopicName>/placeholder_camera/depth/image_raw</depthImageTopicName>
+                <depthImageInfoTopicName>/placeholder_camera/depth/camera_info</depthImageInfoTopicName>
+                <pointCloudTopicName>/placeholder_camera/depth/points</pointCloudTopicName>
+                <frameName>placeholder_camera_link</frameName>
+                <pointCloudCutoff>0.5</pointCloudCutoff>
+                <pointCloudCutoffMax>3.0</pointCloudCutoffMax>
+                <distortionK1>0.00000001</distortionK1>
+                <distortionK2>0.00000001</distortionK2>
+                <distortionK3>0.00000001</distortionK3>
+                <distortionT1>0.00000001</distortionT1>
+                <distortionT2>0.00000001</distortionT2>
+                <CxPrime>0</CxPrime>
+                <Cx>0</Cx>
+                <Cy>0</Cy>
+                <focalLength>0</focalLength>
+                <hackBaseline>0</hackBaseline>
+                </plugin>
+            </sensor>
+            </gazebo>
+
+    </xacro:macro>
+
+    <xacro:arm arm_name="${arm_name}"/>
+    <xacro:pedestal/>
+</robot>
