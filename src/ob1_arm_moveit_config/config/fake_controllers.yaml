@@ -6,7 +6,6 @@ controller_list:
       - shoulder_arm_joint
       - arm_elbow_joint
       - elbow_forearm_joint
-      - wrist
 initial:  # Define initial robot poses per group
   - group: arm
-    pose: up
+    pose: pose1
