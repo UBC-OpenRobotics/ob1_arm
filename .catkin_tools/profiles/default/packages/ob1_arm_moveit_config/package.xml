@@ -3,7 +3,7 @@
   <name>ob1_arm_moveit_config</name>
   <version>0.3.0</version>
   <description>
-     An automatically generated package with all the configuration and launch files for using the ob1_arm_description with the MoveIt Motion Planning Framework
+     An automatically generated package with all the configuration and launch files for using the arm_with_pedestal with the MoveIt Motion Planning Framework
   </description>
   <author email="andrewxieax1@gmail.com">Andrew Xie</author>
   <maintainer email="andrewxieax1@gmail.com">Andrew Xie</maintainer>
