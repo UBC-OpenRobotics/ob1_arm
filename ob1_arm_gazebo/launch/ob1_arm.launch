@@ -1,0 +1,42 @@
+<launch>
+    <!-- load URDF -->
+    <param name="robot_description" command="$(find xacro)/xacro '$(find ob1_arm_description)/urdf/arm_with_base.xacro'" />
+
+    <!-- define robot name -->
+    <arg name="robot_name" value="ob1_robot"/>
+    
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+        <param name="use_gui" value="true" />
+
+        <!-- default joint angles -->
+        <!-- <rosparam subst_value="true">
+        zeros:
+        $(arg robot_name)_base_fixed_base_joint       : 1
+        $(arg robot_name)_base_bridge_joint           : 0.23
+        $(arg robot_name)_bridge_housing_joint        : 0.71
+        $(arg robot_name)_housing_wrist_link_joint    : 0.9
+        $(arg robot_name)_wrist_link_wrist_cuff_joint : 0
+        </rosparam> -->
+    </node>
+
+    <arg name="x_pos" default="0.0"/>
+    <arg name="y_pos" default="0.0"/>
+    <arg name="z_pos" default="0.5"/>
+
+  <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find ob1_arm_gazebo)/worlds/ob1_arm_empty.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="recording" value="false"/>
+    <arg name="debug" value="false"/>
+    <!-- more default parameters can be changed here -->
+  </include>
+
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find ob1_arm_description)/urdf/arm_with_base.xacro" />
+
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model ob1_robot -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
+
+</launch>
