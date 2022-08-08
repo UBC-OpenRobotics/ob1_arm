@@ -40,7 +40,7 @@ print("")
 
 rospy.init_node('armplanner')
 
-for i in range(100):
+for i in range(10):
     pose = move_group.get_random_pose()
     # pose_goal = geometry_msgs.msg.Pose()
     # pose_goal.orientation.w = 1.0
@@ -60,7 +60,7 @@ for i in range(100):
     if plan: break
 # move_group.execute(plan, wait=True)
 
-for i in range(100):
+for i in range(10):
     joints = move_group.get_random_joint_values()
     move_group.set_joint_value_target(joints)
     plan = move_group.go(wait=True)

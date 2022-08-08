@@ -2,6 +2,7 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="arm_with_pedestal">
 
     <xacro:property name="arm_name" value="arm1" />
+    <xacro:property name="base_name" value="base" />
     <xacro:property name="width" value="0.5" />
     <xacro:property name="height" value="1.7" />
     
@@ -17,12 +18,12 @@
             </geometry>
             </visual>
 
-            <collision>
-            <origin rpy="0 0 0" xyz="0 0 0.4"/>
+            <!-- <collision>
+            <origin rpy="0 0 0" xyz="0 0 ${height/2}"/>
             <geometry>
                 <box size="${width} ${width} ${height}"/>
             </geometry>
-            </collision>
+            </collision> -->
 
             <inertial>
                 <mass value="100" />
@@ -31,14 +32,22 @@
             </inertial>
         </link>
 
+        <joint name="hip_torso_joint" type="fixed">
+            <parent link="tele_hip_link"/>
+            <child link="torso"/>
+            <origin xyz="0 0 0.2" rpy="0 0 0"/>
+        </joint>
+
         <joint name="torso_base_joint" type="continuous">
             <origin rpy="${-pi/2} 0 0" xyz="0 ${width/2} ${height*2/3}"/>
             <axis xyz="0 0 1"/>
-            <!-- <limit effort="1000.0" lower="${radians(-180)}" upper="${radians(180)}" velocity="0.5"/> -->
+            <limit effort="1000.0" lower="${radians(-180)}" upper="${radians(180)}" velocity="0.5"/>
             <parent link="torso" />
             <child link="${arm_name}_base_link" />
-            <!-- <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/> -->
+            <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/>
         </joint>
+
+        
 
         <link name="tele_hip_link">
             <visual>
@@ -68,11 +77,7 @@
             <limit lower="0" upper="0.15" velocity="0.1" effort="1.0" />
         </joint>
 
-        <joint name="hip_torso_joint" type="fixed">
-            <parent link="tele_hip_link"/>
-            <child link="torso"/>
-            <origin xyz="0 0 0.2" rpy="0 0 0"/>
-        </joint>
+        
 
         <link name="camera_link">
             <visual>
@@ -142,7 +147,7 @@
             </gazebo>
 
     </xacro:macro>
-
+    <xacro:mobile_base base_name="${base_name}"/>
     <xacro:arm arm_name="${arm_name}"/>
     <xacro:pedestal/>
 </robot>
