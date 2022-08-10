@@ -1,5 +1,0 @@
-ob1_arm_control
-/home/ywishahy/UBCOpenRobotics/ob1_arm/devel/.private/ob1_arm_control/cmake.lock /home/ywishahy/UBCOpenRobotics/ob1_arm/devel/./cmake.lock
-/home/ywishahy/UBCOpenRobotics/ob1_arm/devel/.private/ob1_arm_control/lib/pkgconfig/ob1_arm_control.pc /home/ywishahy/UBCOpenRobotics/ob1_arm/devel/lib/pkgconfig/ob1_arm_control.pc
-/home/ywishahy/UBCOpenRobotics/ob1_arm/devel/.private/ob1_arm_control/share/ob1_arm_control/cmake/ob1_arm_controlConfig-version.cmake /home/ywishahy/UBCOpenRobotics/ob1_arm/devel/share/ob1_arm_control/cmake/ob1_arm_controlConfig-version.cmake
-/home/ywishahy/UBCOpenRobotics/ob1_arm/devel/.private/ob1_arm_control/share/ob1_arm_control/cmake/ob1_arm_controlConfig.cmake /home/ywishahy/UBCOpenRobotics/ob1_arm/devel/share/ob1_arm_control/cmake/ob1_arm_controlConfig.cmake
