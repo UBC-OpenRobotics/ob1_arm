@@ -3,3 +3,5 @@
 Author: Yousif El-Wishahy (yel.wishahy@gmail.com)
 
 Branch for ob1 arm control and testing code using MoveIt python interface.
+
+TODO: write documentation for using the package, issues encountered and solutions. 
