@@ -1,0 +1,3 @@
+[submodule "ros_control_boilerplate"]
+	path = ros_control_boilerplate
+	url = https://github.com/PickNikRobotics/ros_control_boilerplate.git
