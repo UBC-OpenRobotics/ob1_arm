@@ -38,10 +38,10 @@ void Ob1ArmHWInterface::write(ros::Duration& elapsed_time)
 
 }
 
-// void Ob1ArmHWInterface::enforceLimits(ros::Duration& period)
-// {
-//   // Enforces position and velocity
-//   pos_jnt_sat_interface_.enforceLimits(period);
-// }
+void Ob1ArmHWInterface::enforceLimits(ros::Duration& period)
+{
+  // Enforces position and velocity
+  pos_jnt_sat_interface_.enforceLimits(period);
+}
 
 }  // namespace ros_control_boilerplate
