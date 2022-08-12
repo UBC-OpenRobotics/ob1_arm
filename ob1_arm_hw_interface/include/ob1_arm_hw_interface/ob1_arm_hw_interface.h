@@ -25,7 +25,7 @@ public:
   virtual void write(ros::Duration& elapsed_time);
 
 //   /** \breif Enforce limits for all values before writing */
-//   virtual void enforceLimits(ros::Duration& period);
+  virtual void enforceLimits(ros::Duration& period);
 
 protected:
   // Name of this class
