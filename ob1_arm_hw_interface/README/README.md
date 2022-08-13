@@ -16,7 +16,7 @@ To communicate between the hardware (Ardunio connected to servos and encoders) a
 
 In this package I implement a class `Ob1ArmHWInterface` which inherits `ros_control_boilerplate::GenericHWInterface`. 
 
-## Serial Communication Functions
+## Communication Functions
 
 There are 2 main communication functions to handle related to the serial communications:
 
@@ -37,4 +37,63 @@ Internally, the arm commands and arm states are vectors with joint, velocity, an
   std::vector<double> joint_velocity_command_;
   std::vector<double> joint_effort_command_;
 ```
+
+## Serial Communication
+
+Read/write will happen between arduino and ros machine (linux box likely) over serial ports. JSON data will be serialized in the write() cmd, sent as a stream to arduino, and deserialized. The ArduinoJson library (https://arduinojson.org/) will facilitate this.
+
+### Output (Joint commands)
+
+Example arm command message that will be sent to arduino (this is a 'prettified' version, but unprettified version will be sent to save bytes):
+
+```
+{
+  "msg_counter": 27,
+  "num_joints": 6,
+  "time": 1351824120,
+  "angle": [
+    48.75608,
+    2.302038,
+    2.302038,
+    2.302038,
+    2.302038,
+    2.302038
+  ],
+  "vel": [
+    48.75608,
+    2.302038,
+    2.302038,
+    2.302038,
+    2.302038,
+    2.302038
+  ]
+}
+```
+
+### Input (Telemetry)
+
+```
+{
+  "msg_rcv_counter": 25,
+  "read_timestamp": 1351824120,
+  "sync_time": 234264,
+  "angle": [
+    48.75608,
+    2.302038,
+    2.302038,
+    2.302038,
+    2.302038,
+    2.302038
+  ],
+  "vel": [
+    48.75608,
+    2.302038,
+    2.302038,
+    2.302038,
+    2.302038,
+    2.302038
+  ]
+}
+
+
 

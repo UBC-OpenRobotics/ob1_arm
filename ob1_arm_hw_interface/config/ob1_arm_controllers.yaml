@@ -30,3 +30,4 @@ position_trajectory_controller:
       - shoulder_arm_joint
       - arm_elbow_joint
       - elbow_forearm_joint
+  
