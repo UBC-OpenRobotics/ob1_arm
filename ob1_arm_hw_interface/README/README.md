@@ -94,6 +94,13 @@ Example arm command message that will be sent to arduino (this is a 'prettified'
     2.302038
   ]
 }
+```
+
+## Launching moveit and hardware interface
+
+Build catkin ws from director 1 level before root directory of repo and source devel/setup.bash.
+
+Run ```roslaunch ob1_arm_hw_interface ob1_arm_HW.launch```
 
 
 
