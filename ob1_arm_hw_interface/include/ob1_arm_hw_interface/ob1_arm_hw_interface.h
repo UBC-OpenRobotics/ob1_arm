@@ -4,6 +4,13 @@
 #include <ros_control_boilerplate/generic_hw_interface.h>
 #include <iostream>
 #include <fstream>
+// ROS parameter loading
+#include <rosparam_shortcuts/rosparam_shortcuts.h>
+#include <arduino_json/ArduinoJson-v6.19.4.h>
+#include "std_msgs/String.h"
+#include <sstream>
+#include <string>
+#include <iostream>
 
 namespace ob1_arm_hw
 {
@@ -28,6 +35,8 @@ namespace ob1_arm_hw
 
         void close_serial();
 
+        void open_serial();
+
         //   /** \breif Enforce limits for all values before writing */
         virtual void enforceLimits(ros::Duration& period);
 
@@ -37,6 +46,7 @@ namespace ob1_arm_hw
         long msgCount_;
         std::ofstream arduinoOutput;
         std::ifstream arduinoInput;
+        ros::Publisher debug_pub;
 
     }; 
 

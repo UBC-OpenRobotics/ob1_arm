@@ -3,7 +3,7 @@
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "sim_hw_interface");
+    ros::init(argc, argv, "ob1_arm_hw_interface");
     ros::NodeHandle nh;
 
     // NOTE: We run the ROS loop in a separate thread as external calls such
@@ -12,8 +12,7 @@ int main(int argc, char** argv)
     spinner.start();
 
     // Create the hardware interface specific to your robot
-    std::shared_ptr<ob1_arm_hw::Ob1ArmHWInterface> ob1_arm_hw_interface(
-        new ob1_arm_hw::Ob1ArmHWInterface(nh));
+    std::shared_ptr<ob1_arm_hw::Ob1ArmHWInterface> ob1_arm_hw_interface(new ob1_arm_hw::Ob1ArmHWInterface(nh));
     ob1_arm_hw_interface->init();
 
     // Start the control loop
