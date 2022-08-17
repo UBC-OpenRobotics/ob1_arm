@@ -51,7 +51,7 @@
     <!-- Run the main MoveIt executable without trajectory execution (we do not have controllers configured by default) -->
     <include file="$(find ob1_arm_moveit_config)/launch/move_group.launch">
     <arg name="allow_trajectory_execution" value="true"/>
-    <!-- <arg name="fake_execution" value="false"/> -->
+    <arg name="fake_execution_type" value="false"/>
     <arg name="info" value="true"/> 
     </include>
 

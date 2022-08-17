@@ -1,9 +1,5 @@
 #include <ob1_arm_hw_interface/ob1_arm_hw_interface.h>
 
-// ROS parameter loading
-#include <rosparam_shortcuts/rosparam_shortcuts.h>
-#include <arduino_json/ArduinoJson-v6.19.4.h>
-
 namespace ob1_arm_hw
 {
     Ob1ArmHWInterface::Ob1ArmHWInterface(ros::NodeHandle& nh, urdf::Model* urdf_model)
@@ -11,6 +7,7 @@ namespace ob1_arm_hw
     {
         // Load rosparams
         ros::NodeHandle rpnh(nh_, "hardware_interface");
+        debug_pub = nh.advertise<std_msgs::String>("/hw_debug", 1000);
     }
 
     void Ob1ArmHWInterface::init()
@@ -18,11 +15,7 @@ namespace ob1_arm_hw
         // Call parent class version of this function
         GenericHWInterface::init();
         msgCount_ = 0;
-
-        //need 2 serial ports for comms
-        arduinoOutput.open("/dev/ttyACM0"); //output serial port to write to
-        arduinoInput.open("/dev/ttyACM0"); //input serial port to read from
-        ROS_INFO_NAMED(name_, "Ob1ArmHWInterface: Opened serial port streams");
+        open_serial();
 
         ROS_INFO_NAMED(name_, "Ob1ArmHWInterface Ready.");
     }
@@ -32,6 +25,14 @@ namespace ob1_arm_hw
         arduinoOutput.close();
         arduinoInput.close();
         ROS_INFO_NAMED(name_, "Ob1ArmHWInterface: Closed serial port streams");
+    }
+
+    void Ob1ArmHWInterface::open_serial()
+    {
+        //need 2 serial ports for comms
+        arduinoOutput.open("/dev/ttyACM0"); //output serial port to write to
+        arduinoInput.open("/dev/ttyACM0"); //input serial port to read from
+        ROS_INFO_NAMED(name_, "Ob1ArmHWInterface: Opened serial port streams");
     }
 
     void Ob1ArmHWInterface::read(ros::Duration& elapsed_time)
@@ -52,6 +53,16 @@ namespace ob1_arm_hw
             }
        }
 
+        //dummy values for testing
+        // for(int i = 0; i < num_joints_; i++)
+        // {
+        //     joint_position_[i] = 0.15;
+        //     joint_velocity_[i] = 0;
+        // }
+
+       std_msgs::String msg;
+       msg.data = "test";
+       debug_pub.publish(msg);
     }
 
     void Ob1ArmHWInterface::write(ros::Duration& elapsed_time)
@@ -81,6 +92,13 @@ namespace ob1_arm_hw
 
         //write to serial port stream
         serializeJson(jsonMsg, arduinoOutput);
+
+        //write to a debug topic, FOR TESTING
+        // std::string msg = "";
+        // serializeJson(jsonMsg, msg);
+        // std_msgs::String rosMsg;
+        // rosMsg.data = msg;
+        // debug_pub.publish(rosMsg);
     }
 
     void Ob1ArmHWInterface::enforceLimits(ros::Duration& period)
