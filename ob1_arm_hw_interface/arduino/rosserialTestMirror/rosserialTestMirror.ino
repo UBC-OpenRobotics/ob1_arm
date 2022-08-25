@@ -13,10 +13,11 @@ int num_joints;
 ob1_arm_hw_interface::armState armState;
 ros::Publisher p("/arduino/armState", &armState);
 
+//callback function called when new arm cmd received
 void armCmdCb( const ob1_arm_hw_interface::armCmd &msg){
   rcv_cnt++;
   num_joints = msg.num_joints;
-  digitalWrite(13, HIGH-digitalRead(13));   // blink the led
+  digitalWrite(13, HIGH-digitalRead(13));   // blink the led on rcv
   
   armState.msg_rcv_ctr = rcv_cnt;
   for(int i = 0; i < num_joints; i++)
