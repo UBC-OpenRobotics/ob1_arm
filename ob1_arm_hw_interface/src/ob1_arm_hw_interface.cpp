@@ -5,100 +5,70 @@ namespace ob1_arm_hw
     Ob1ArmHWInterface::Ob1ArmHWInterface(ros::NodeHandle& nh, urdf::Model* urdf_model)
     : ros_control_boilerplate::GenericHWInterface(nh, urdf_model), name_("ob1_arm_hw_interface")
     {
+        msgCount = 0;
+        bufferHealth = 10;
+
         // Load rosparams
         ros::NodeHandle rpnh(nh_, "hardware_interface");
-        debug_pub = nh.advertise<std_msgs::String>("/hw_debug", 1000);
+
+        arm_state_sub = nh.subscribe("/arduino/armState", 1, &Ob1ArmHWInterface::armStateCallback, this);
+        arm_cmd_pub = nh.advertise<ob1_arm_hw_interface::armCmd>("/arduino/armCmd", 3);
+    }
+
+    void Ob1ArmHWInterface::armStateCallback(const ob1_arm_hw_interface::armState::ConstPtr &msg)
+    {
+        for(int i=0; i<num_joints_; i++){
+            joint_velocity_[i] = msg->vel[i]*DEG_TO_RAD; // declared in GenericHWInterface
+            joint_position_[i] = msg->angle[i]*DEG_TO_RAD;
+        }
+
+        bufferHealth = msgCount - msg->msg_rcv_ctr;
     }
 
     void Ob1ArmHWInterface::init()
     {
         // Call parent class version of this function
         GenericHWInterface::init();
-        msgCount_ = 0;
-        open_serial();
 
         ROS_INFO_NAMED(name_, "Ob1ArmHWInterface Ready.");
     }
 
-    void Ob1ArmHWInterface::close_serial()
-    {
-        arduinoOutput.close();
-        arduinoInput.close();
-        ROS_INFO_NAMED(name_, "Ob1ArmHWInterface: Closed serial port streams");
-    }
-
-    void Ob1ArmHWInterface::open_serial()
-    {
-        //need 2 serial ports for comms
-        arduinoOutput.open("/dev/ttyACM0"); //output serial port to write to
-        arduinoInput.open("/dev/ttyACM0"); //input serial port to read from
-        ROS_INFO_NAMED(name_, "Ob1ArmHWInterface: Opened serial port streams");
-    }
-
     void Ob1ArmHWInterface::read(ros::Duration& elapsed_time)
     {
-        /** Need to populate the following data for robot state
-         *   // States
-            std::vector<double> joint_position_;
-            std::vector<double> joint_velocity_;
-        */
-       StaticJsonDocument<256> jsonMsg;
-       DeserializationError err = deserializeJson(jsonMsg, arduinoInput);
-
-       if(err == DeserializationError::Ok)
-       {
-            for(int i = 0; i < num_joints_; i++){
-                joint_position_[i] = jsonMsg["angle"][i];
-                joint_velocity_[i] = jsonMsg["vel"][i];
-            }
-       }
-
-        //dummy values for testing
-        // for(int i = 0; i < num_joints_; i++)
-        // {
-        //     joint_position_[i] = 0.15;
-        //     joint_velocity_[i] = 0;
-        // }
-
-       std_msgs::String msg;
-       msg.data = "test";
-       debug_pub.publish(msg);
+        //do nothing since call back function for subscriber handles reading
     }
 
     void Ob1ArmHWInterface::write(ros::Duration& elapsed_time)
     {
-        /**
-         angle, vel and effort commands for joints 
-         are stored and updated in these variables internally.
 
-         std::vector<double> joint_position_command_;
-         std::vector<double> joint_velocity_command_;
-        */
+        bool changeFlag = false;
 
-        //see readme for example message
-        //get json file size with tool: https://arduinojson.org/v6/assistant/
-
-        StaticJsonDocument<256> jsonMsg;
-
-        //populate json msg
-        //TODO: radians -> degree conversion if neccessary
-        // does robot accept radians or degrees? 
-        jsonMsg["msg_counter"] = msgCount_;
-        jsonMsg["num_joints"] = num_joints_;
-        for(int i = 0; i < num_joints_; i++){
-            jsonMsg["angle"][i] = joint_position_command_[i];
-            jsonMsg["vel"][i] = joint_velocity_command_[i];
+        for(int i =0; i < num_joints_; i++)
+        {
+            if(joint_pos_cmd_prev_[i] != joint_position_command_[i])
+            {
+                changeFlag = true;
+                break;
+            }
         }
 
-        //write to serial port stream
-        serializeJson(jsonMsg, arduinoOutput);
+        static ob1_arm_hw_interface::armCmd cmd;
 
-        //write to a debug topic, FOR TESTING
-        // std::string msg = "";
-        // serializeJson(jsonMsg, msg);
-        // std_msgs::String rosMsg;
-        // rosMsg.data = msg;
-        // debug_pub.publish(rosMsg);
+        if(changeFlag)
+        {
+            for(int i=0; i<num_joints_; i++)
+            {
+                cmd.angle[i]=joint_position_command_[i]*RAD_TO_DEG;
+                cmd.vel[i] = 0;
+
+                joint_pos_cmd_prev_[i] = joint_position_command_[i];
+            }
+
+            msgCount++;
+            cmd.msg_send_ctr = msgCount;
+            cmd.num_joints =  num_joints_;
+            arm_cmd_pub.publish(cmd);
+        }
     }
 
     void Ob1ArmHWInterface::enforceLimits(ros::Duration& period)
@@ -107,4 +77,4 @@ namespace ob1_arm_hw
         pos_jnt_sat_interface_.enforceLimits(period);
     }
 
-}  // namespace ros_control_boilerplate
+}  

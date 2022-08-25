@@ -7,7 +7,7 @@
 
 
     <!-- Show in Rviz  -->
-    <node name="rviz" pkg="rviz" type="rviz" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find ob1_arm_hw_interface)/default.rviz"/>
 
 
 
@@ -54,6 +54,12 @@
     <arg name="fake_execution_type" value="false"/>
     <arg name="info" value="true"/> 
     </include>
+
+ <!-- ROS SERIAL SERVER (for arduino publishing/subscribing) -->
+   <node name="serial_node"        pkg="rosserial_python"      type="serial_node.py">
+      <param name="port"              type="string"               value="/dev/ttyACM0"/>
+      <param name="baud"              type="int"                  value="57600"/>
+   </node>
 
 
 
