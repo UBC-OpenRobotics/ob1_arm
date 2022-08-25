@@ -30,6 +30,7 @@ namespace ob1_arm_hw
         // Call parent class version of this function
         GenericHWInterface::init();
 
+        joint_pos_cmd_prev_.resize(joint_position_command_.size());
         ROS_INFO_NAMED(name_, "Ob1ArmHWInterface Ready.");
     }
 
@@ -40,7 +41,7 @@ namespace ob1_arm_hw
 
     void Ob1ArmHWInterface::write(ros::Duration& elapsed_time)
     {
-
+        static ob1_arm_hw_interface::armCmd cmd;
         bool changeFlag = false;
 
         for(int i =0; i < num_joints_; i++)
@@ -51,8 +52,6 @@ namespace ob1_arm_hw
                 break;
             }
         }
-
-        static ob1_arm_hw_interface::armCmd cmd;
 
         if(changeFlag)
         {
