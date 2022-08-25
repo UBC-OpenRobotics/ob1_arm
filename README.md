@@ -1,7 +1,9 @@
-# ob1_arm / arm_command branch
+# Arm Repository
 
-Author: Yousif El-Wishahy (yel.wishahy@gmail.com)
+**Maintained by:** Software-Mainpulation sub team
 
-Branch for ob1 arm control and testing code using MoveIt python interface.
+## Table of Contents (READMEs):
 
-TODO: write documentation for using the package, issues encountered and solutions. 
+- [Hardware Interface](./src/ob1_arm_hw_interface/README/README.md)
+    
+#todo: create documentation for other packages
