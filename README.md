@@ -4,6 +4,6 @@
 
 ## Table of Contents (READMEs):
 
-- [Hardware Interface](./src/ob1_arm_hw_interface/README/README.md)
+- [Hardware Interface](./ob1_arm_hw_interface/README/README.md)
     
 #todo: create documentation for other packages
