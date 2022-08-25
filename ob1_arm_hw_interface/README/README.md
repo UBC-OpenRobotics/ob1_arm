@@ -75,7 +75,7 @@ sudo apt-get install ros-noetic-ros-control ros-noetic-ros-controllers
 sudo apt-get install ros-noetic-rosserial-arduino ros-noetic-rosserial
 ```
 
-## How to upload rosserial firmware to Arduino 
+## Integrating rosserial with Arduino firmware
 
 Tutorial: http://wiki.ros.org/rosserial_arduino/Tutorials/Arduino%20IDE%20Setup 
 
