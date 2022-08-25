@@ -12,6 +12,13 @@
 #include <string>
 #include <iostream>
 
+#include <ob1_arm_hw_interface/armCmd.h>
+#include <ob1_arm_hw_interface/armState.h>
+
+#define DEG_TO_RAD 0.01745329251
+#define RAD_TO_DEG 57.2957795131
+#define DESIRED_BUFFERED_POINTS 12
+
 namespace ob1_arm_hw
 {
     /** \brief Hardware interface for a robot */
@@ -33,22 +40,32 @@ namespace ob1_arm_hw
         /** \brief Write the command to the robot hardware. */
         virtual void write(ros::Duration& elapsed_time);
 
-        void close_serial();
-
-        void open_serial();
-
         //   /** \breif Enforce limits for all values before writing */
         virtual void enforceLimits(ros::Duration& period);
 
     protected:
         // Name of this class
         std::string name_;
-        long msgCount_;
-        std::ofstream arduinoOutput;
-        std::ifstream arduinoInput;
-        ros::Publisher debug_pub;
+        long msgCount;
+        long bufferHealth;
 
-    }; 
+        //previous joint state
+        std::vector<double> joint_pos_cmd_prev_;
+
+        //serial comms
+        // std::ofstream arduinoOutput;
+        // ob1_arm_hw::ArduinoSerial arduinoInput = ob1_arm_hw::ArduinoSerial();
+
+        //debug topics
+        // ros::Publisher writeDebugPub;
+        // ros::Publisher readDebugPub;
+
+        //rosserial comms
+        ros::Subscriber arm_state_sub;
+        void armStateCallback(const ob1_arm_hw_interface::armState::ConstPtr &msg);
+        ros::Publisher arm_cmd_pub;
+
+    };  
 
 }  
 

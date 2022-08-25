@@ -43,11 +43,11 @@ find_package(catkin REQUIRED COMPONENTS message_generation cmake_modules hardwar
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  armCmd.msg
+  armState.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -64,10 +64,10 @@ find_package(catkin REQUIRED COMPONENTS message_generation cmake_modules hardwar
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs  # Or other packages containing msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##

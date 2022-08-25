@@ -1,5 +1,7 @@
 # ob1_arm_hw_interface
 
+## Summary
+
 Hardware interface for the ob1 robotic arm. This implements a hw interface for the Ros Control plugin (http://wiki.ros.org/ros_control) using a hand ros_control_boilerplate.  
 
 Ros control contains multiple controller plugins to control a robotic arm, including:
@@ -38,62 +40,72 @@ Internally, the arm commands and arm states are vectors with joint, velocity, an
   std::vector<double> joint_effort_command_;
 ```
 
-## Serial Communication
+## Serial Communication with rosserial
 
-Read/write will happen between arduino and ros machine (linux box likely) over serial ports. JSON data will be serialized in the write() cmd, sent as a stream to arduino, and deserialized. The ArduinoJson library (https://arduinojson.org/) will facilitate this.
+rosserial will allow for the arduino to act as a fully fledged ros node that we can subcribe and publish to. This plugin implements all the communication protocols over UART.
 
-### Output (Joint commands)
+With this method, we use custom ros messages to communicate between the hwardware interface and arduino as we would with any other ros node. Additional we use subscribe and publish to achieve this.
 
-Example arm command message that will be sent to arduino (this is a 'prettified' version, but unprettified version will be sent to save bytes):
-
-```
-{
-  "msg_counter": 27,
-  "num_joints": 6,
-  "time": 1351824120,
-  "angle": [
-    48.75608,
-    2.302038,
-    2.302038,
-    2.302038,
-    2.302038,
-    2.302038
-  ],
-  "vel": [
-    48.75608,
-    2.302038,
-    2.302038,
-    2.302038,
-    2.302038,
-    2.302038
-  ]
-}
-```
-
-### Input (Telemetry)
+There are 2 custom ros messages:
+* armCmd will be used to publish joint/velocity commands to the arduino node.
+* armState will subscribe to the arduino node and receive the robot state
 
 ```
-{
-  "msg_rcv_counter": 25,
-  "read_timestamp": 1351824120,
-  "sync_time": 234264,
-  "angle": [
-    48.75608,
-    2.302038,
-    2.302038,
-    2.302038,
-    2.302038,
-    2.302038
-  ],
-  "vel": [
-    48.75608,
-    2.302038,
-    2.302038,
-    2.302038,
-    2.302038,
-    2.302038
-  ]
-}
+#armCmd
+float32[6] vel #deg/s
+float32[6] angle #deg
+int32 msg_send_ctr # count sent msgs to detected missed messages
+int32 num_joints
+```
+
+```
+#armState
+float32[6] angle # degrees
+float32[6] vel # deg/s
+int32 msg_rcv_ctr
+```
+
+## Setup and Installation 
+
+This package requires ros_control and rosserial, install for ubtunu noetic with the following commands: 
+
+```
+sudo apt-get install ros-noetic-ros-control ros-noetic-ros-controllers
+
+sudo apt-get install ros-noetic-rosserial-arduino ros-noetic-rosserial
+```
+
+## How to upload rosserial firmware to Arduino 
+
+Tutorial: http://wiki.ros.org/rosserial_arduino/Tutorials/Arduino%20IDE%20Setup 
+
+The usage of rosserial is fairly simple. First you need to inlude the ros_lib library (ros.h header) and any custom message headers you will be using.
+
+Assuming the rosserial package is installed on your Ubuntu, you can compile all the required libraries with: 
+```
+rosrun rosserial_arduino make_libraries.py <arduino libraries directory path> <custom_msg_pkg>
+```
+
+In my case, my arduino libraries path available to my arduino IDE is `~/Arduino/libraries/`
+
+Once you have the required libraries, setting up the ros node on your arduino is very simple.
+
+Basic hello world tutorial: http://wiki.ros.org/rosserial_arduino/Tutorials/Hello%20World
+
+## Configuring rosserial arduino parameters 
+
+The hello world tutorial shows a basic example of what you need to do to get a ros node running on arduino. There isn't much more than that on the arduino side. 
+
+On the roscore server, a rosserial python server needs to be setup with certain parameters. This is done in the `ob1_arm_HW.launch` launch file. 
+
+In this file you need to set the correct serial port parameters for the arduino. In my case the serial port is `/dev/ttyACM0` but this will differ.
+
+```
+ <!-- ROS SERIAL SERVER (for arduino publishing/subscribing) -->
+   <node name="serial_node"        pkg="rosserial_python"      type="serial_node.py">
+      <param name="port"              type="string"               value="/dev/ttyACM0"/>
+      <param name="baud"              type="int"                  value="57600"/>
+   </node>
 ```
 
 ## Launching moveit and hardware interface
@@ -101,6 +113,8 @@ Example arm command message that will be sent to arduino (this is a 'prettified'
 Build catkin ws from director 1 level before root directory of repo and source devel/setup.bash.
 
 Run ```roslaunch ob1_arm_hw_interface ob1_arm_HW.launch```
+
+This will all the required nodes for the arm. 
 
 
 

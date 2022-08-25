@@ -19,6 +19,5 @@ int main(int argc, char** argv)
     ros_control_boilerplate::GenericHWControlLoop control_loop(nh, ob1_arm_hw_interface);
     control_loop.run();  // Blocks until shutdown signal recieved
 
-    ob1_arm_hw_interface->close_serial();
     return 0;
 }
