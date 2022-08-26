@@ -8,6 +8,7 @@
     
     <xacro:include filename="$(find ob1_arm_description)/urdf/ob1_arm.xacro"/>
     <xacro:include filename="$(find ob1_arm_description)/urdf/mobile_base.xacro"/>
+    <xacro:include filename="$(find ob1_arm_description)/urdf/ob1_arm_gazebo.xacro"/>
     
     <xacro:macro name="pedestal">
         <link name="torso">
@@ -81,7 +82,7 @@
 
         <link name="camera_link">
             <visual>
-            <origin rpy="${pi/4} 0 0" xyz="0 0 0"/>
+            <origin rpy="${-pi/2} 0 0" xyz="0 0 0"/>
             <geometry>
                 <box size="0.1 0.1 0.1"/>
             </geometry>
