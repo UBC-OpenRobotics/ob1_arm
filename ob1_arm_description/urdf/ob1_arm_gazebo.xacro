@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="ob1_arm">
+    <xacro:macro name="arm_gazebo" params="arm_name">
+        <gazebo reference="${arm_name}_base_link">
+            <selfCollide>true</selfCollide>
+        </gazebo>
+        <gazebo reference="shoulder_link">
+            <selfCollide>true</selfCollide>
+        </gazebo>
+        <gazebo reference="arm_link">
+            <selfCollide>true</selfCollide>
+        </gazebo>
+        <gazebo reference="elbow_link">
+            <selfCollide>true</selfCollide>
+        </gazebo>
+        <gazebo reference="forearm_link">
+            <selfCollide>true</selfCollide>
+        </gazebo>
+        <gazebo reference="main_assembly">
+            <selfCollide>true</selfCollide>
+        </gazebo>
+    </xacro:macro>
+</robot>

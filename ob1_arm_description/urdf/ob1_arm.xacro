@@ -78,7 +78,7 @@
             <inertial>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <mass value="1" />
-                <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+                <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.2"/>
             </inertial>
         </link>
         <link name="shoulder_link">
@@ -193,7 +193,7 @@
             <inertial>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <mass value="1" />
-                <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+                <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.2"/>
             </inertial>
         </link>
         <link name="arm_link">
@@ -290,7 +290,7 @@
             <inertial>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <mass value="1" />
-                <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+                <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.2"/>
             </inertial>
         </link>
         <link name="elbow_link">
@@ -351,7 +351,7 @@
             <inertial>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <mass value="1" />
-                <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+                <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.2"/>
             </inertial>
         </link>
         <link name="forearm_link">
@@ -430,7 +430,7 @@
             <inertial>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <mass value="1" />
-                <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+                <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.2"/>
             </inertial>
         </link>
         <link name="main_assembly">
@@ -1373,7 +1373,7 @@
             <inertial>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <mass value="1" />
-                <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+                <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.2"/>
             </inertial>
         </link>
         <joint name="wrist" type="revolute">
