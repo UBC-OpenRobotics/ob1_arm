@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="arm_with_pedestal">
+
+    <xacro:property name="arm_name" value="arm1" />
+    
+    <xacro:include filename="$(find ob1_arm_description)/urdf/ob1_arm.xacro"/>
+    <xacro:arm arm_name="${arm_name}"/>
+</robot>

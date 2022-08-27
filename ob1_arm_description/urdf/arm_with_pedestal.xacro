@@ -140,9 +140,13 @@
                 </plugin>
             </sensor>
             </gazebo>
+        <gazebo reference="torso">
+            <selfCollide>true</selfCollide>
+        </gazebo>
 
     </xacro:macro>
 
     <xacro:arm arm_name="${arm_name}"/>
+    <xacro:arm_gazebo arm_name="${arm_name}"/>
     <xacro:pedestal/>
 </robot>
