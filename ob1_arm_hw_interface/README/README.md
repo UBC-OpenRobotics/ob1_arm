@@ -1,5 +1,11 @@
 # ob1_arm_hw_interface
 
+Author:
+
+Yousif El-Wishahy
+
+Email: yel.wishahy@gmail.com
+
 ## Summary
 
 Hardware interface for the ob1 robotic arm. This implements a hw interface for the Ros Control plugin (http://wiki.ros.org/ros_control) using a hand ros_control_boilerplate.  
