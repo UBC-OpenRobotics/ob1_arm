@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3.8
 from distutils.util import rfc822_escape
 import sys
 import copy

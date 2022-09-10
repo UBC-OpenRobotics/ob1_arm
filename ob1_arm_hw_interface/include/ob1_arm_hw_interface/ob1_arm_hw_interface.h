@@ -64,7 +64,6 @@ namespace ob1_arm_hw
         ros::Subscriber arm_state_sub;
         void armStateCallback(const ob1_arm_hw_interface::armState::ConstPtr &msg);
         ros::Publisher arm_cmd_pub;
-
     };  
 
 }  

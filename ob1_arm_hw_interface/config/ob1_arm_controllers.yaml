@@ -12,7 +12,7 @@ hardware_interface:
       - shoulder_arm_joint
       - arm_elbow_joint
       - elbow_forearm_joint
-
+      - wrist
 
 # Publish all joint states ----------------------------------
 # Creates the /joint_states topic necessary in ROS
@@ -30,4 +30,5 @@ position_trajectory_controller:
       - shoulder_arm_joint
       - arm_elbow_joint
       - elbow_forearm_joint
+      - wrist
   

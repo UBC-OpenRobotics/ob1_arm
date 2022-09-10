@@ -28,6 +28,12 @@
         <joint name="elbow_forearm_joint" value="-1.3011"/>
         <joint name="shoulder_arm_joint" value="-1.7522"/>
     </group_state>
+    <group_state name="folded2" group="arm">
+        <joint name="arm_elbow_joint" value="-2.7583"/>
+        <joint name="base_shoulder_joint" value="-0.9194"/>
+        <joint name="elbow_forearm_joint" value="1.3358"/>
+        <joint name="shoulder_arm_joint" value="-0.4337"/>
+    </group_state>
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
     <end_effector name="gripper" parent_link="forearm_link" group="gripper" parent_group="arm"/>
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
