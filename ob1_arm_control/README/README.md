@@ -1,5 +1,12 @@
 # ob1_arm_control package
 
+
+Author:
+
+Yousif El-Wishahy
+
+Email: yel.wishahy@gmail.com
+
 # Description 
 
 This package contains the ArmCommander class (located in scripts/arm_commander.py) that is called by the main robot loop for manipulation related tasks such as picking up objects. Additionally, inverse kinematics and pick and place test cases are also in this package in scripts/test_arm.py. 
