@@ -6,6 +6,6 @@
 
 - [Hardware Interface](./ob1_arm_hw_interface/README/README.md)
 
-- [Workspace Analysis / Visualization (external plugin)](./reuleaux/README.md)
+- [Workspace Analysis / Visualization (external plugin)](./simple-reachability/README.md)
     
 #todo: create documentation for other packages
