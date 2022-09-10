@@ -7,3 +7,4 @@ controller_list:
       - shoulder_arm_joint
       - arm_elbow_joint
       - elbow_forearm_joint
+      - wrist

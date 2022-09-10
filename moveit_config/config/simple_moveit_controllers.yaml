@@ -1,0 +1,10 @@
+controller_list:
+  - name: ""
+    action_ns: joint_trajectory_action
+    type: FollowJointTrajectory
+    joints:
+      - arm1_base_fixed_base_joint
+      - arm1_base_bridge_joint
+      - arm1_bridge_housing_joint
+      - arm1_housing_wrist_link_joint
+      - arm1_wrist_link_wrist_cuff_joint

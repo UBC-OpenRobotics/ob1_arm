@@ -55,9 +55,9 @@ class ArmCommander(object):
     plan = None # current joint trajectory plan
     pose_goal : PoseStamped = None #current pose goal 
 
-    sample_time_out   = 60            # time out in seconds for Inverse Kinematic search
-    sample_attempts   = 10             # num of planning attempts 
-    goal_tolerance    = 0.1
+    _sample_time_out   = 50          # time out in seconds for Inverse Kinematic search
+    _sample_attempts   = 5             # num of planning attempts 
+    _goal_tolerance    = 0.001
 
     ARM_GROUP_NAME = "arm"
     GRIPPER_GROUP_NAME = "gripper"
@@ -65,7 +65,7 @@ class ArmCommander(object):
     GRIPPER_REF_FRAME = "main_assembly"
     WORLD_REF_FRAME = "world"
  
-    def __init__(self):
+    def __init__(self, sample_time_out=50, sample_attempts=5, goal_tolerance=0.001):
         '''
         @brief init arm command object, moveit commander, scene and movegroups for arm and arm gripper
         '''
@@ -74,16 +74,17 @@ class ArmCommander(object):
 
         self.robot:RobotCommander = moveit_commander.RobotCommander()
         self.scene:PlanningSceneInterface = moveit_commander.PlanningSceneInterface()
-        self.display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path',
-                                               DisplayTrajectory,
-                                               queue_size=20)
 
+        #init arm move group 
         self.arm_mvgroup:MoveGroupCommander = moveit_commander.MoveGroupCommander(self.ARM_GROUP_NAME)
-        self.arm_mvgroup.set_planning_time(self.sample_time_out)
-        self.arm_mvgroup.set_num_planning_attempts(self.sample_attempts)
-        self.arm_mvgroup.set_goal_tolerance(self.goal_tolerance)
+        self.arm_mvgroup.set_planning_time(sample_time_out)
+        self.arm_mvgroup.set_num_planning_attempts(sample_attempts)
+        self.arm_mvgroup.set_goal_tolerance(goal_tolerance)
+        self._goal_tolerance = goal_tolerance
         self.arm_mvgroup.set_max_velocity_scaling_factor(1)
-        self.arm_mvgroup.set_max_acceleration_scaling_factor(1)
+        self.arm_mvgroup.set_max_acceleration_scaling_factor(0.3)
+        # self.arm_mvgroup.set_workspace([-50,-50,-50,50,50,50])
+        
         # self.arm_mvgroup.set_end_effector_link(self.GRIPPER_REF_FRAME)
         # self.arm_mvgroup.set_pose_reference_frame(self.GRIPPER_REF_FRAME)
 
@@ -172,6 +173,7 @@ class ArmCommander(object):
             goal = group.get_random_joint_values()
         group.go(joints=goal, wait=True)
         group.stop()
+        group.clear_pose_targets()
     
     def get_end_effector_pose(self):
         return self.robot.get_link(self.arm_mvgroup.get_end_effector_link()).pose()
@@ -190,6 +192,7 @@ class ArmCommander(object):
             print('PLANNING FAILED')
         goal = self.pose_goal
         actual = self.get_end_effector_pose()
+        result = all_close(goal,actual,self._goal_tolerance)
 
         if goal.header.frame_id == actual.header.frame_id:
             print('\n\n')
@@ -197,6 +200,8 @@ class ArmCommander(object):
             print('\n')
             print("End effector result:\n",actual)
             print('\n\n')
-            print('Goal within tolerance: %s : %s' % (self.goal_tolerance,all_close(goal,actual,self.goal_tolerance)))
+            print('Goal within tolerance: %s : %s' % (self._goal_tolerance,result))
         else:
             print("pose goal not in correct reference frame, %s instead of %s" %(goal.header.frame_id,actual.header.frame_id))
+
+        return result

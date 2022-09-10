@@ -6,10 +6,7 @@ controller_list:
       - shoulder_arm_joint
       - arm_elbow_joint
       - elbow_forearm_joint
-  - name: fake_gripper_controller
-    type: $(arg fake_execution_type)
-    joints:
       - wrist
 initial:  # Define initial robot poses per group
   - group: arm
-    pose: pose0
+    pose: POSE0

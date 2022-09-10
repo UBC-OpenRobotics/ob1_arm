@@ -22,7 +22,7 @@ namespace ob1_arm_hw
             joint_position_[i] = msg->angle[i]*DEG_TO_RAD;
         }
 
-        bufferHealth = msgCount - msg->msg_rcv_ctr;
+        bufferHealth = msg->buffer_health;
     }
 
     void Ob1ArmHWInterface::init()
@@ -63,10 +63,13 @@ namespace ob1_arm_hw
                 joint_pos_cmd_prev_[i] = joint_position_command_[i];
             }
 
-            msgCount++;
-            cmd.msg_send_ctr = msgCount;
-            cmd.num_joints =  num_joints_;
-            arm_cmd_pub.publish(cmd);
+            if(bufferHealth == 0)
+            {
+                msgCount++;
+                cmd.msg_send_ctr = msgCount;
+                cmd.num_joints =  num_joints_;
+                arm_cmd_pub.publish(cmd);
+            }
         }
     }
 
