@@ -6,6 +6,6 @@
 
 - [Hardware Interface](./ob1_arm_hw_interface/README/README.md)
 
-- [Workspace Analysis / Visualization (external plugin)](./simple-reachability/README.md)
+- [Workspace Analysis / Visualization (external plugin)](https://github.com/vonunwerth/simple-reachability/blob/master/README.md)
     
 #todo: create documentation for other packages
