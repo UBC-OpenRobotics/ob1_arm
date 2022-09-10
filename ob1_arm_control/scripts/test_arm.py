@@ -318,8 +318,8 @@ if __name__ == '__main__':
     arm_pos_joints = degrees_to_radians([-4.0, -29.0, -68.0, -180.0, 83.0])
 
     arm_commander = ArmCommander(sample_time_out=10, goal_tolerance=0.001)
-    # go_ik_test(arm_commander,100)
-    brute_force_test_translation(arm_commander,range=1,d=0.05)
+    go_ik_test(arm_commander,10)
+    # brute_force_test_translation(arm_commander,range=1,d=0.05)
 
     # increment_pose_go_ik_test(arm_commander)
     # arm_commander.go_joint(arm_commander.arm_mvgroup,arm_pos_joints)
