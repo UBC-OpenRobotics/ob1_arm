@@ -1,7 +1,8 @@
 controller_list:
-  - name: ""
-    action_ns: joint_trajectory_action
+  - name: arm_controller
+    action_ns: follow_joint_trajectory
     type: FollowJointTrajectory
+    default: True
     joints:
       - base_shoulder_joint
       - shoulder_arm_joint

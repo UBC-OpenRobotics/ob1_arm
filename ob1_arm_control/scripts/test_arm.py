@@ -241,9 +241,9 @@ def go_ik_test_rand(arm_commander: ArmCommander,iterations):
 
 def go_joint_test(arm_commander: ArmCommander,iterations=10):
     """go to random joints"""
-    for _ in range(iterations):
-        ArmCommander.go_joint(arm_commander.arm_mvgroup)
-        time.sleep(10)
+    # for _ in range(iterations):
+    #     ArmCommander.go_joint(arm_commander.arm_mvgroup)
+    #     time.sleep(10)
 
 def increment_curr_pose_go_ik_test(arm_commander: ArmCommander, d=[0,0,0.1], iterations=10):
 
