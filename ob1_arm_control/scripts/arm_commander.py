@@ -58,6 +58,7 @@ class ArmCommander(object):
     _sample_time_out   = 50          # time out in seconds for Inverse Kinematic search
     _sample_attempts   = 5             # num of planning attempts 
     _goal_tolerance    = 0.001
+    _joint_tolerances = []
 
     ARM_GROUP_NAME = "arm"
     GRIPPER_GROUP_NAME = "gripper"
@@ -83,6 +84,7 @@ class ArmCommander(object):
         self._goal_tolerance = goal_tolerance
         self.arm_mvgroup.set_max_velocity_scaling_factor(1)
         self.arm_mvgroup.set_max_acceleration_scaling_factor(0.3)
+        self.arm_mvgroup.set_pose_reference_frame
         # self.arm_mvgroup.set_workspace([-50,-50,-50,50,50,50])
         
         # self.arm_mvgroup.set_end_effector_link(self.GRIPPER_REF_FRAME)
@@ -110,12 +112,14 @@ class ArmCommander(object):
         print("============ Printing MoveIt interface description")
         print(self.arm_mvgroup.get_interface_description())
 
-        # self.register_gripper_joint_states()
+        for joint_name in self.arm_mvgroup.get_active_joints():
+            joint = self.robot.get_joint(joint_name)
+            self._joint_tolerances.append((joint.bounds()[0],joint.bounds()[1]))
 
-    def register_gripper_joint_states(self):
+    def register_gripper_edge_states(self):
         joint_vals_min = [0]
         joint_vals_max = [0]
-        for joint_name in self.gripper_mvgroup.get_joints()[1:]:
+        for joint_name in self.gripper_mvgroup.get_joints():
             joint = self.robot.get_joint(joint_name)
             joint_vals_min.append(joint.bounds()[0])
             joint_vals_max.append(joint.bounds()[1])
@@ -157,8 +161,7 @@ class ArmCommander(object):
             self.arm_mvgroup.clear_pose_targets()
         return self.plan[0]
 
-    @staticmethod
-    def go_joint(group : MoveGroupCommander, goal=None):
+    def go_joint(self, joints=None):
         """
         @brief Makes the group's joints go to joint angles specified by goal,
         blocks until goal is reached within tolerance or exit if goal joint
@@ -169,11 +172,17 @@ class ArmCommander(object):
         @param goal (JointState): JointState object that specifies joint angle goals
         returns: void
         """
-        if goal == None:
-            goal = group.get_random_joint_values()
-        group.go(joints=goal, wait=True)
-        group.stop()
-        group.clear_pose_targets()
+        if joints == None:
+            joints = self.arm_mvgroup.get_random_joint_values()
+
+        self.arm_mvgroup.set_joint_value_target(joints)
+        plan = self.arm_mvgroup.plan()
+
+        if plan[0]:
+            self.arm_mvgroup.go()
+            self.arm_mvgroup.stop()
+            self.arm_mvgroup.clear_pose_targets()
+        return plan[0]
     
     def get_end_effector_pose(self):
         return self.robot.get_link(self.arm_mvgroup.get_end_effector_link()).pose()
