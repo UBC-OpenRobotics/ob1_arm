@@ -1,5 +1,6 @@
 #!/usr/bin/env python3.8
 from __future__ import print_function
+import pickle
 import time
 from arm_commander import ArmCommander
 import sys
@@ -16,6 +17,11 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from tf.transformations import quaternion_from_euler
 from copy import deepcopy
 from distutils.util import rfc822_escape
+import rospkg
+
+rp = rospkg.RosPack()
+PACKAGE_PATH = rp.get_path('ob1_arm_control')
+DATA_FILE_PATH = PACKAGE_PATH+"/data/5k_pose_data.pickle"
 
 HOR = '-'*20
 
@@ -199,7 +205,7 @@ def go_ik_test(arm_commander: ArmCommander,iterations):
     success_counter = 0
     counter = 0
     for _ in range(iterations):
-        arm_commander.go_ik()
+        arm_commander.go_ik(position_only=True)
         # print(arm_commander.pose_goal)
         # print(arm_commander.get_end_effector_pose())
         if arm_commander.compare_eef_pose_states():
@@ -309,6 +315,27 @@ def brute_force_test_translation(arm_commander: ArmCommander, range=5, d=0.01):
                 print("Iteration: %s \n%s/%s goal successes" %(counter, success_counter, iterations))
                 print(HOR,)
 
+def pose_list_test():
+    #get list of poses to test
+    pose_stamped_list = None    
+    with open(DATA_FILE_PATH, "rb") as input_file:
+        pose_stamped_list = pickle.load(input_file)
+    
+    if pose_stamped_list is not None and type(pose_stamped_list) is list:
+        arm_commander = ArmCommander(sample_time_out=10, goal_tolerance=0.001)
+        success_counter = 0
+        counter = 0
+        iterations = len(pose_stamped_list)
+
+        for pose_stamped in pose_stamped_list:
+            if not rospy.is_shutdown():
+                print(pose_stamped)
+                arm_commander.go_ik(pose_stamped)
+                if arm_commander.compare_eef_pose_states():
+                    success_counter+=1
+                counter+=1
+                print("Iteration: %s \n%s/%s goal successes" %(counter, success_counter, iterations))
+
 ####################
 #Main loop for testing
 ####################
@@ -317,8 +344,16 @@ if __name__ == '__main__':
     gripper_close_joints = degrees_to_radians([-15.0, 0.0, -2.0, 0.0, -2.0])
     arm_pos_joints = degrees_to_radians([-4.0, -29.0, -68.0, -180.0, 83.0])
 
-    arm_commander = ArmCommander(sample_time_out=10, goal_tolerance=0.001)
-    go_ik_test(arm_commander,10)
+
+    # arm_commander = ArmCommander(sample_time_out=60, sample_attempts=10, goal_tolerance=0.1)
+    # arm_commander.arm_mvgroup.clear_pose_targets()
+    # pose = arm_commander.arm_mvgroup.get_random_pose().pose
+    # pos = [pose.position.x,pose.position.y,pose.position.z]
+    # arm_commander.arm_mvgroup.set_position_target(pos,"main_assembly")
+    # arm_commander.arm_mvgroup.go()
+    
+    # go_ik_test(arm_commander,10)
+    pose_list_test()
     # brute_force_test_translation(arm_commander,range=1,d=0.05)
 
     # increment_pose_go_ik_test(arm_commander)
