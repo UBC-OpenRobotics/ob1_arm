@@ -1,44 +1,38 @@
 #!/usr/bin/env python3.8
 from __future__ import print_function
-from pickletools import markobject
-import sys
 import time
 import rospy
-import moveit_commander
-from moveit_commander.conversions import pose_to_list
-import numpy as np
-from math import pi, tau, dist, fabs, cos
-import geometry_msgs
-from sensor_msgs.msg import JointState
-from geometry_msgs.msg import PoseStamped, Pose, Point
-from moveit_commander import MoveGroupCommander,RobotCommander, PlanningSceneInterface
-from moveit_msgs.msg import Grasp, GripperTranslation, MoveItErrorCodes,DisplayTrajectory
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from tf.transformations import quaternion_from_euler
-from copy import deepcopy, copy
+from copy import deepcopy
 from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Pose, PoseStamped
 from std_msgs.msg import ColorRGBA
 import pickle
 from arm_commander import ArmCommander
 import rospkg
+from dataclasses import dataclass
+
 # Author: Yousif El-Wishahy
 # Email: yel.wishahy@gmail.com
 # Reachability analysis module to test/analyze UBC Open Robotics arm IK algorithms
 
+############ PARAMETERS ##################
+#auto save interval (hours)
+AUTO_SAVE_INTERVAL = 0.1
+
+#reachability test joint space resolution, in radians
+#note: there are 4+ joints, so small resolutions will produce a LARGE amount of test values...
+JS_RESOLUTION = 0.4
+
+###########################################
+
+
+
 rp = rospkg.RosPack()
 PACKAGE_PATH = rp.get_path('ob1_arm_control')
 
-############ PARAMETERS ##################
-#reachability test joint space resolution, in radians
-#note: there are 4+ joints, so small resolutions will produce a LARGE amount of test values...
-JS_RESOLUTION = 0.95
-
-#reachability test carteisan space resolution, in metres
-CS_RESOLUTION = 0.1
-
 #std_msgs.mg.ColorRGBA ros clr msg for visual markers
-GREEN = ColorRGBA(r=0, g=165, b=8, a=0.8)
-#############################################
+GREEN = ColorRGBA(r=0, g=255, b=0, a=1)
+RED = ColorRGBA(r=255, g=0, b=0, a=1)
 
 # Ros Marker message (visualization_msgs.msg.Marker) to store points in cartesian space
 # IK reachability is indicated by point colour
@@ -48,31 +42,54 @@ marker_data:Marker = Marker()
 
 #pose data
 #stores all successful orientations and positions (aka poses)
-pose_data = []
+successful_pose_data = []
+
+#stores all failed orientations and positions (aka poses)
+failed_pose_data = []
 
 #list to store all joint targets to test
 joint_targets = []
 
+#list to store failed joint targets
+failed_joint_targets = []
+
+#list to store successful joint targets
+successful_joint_targets = []
+
+#list to store combined data of successful pose and joint target relations
+ikpoints_list = []
+
 #arm commander class, intializes move group planning interface
-arm_commander:ArmCommander = ArmCommander(sample_time_out=5,goal_tolerance=0.01)
+arm_commander:ArmCommander = ArmCommander(sample_attempts=5, sample_time_out=1,goal_tolerance=0.01)
 
 def save_marker_data():
     """
-    Saves the marker msg datatype through Python's pickle method
+    Saves the test data into pickle files
+
+    marker_data.pickle is a saved visualization_msgs.msg.Marker object
+    pose_data.pickle is a saved list of PoseStamped objects
+    joint_data.pickle is a dictionary containing lists of good and bad joint targets
     """
+
     with open(PACKAGE_PATH+"/data/marker_data.pickle", "wb") as output_file:
         pickle.dump(marker_data, output_file)
     with open(PACKAGE_PATH+"/data/pose_data.pickle", "wb") as output_file:
-        pickle.dump(marker_data, output_file)
+        pickle.dump({"good poses":successful_pose_data,
+        "bad poses":failed_pose_data}, output_file)
+    with open(PACKAGE_PATH+"/data/joint_data.pickle", "wb") as output_file:
+        pickle.dump({"good joint targets":successful_joint_targets,
+        "bad joint targets":failed_joint_targets}, output_file)
+    with open(PACKAGE_PATH+"/data/ikpoints_data.pickle", "wb") as output_file:
+        pickle.dump(ikpoints_list, output_file)
 
 def calculate_js_reachability():
     """
     Function for calcualting reachability in joint space.
     Iterates over joint goals with a certain resolution and saves Pose results as green or red markers
     """
-
-    joint_target = arm_commander.arm_mvgroup.get_random_joint_values()
+    joint_target = arm_commander.arm_mvgroup.get_current_joint_values()
     num_joints = len(joint_target)
+
     joint_targets.append(deepcopy(joint_target))
 
     def generate_joint_space_recursively(joint_index=1):
@@ -86,7 +103,7 @@ def calculate_js_reachability():
             while val < max:
                 val+=JS_RESOLUTION
                 if val >= min and val <= max:
-                    joint_target[joint_index-1] = val
+                    joint_target[joint_index-1] = val 
                     joint_targets.append(deepcopy(joint_target))
                 generate_joint_space_recursively(joint_index+1)
                 if rospy.is_shutdown():
@@ -104,6 +121,7 @@ def calculate_js_reachability():
     total = len(joint_targets)
     time_remaining = 0
     time_passed = 0
+    last_autosave = 0
     for joints in joint_targets:
         print("Testing joint target %s/%s " %(counter,total))
         print(joints)
@@ -115,19 +133,34 @@ def calculate_js_reachability():
         time_remaining = time_passed/counter * (total-counter)
         if success:
             success_counter+=1
-            eef_pose = arm_commander.get_end_effector_pose().pose
-            marker_data.points.append(eef_pose.position)
+            eef_pose_stamped = arm_commander.get_end_effector_pose()
+            position = eef_pose_stamped.pose.position
+            header = eef_pose_stamped.header
+
+            successful_pose_data.append(eef_pose_stamped)
+            marker_data.points.append(position)
             marker_data.colors.append(GREEN)
-            pose_data.append(eef_pose)
-            if rospy.is_shutdown():
-                return
+            marker_data.header = header
+
+            successful_joint_targets.append(joints)
+
+            ikpoint = {"pose_stamped":eef_pose_stamped,"joint_target":joints}
+            ikpoints_list.append(ikpoint)
+        else:
+            failed_joint_targets.append(joints)
+
+        if time_passed > last_autosave + AUTO_SAVE_INTERVAL:
+            save_marker_data()
+            last_autosave = time_passed
+        
+        if rospy.is_shutdown():
+            return
+
         print(" %s/%s Planning Success Rate " %(success_counter,counter))
-        print("Time remaining: Est. %s hours\n" %(time_remaining))
+        print("Time remaining: Est. %s hours" %(time_remaining))
+        print("Time to Autosave: %s hours\n" %(last_autosave + AUTO_SAVE_INTERVAL - time_passed))
+    
+    save_marker_data()
 
 if __name__ == '__main__':
-    save_marker_data()
-    try:
-        calculate_js_reachability()
-    except KeyboardInterrupt:
-        save_marker_data() 
-        exit()
+    calculate_js_reachability()

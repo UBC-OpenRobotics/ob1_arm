@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<robot  name="ob1_arm">
+    <link name="base_link">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0" />
+            <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+        </inertial>
+    </link>
+    <link name="shoulder_link">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0" />
+            <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+        </inertial>
+    </link>
+    <link name="arm_link">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0" />
+            <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+        </inertial>
+    </link>
+    <link name="elbow_link">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0" />
+            <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+        </inertial>
+    </link>
+    <link name="forearm_link">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0" />
+            <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+        </inertial>
+    </link>
+    <link name="main_assembly">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0" />
+            <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+        </inertial>
+    </link>
+
+    <joint name="wrist" type="fixed">
+        <origin xyz="0 -0.1 0.08285" rpy="1.5708 0 0" />
+        <parent link="forearm_link" />
+        <child link="main_assembly" />
+        <axis xyz="0 0 1"/>
+        <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
+        <joint_properties friction="0.0"/>
+    </joint>
+    <joint name="elbow_forearm_joint" type="revolute">
+        <origin xyz="0 0.08285 -0.03115" rpy="1.5708 0 0" />
+        <parent link="elbow_link" />
+        <child link="forearm_link" />
+        <axis xyz="0 0 1"/>
+        <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
+        <joint_properties friction="0.0"/>
+    </joint>
+    <joint name="arm_elbow_joint" type="revolute">
+        <origin xyz="0 0.18 0.0475" rpy="1.5708 0.0295346 0" />
+        <parent link="arm_link" />
+        <child link="elbow_link" />
+        <axis xyz="0 0 1"/>
+        <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
+        <joint_properties friction="0.0"/>
+    </joint>
+    <joint name="shoulder_arm_joint" type="revolute">
+        <origin xyz="0.15 0 0" rpy="0 0 -1.5708" />
+        <parent link="shoulder_link" />
+        <child link="arm_link" />
+        <axis xyz="0 0 1"/>
+        <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
+        <joint_properties friction="0.0"/>
+    </joint>
+    <joint name="base_shoulder_joint" type="revolute">
+        <origin xyz="0 0.0465 0.06" rpy="1.5708 -1.5708 0" />
+        <parent link="base_link" />
+        <child link="shoulder_link" />
+        <axis xyz="0 0 1"/>
+        <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
+        <joint_properties friction="0.0"/>
+    </joint>
+</robot>

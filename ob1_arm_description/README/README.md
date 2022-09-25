@@ -1,16 +1,20 @@
 # Arm URDF Package
 
-Author: Jonathan Qiao
+Authors: 
+* Jonathan Qiao
+    * Email: jonathanqfxw@gmail.com
+* Yousif El-Wishahy
+    * Email: yel.wishahy@gmail.com
 
-Email: jonathanqfxw@gmail.com
+*This README has been copied and modified from the old arm repo.*
 
 # Descripton:
 
 **This package is meant to be an envorment to develope the URDF of the arm.**
 
-The vast majority of the URDF is defined in **arm_urdf/urdf/arm_urdf.xacro**. The xacro file contains a xacro macro with name **arm** and parameter **prefix (string)**, prefix will be used to defined unique arm. This file acts like a function definition but for URDF
+The vast majority of the URDF is defined in **ob1_arm_description/urdf/arm_no_base.xacro.urdf**. The xacro file contains a xacro macro with name **arm** and parameter **prefix (string)**, prefix will be used to defined unique arm. This file acts like a function definition but for URDF
 
-The xacro file with path **arm_urdf/urdf/main.xacro** is where the URDF is explicitly called and connected to the world.
+The xacro file with path **arm_urdf/urdf/arm_no_base.xacro** is used to generate the urdf.
 
 # Usage:
 

@@ -8,7 +8,7 @@ import numpy as np
 from math import pi, tau, dist, fabs, cos
 import geometry_msgs
 from sensor_msgs.msg import JointState
-from geometry_msgs.msg import PoseStamped, Pose
+from geometry_msgs.msg import PoseStamped, Pose, Point
 from moveit_commander import MoveGroupCommander,RobotCommander, PlanningSceneInterface
 from moveit_msgs.msg import Grasp, GripperTranslation, MoveItErrorCodes,DisplayTrajectory
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
@@ -62,6 +62,7 @@ class ArmCommander(object):
 
     ARM_GROUP_NAME = "arm"
     GRIPPER_GROUP_NAME = "gripper"
+    GRIPPER_LINK_NAME = "main_assembly"
     ARM_REF_FRAME = "base_link"
     GRIPPER_REF_FRAME = "main_assembly"
     WORLD_REF_FRAME = "world"
@@ -128,7 +129,7 @@ class ArmCommander(object):
         self.gripper_mvgroup.remember_joint_values("open", values=joint_vals_max)
         self.gripper_mvgroup.remember_joint_values("close", values=joint_vals_min)
         
-    def go_ik(self, pose_goal:PoseStamped=None):
+    def go_ik(self, pose_goal:PoseStamped=None, position_only=False):
         '''
         @brief Makes the head of the arm go to a position and orientation
         specified by goal, blocks until either inverse kinematics fails 
@@ -153,7 +154,17 @@ class ArmCommander(object):
             self.pose_goal = None
             return False
 
-        self.plan = self.arm_mvgroup.plan(self.pose_goal.pose)
+        if position_only:
+            print("POSITION ONLY PLANNING")
+            pos = [self.pose_goal.pose.position.x,
+                self.pose_goal.pose.position.y,
+                self.pose_goal.pose.position.z]
+
+            self.arm_mvgroup.clear_pose_targets()
+            self.arm_mvgroup.set_position_target(pos,self.GRIPPER_LINK_NAME)
+            self.plan = self.arm_mvgroup.plan()
+        else:
+            self.plan = self.arm_mvgroup.plan(self.pose_goal.pose)
 
         if (self.plan[0]):
             self.arm_mvgroup.go(joints=None, wait=True)
