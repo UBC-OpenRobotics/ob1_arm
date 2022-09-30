@@ -21,11 +21,13 @@ AUTO_SAVE_INTERVAL = 0.1
 
 #reachability test joint space resolution, in radians
 #note: there are 4+ joints, so small resolutions will produce a LARGE amount of test values...
-JS_RESOLUTION = 0.4
+JS_RESOLUTION = 0.3 #0.5
 
 ###########################################
 
-
+#arm commander class, intializes move group planning interface
+arm_commander:ArmCommander = ArmCommander(sample_attempts=1, sample_time_out=0.01,goal_tolerance=0.01)
+# ArmCommander(sample_attempts=5, sample_time_out=5,goal_tolerance=0.01)
 
 rp = rospkg.RosPack()
 PACKAGE_PATH = rp.get_path('ob1_arm_control')
@@ -58,9 +60,6 @@ successful_joint_targets = []
 
 #list to store combined data of successful pose and joint target relations
 ikpoints_list = []
-
-#arm commander class, intializes move group planning interface
-arm_commander:ArmCommander = ArmCommander(sample_attempts=5, sample_time_out=1,goal_tolerance=0.01)
 
 def save_marker_data():
     """
