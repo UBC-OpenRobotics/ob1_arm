@@ -122,7 +122,7 @@ class ArmCommander(object):
         @param position_goal: can be list of [x,y,z] a Point, Pose, or PoseStamped objects
         The position will be extracted from any of these data types.
 
-        @return the attempted position as [x,y,z]
+        @returns (execution result, position target [x,y,z] )
         """
 
         #handle different kind of inputs
@@ -133,14 +133,14 @@ class ArmCommander(object):
             position_goal[1] = rand_pos.y
             position_goal[2] = rand_pos.z
         elif type(position_goal) is not list:
-            position_goal = convert_to_point(position_goal)
+            position_goal = convert_to_list(position_goal)
 
         try:
             self.arm_mvgroup.set_position_target(position_goal, self.GRIPPER_LINK_NAME)
-            self.arm_mvgroup.go()
+            res = self.arm_mvgroup.go()
             self.arm_mvgroup.stop()
             self.arm_mvgroup.clear_pose_targets()
-            return position_goal
+            return res, position_goal
         except Exception as err:
             print(err)
 
@@ -153,7 +153,9 @@ class ArmCommander(object):
         @param position_goal: can be list of [x,y,z] a Point, Pose, or PoseStamped objects
         The position will be extracted from any of these data types.
 
-        @return the attempted position as [x,y,z]
+        **IF position_goal is None, a random position_goal will be selected and the nearest ikpoint will be matched to it
+
+        @returns (execution result, position target [x,y,z], joint_target [j0,j1,j2,...])
         """
 
         #handle different kind of inputs
@@ -164,10 +166,12 @@ class ArmCommander(object):
             position_goal[1] = rand_pos.y
             position_goal[2] = rand_pos.z
         elif type(position_goal) is not list:
-            position_goal = convert_to_point(position_goal)
+            position_goal = convert_to_list(position_goal)
 
         joint_target = self.ikpoints.get_nearest_joint_target(np.array(position_goal))
-        return self.go_joint(joint_target), position_goal
+        #res = (execution result, joint_target)
+        res = self.go_joint(joint_target)
+        return res[0], position_goal, res[1]
         
     def go_pose(self, pose_goal:PoseStamped=None):
         '''
@@ -180,7 +184,7 @@ class ArmCommander(object):
 
         if pose_goal param is not passed, random pose goal will be generated
 
-        @return bool success flag
+        @returns (execution result, PoseStamped target)
         '''
 
         if pose_goal == None:
@@ -192,15 +196,15 @@ class ArmCommander(object):
             print("Incorrect planning frame for pose goal, got %s instead of %s \n" \
                     %(self._current_pose_goal.header.frame_id,self.robot.get_planning_frame()))
             self._current_pose_goal = None
-            return False
+            return False, None
 
         self._current_plan = self.arm_mvgroup.plan(self._current_pose_goal.pose)
-
+        res = self._current_plan[0]
         if (self._current_plan[0]):
-            self.arm_mvgroup.go(joints=None, wait=True)
+            res = self.arm_mvgroup.go(joints=None, wait=True)
             self.arm_mvgroup.stop()
             self.arm_mvgroup.clear_pose_targets()
-        return self._current_plan[0]
+        return res, self._current_pose_goal
 
     def go_joint(self, joints=None):
         """
@@ -211,52 +215,74 @@ class ArmCommander(object):
         @param group (MoveGroupCommander) : Move group object , either arm or gripper
 
         @param goal (JointState): JointState object that specifies joint angle goals
-        returns: void
-        """
-        if len(joints) != self._num_joints:
-            print("invalid input .. getting random joint goal")
-            joints = self.arm_mvgroup.get_random_joint_values()
 
-        print("setting joint target to: ", joints)
+        @returns (execution result, joint_target [j0,j1,j2,...])
+        """
+        if type(joints) is not list or len(joints) != self._num_joints:
+            if type(joints) is np.ndarray:
+                joints = joints.tolist()
+            else:
+                print('getting random joint values')
+                joints = self.arm_mvgroup.get_random_joint_values()
+
         self.arm_mvgroup.set_joint_value_target(joints)
         plan = self.arm_mvgroup.plan()
+        res = plan[0]
 
         if plan[0]:
-            self.arm_mvgroup.go()
+            res = self.arm_mvgroup.go()
             self.arm_mvgroup.stop()
             self.arm_mvgroup.clear_pose_targets()
-        return plan[0]
+        self._current_plan = plan
+        return res, joints
     
     def get_end_effector_pose(self):
+        """
+        Returns PoseStamped object of end effector of arm move group
+        """
         return self.robot.get_link(self.arm_mvgroup.get_end_effector_link()).pose()
 
     def print_robot_cartesian_state(self):
+        """
+        Prints cartesian pose state of all robot links
+        """
         print('ROBOT CARTESIAN STATE\n')
         for link_name in self.robot.get_link_names():
             link = self.robot.get_link(link_name)
             print(link.name(),'\n',link.pose().pose,'\n',link.pose().header.frame_id)
-    
-    def compare_eef_pose_states(self):
-        """
-        @brief print goal pose and actual pose and if it meets self.goal_tolerance
-        """
-        if self._current_plan[0]:
-            print('PLANNING FAILED')
-        goal = self._current_pose_goal
-        actual = self.get_end_effector_pose()
-        result = all_close(goal,actual,self._goal_tolerance)
 
-        if goal.header.frame_id == actual.header.frame_id:
-            print('\n\n')
-            print("End effector goal:\n",goal)
-            print('\n')
-            print("End effector result:\n",actual)
-            print('\n\n')
-            print('Goal within tolerance: %s : %s' % (self._goal_tolerance,result))
-        else:
-            print("pose goal not in correct reference frame, %s instead of %s" %(goal.header.frame_id,actual.header.frame_id))
+    # def compare_eef_pose_states(self):
+    #     """
+    #     @brief print goal pose and actual pose and if it meets self.goal_tolerance
+    #     """
+    #     if self._current_plan[0]:
+    #         print('PLANNING FAILED')
+    #     goal = self._current_pose_goal
+    #     actual = self.get_end_effector_pose()
+    #     result = all_close(goal,actual,self._goal_tolerance)
 
-        return result
+    #     if goal.header.frame_id == actual.header.frame_id:
+    #         print('\n\n')
+    #         print("End effector goal:\n",goal)
+    #         print('\n')
+    #         print("End effector result:\n",actual)
+    #         print('\n\n')
+    #         print('Goal within tolerance: %s : %s' % (self._goal_tolerance,result))
+    #     else:
+    #         print("pose goal not in correct reference frame, %s instead of %s" %(goal.header.frame_id,actual.header.frame_id))
+
+    #     return result
+
+def assert_ik_result(current_state,target,tolerance:float):
+    def dist():
+        p1 = np.array(convert_to_list(current_state))
+        p2 = np.array(convert_to_list(target))
+        return np.linalg.norm(p1-p2)
+
+    if type(target) is PoseStamped and type(current_state) is PoseStamped:
+        assert target.header.frame_id == current_state.header.frame_id , "transform frame mismatch"
+    d = dist()
+    assert d <= tolerance, "Distance from target is too far, %s m" % d
 
 def all_close(goal, actual, tolerance):
     """
@@ -288,7 +314,7 @@ def all_close(goal, actual, tolerance):
 
     return True
 
-def convert_to_point(obj):
+def convert_to_list(obj):
     """
     @brief helper function to convert geometry messages to point array [x,y,z]
 
@@ -304,7 +330,10 @@ def convert_to_point(obj):
         return [ obj.pose.position.x,
                  obj.pose.position.y,
                  obj.pose.position.z ]
+    elif type(obj) is np.ndarray:
+        return obj.tolist()
     elif type(obj) is list:
         return obj
     else:
-        return None
+        print(obj)
+        raise ValueError("Invalid input to convert_to_list funtion")

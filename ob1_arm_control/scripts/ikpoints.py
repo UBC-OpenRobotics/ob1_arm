@@ -1,3 +1,4 @@
+import random
 from re import S
 import time
 import numpy as np
@@ -24,6 +25,8 @@ class IKPoints():
     #np array of joint targets to reach corresponding point
     joint_targets:np.ndarray = np.array([])
 
+    _size:int 
+
     def __init__(self, file_path):
         try:
             with open(file_path, "rb") as input_file:
@@ -42,6 +45,7 @@ class IKPoints():
             point = np.array([p.x,p.y,p.z])
             points.append(point)
         if len(points) == len(joint_targets):
+            self._size = len(points)
             self.points = np.array(points)
             self.joint_targets = np.array(joint_targets)
             print(self.points.shape,self.points.size)
@@ -65,7 +69,7 @@ class IKPoints():
         index = -1
         min_magnitude = -1
         start = time.time()
-        for i in range(self.points.shape[0]):
+        for i in range(self._size):
             pt2 = self.points[i]
             dist = np.linalg.norm(pt1-pt2)
             if dist < min_magnitude or min_magnitude < 0:
@@ -73,13 +77,16 @@ class IKPoints():
                 min_magnitude = dist
         print("search duration: %s seconds" %(time.time()-start))
 
-        if index >= 0 and index < self.points.size:
+        if index >= 0 and index < self._size:
             print("found point with promimity %s" % min_magnitude)
-            return self.joint_targets[index]
+            return self.joint_targets[index].tolist()
         else:
             print("Could not find closest point and joint target")
             return None
-
+    
+    def get_rand_point(self):
+        index = random.randint(0, self._size)
+        return self.points[index].tolist()
         
 
 
