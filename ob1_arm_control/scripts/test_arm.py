@@ -12,6 +12,7 @@ from math import pi, tau, dist, fabs, cos
 import geometry_msgs
 from geometry_msgs.msg import PoseStamped, Pose, Vector3Stamped 
 from moveit_commander import MoveGroupCommander,RobotCommander, PlanningSceneInterface
+from moveit_commander.planning_scene_interface import CollisionObject
 from moveit_msgs.msg import Grasp, GripperTranslation, MoveItErrorCodes,DisplayTrajectory
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from tf.transformations import quaternion_from_euler
@@ -376,19 +377,25 @@ def go_ikpoints_test(arm_commander: ArmCommander,iterations):
 
         print("Iteration: %s / %s \n" %(counter, iterations))
 
+def go_object_test():
+    arm_commander = ArmCommander(sample_time_out=5, sample_attempts=5, goal_tolerance=0.001)
+    objs = arm_commander.scene.get_objects()
+    if len(objs) > 0:
+        obj:CollisionObject = list(objs.items())[0][1]
+        pos = [obj.pose.position.x,obj.pose.position.y,obj.pose.position.z]
+        arm_commander.go_position_ikpoints(pos)
+
 ####################
 #Main loop for testing
 ####################
 if __name__ == '__main__':
-    gripper_open_joints = degrees_to_radians([-20.0, 0.0, -80.0, 0.0, -80.0])
-    gripper_close_joints = degrees_to_radians([-15.0, 0.0, -2.0, 0.0, -2.0])
-    arm_pos_joints = degrees_to_radians([-4.0, -29.0, -68.0, -180.0, 83.0])
+    go_object_test()
 
     # pose_list_test()
     # pose_list_test_position()
 
-    arm_commander = ArmCommander(sample_time_out=0.1, sample_attempts=5, goal_tolerance=0.001)
-    go_ikpoints_test(arm_commander,100)
+    # arm_commander = ArmCommander(sample_time_out=0.1, sample_attempts=5, goal_tolerance=0.001)
+    # go_ikpoints_test(arm_commander,100)
     # arm_commander.arm_mvgroup.clear_pose_targets()
     # pose = arm_commander.arm_mvgroup.get_random_pose().pose
     # pos = [pose.position.x,pose.position.y,pose.position.z]
@@ -411,3 +418,8 @@ if __name__ == '__main__':
     # arm_commander.go_ik(goal)
     # arm_commander.arm_mvgroup.shift_pose_target(2,0.05)
     # go_joint_test(arm_commander,10)
+
+
+# gripper_open_joints = degrees_to_radians([-20.0, 0.0, -80.0, 0.0, -80.0])
+# gripper_close_joints = degrees_to_radians([-15.0, 0.0, -2.0, 0.0, -2.0])
+# arm_pos_joints = degrees_to_radians([-4.0, -29.0, -68.0, -180.0, 83.0])
