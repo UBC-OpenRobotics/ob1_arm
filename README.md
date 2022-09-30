@@ -8,10 +8,8 @@
 
 - [Arm Commander](./ob1_arm_control/README/README.md)
 
-- [Arm Moduel/Description (URDF)](./ob1_arm_description/README/README.md)
+- [Arm Description (URDF)](./ob1_arm_description/README/README.md)
 
 - [MoveIt Configuaration and RVIZ](./ob1_arm_moveit_config/README/README.md)
-
-- [Workspace Analysis / Visualization (external plugin)](https://github.com/vonunwerth/simple-reachability/blob/master/README.md)
     
 #todo: create documentation for other packages
