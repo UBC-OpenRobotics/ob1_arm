@@ -200,12 +200,12 @@ def grasp_test(arm_commander: ArmCommander,max_attempts=25):
         result = arm_commander.arm_mvgroup.pick('part',grasps)
         rospy.sleep(0.2)
 
-def go_ik_test(arm_commander: ArmCommander,iterations):
+def go_pose_test(arm_commander: ArmCommander,iterations):
     """go to random poses generated within reach and test end effector pose accuracy after ik motion complete"""
     success_counter = 0
     counter = 0
     for _ in range(iterations):
-        arm_commander.go_ik(position_only=True)
+        arm_commander.go_pose()
         # print(arm_commander.pose_goal)
         # print(arm_commander.get_end_effector_pose())
         if arm_commander.compare_eef_pose_states():
@@ -213,6 +213,16 @@ def go_ik_test(arm_commander: ArmCommander,iterations):
         counter+=1
 
         print("Iteration: %s \n%s/%s goal successes" %(counter, success_counter, iterations))
+
+def go_position_test(arm_commander: ArmCommander,iterations):
+    counter = 0
+    for _ in range(iterations):
+        pos = arm_commander.go_position()
+        print(pos)
+        print(arm_commander.get_end_effector_pose())
+        counter+=1
+
+        print("Iteration: %s / %s \n" %(counter, iterations))
 
 def go_ik_test_rand(arm_commander: ArmCommander,iterations):
     """go to random poses generated anywhere and test end effector pose accuracy after ik motion complete"""
@@ -240,7 +250,7 @@ def go_ik_test_rand(arm_commander: ArmCommander,iterations):
 
     for p in poses:
         print(p)
-        arm_commander.go_ik(p)
+        arm_commander.go_pose(p)
         arm_commander.compare_eef_pose_states()
         if rospy.is_shutdown():
             break
@@ -272,12 +282,12 @@ def increment_curr_pose_go_ik_test(arm_commander: ArmCommander, d=[0,0,0.1], ite
     counter = 0
     for _ in range(iterations):
         pose_goal = get_incremented_pose_goal()
-        arm_commander.go_ik(pose_goal)
+        arm_commander.go_pose(pose_goal)
         if arm_commander.compare_eef_pose_states():
             success_counter+=1
         counter+=1
         print(HOR,)
-        print(arm_commander.pose_goal)
+        print(arm_commander._current_pose_goal)
         print(arm_commander.get_end_effector_pose())
         print("Iteration: %s \n%s/%s goal successes" %(counter, success_counter, iterations))
         print(HOR,)
@@ -304,13 +314,13 @@ def brute_force_test_translation(arm_commander: ArmCommander, range=5, d=0.01):
                 pose_stamped.pose.orientation.z = 0
                 pose_stamped.pose.orientation.w = 1
 
-                arm_commander.go_ik(pose_stamped)
+                arm_commander.go_pose(pose_stamped)
 
                 if arm_commander.compare_eef_pose_states():
                     success_counter+=1
                 counter+=1
                 print(HOR,)
-                print(arm_commander.pose_goal)
+                print(arm_commander._current_pose_goal)
                 print(arm_commander.get_end_effector_pose())
                 print("Iteration: %s \n%s/%s goal successes" %(counter, success_counter, iterations))
                 print(HOR,)
@@ -330,11 +340,41 @@ def pose_list_test():
         for pose_stamped in pose_stamped_list:
             if not rospy.is_shutdown():
                 print(pose_stamped)
-                arm_commander.go_ik(pose_stamped)
+                arm_commander.go_pose(pose_stamped)
                 if arm_commander.compare_eef_pose_states():
                     success_counter+=1
                 counter+=1
                 print("Iteration: %s \n%s/%s goal successes" %(counter, success_counter, iterations))
+
+def pose_list_test_position():
+    #get list of poses to test
+    pose_stamped_list = None    
+    with open(DATA_FILE_PATH, "rb") as input_file:
+        pose_stamped_list = pickle.load(input_file)
+    
+    if pose_stamped_list is not None and type(pose_stamped_list) is list:
+        arm_commander = ArmCommander(sample_time_out=5, goal_tolerance=0.001)
+        counter = 0
+        iterations = len(pose_stamped_list)
+
+        for pose_stamped in pose_stamped_list:
+            if not rospy.is_shutdown():
+                pos = [pose_stamped.pose.position.x, pose_stamped.pose.position.y, pose_stamped.pose.position.z]
+                print(pos)
+                arm_commander.go_position(pos)
+                counter+=1
+                print("Iteration: %s / %s goal successes\n" %(counter, iterations))
+
+def go_ikpoints_test(arm_commander: ArmCommander,iterations):
+    counter = 0
+    for _ in range(iterations):
+        res, pt = arm_commander.go_position_ikpoints()
+        print(pt)
+        print(arm_commander.get_end_effector_pose())
+        counter+=1
+        time.sleep(5)
+
+        print("Iteration: %s / %s \n" %(counter, iterations))
 
 ####################
 #Main loop for testing
@@ -344,8 +384,11 @@ if __name__ == '__main__':
     gripper_close_joints = degrees_to_radians([-15.0, 0.0, -2.0, 0.0, -2.0])
     arm_pos_joints = degrees_to_radians([-4.0, -29.0, -68.0, -180.0, 83.0])
 
+    # pose_list_test()
+    # pose_list_test_position()
 
-    # arm_commander = ArmCommander(sample_time_out=60, sample_attempts=10, goal_tolerance=0.1)
+    arm_commander = ArmCommander(sample_time_out=0.1, sample_attempts=5, goal_tolerance=0.001)
+    go_ikpoints_test(arm_commander,100)
     # arm_commander.arm_mvgroup.clear_pose_targets()
     # pose = arm_commander.arm_mvgroup.get_random_pose().pose
     # pos = [pose.position.x,pose.position.y,pose.position.z]
@@ -353,7 +396,9 @@ if __name__ == '__main__':
     # arm_commander.arm_mvgroup.go()
     
     # go_ik_test(arm_commander,10)
-    pose_list_test()
+    # pose_list_test()
+    # pose_list_test_position()
+    # go_position_test(arm_commander,100)
     # brute_force_test_translation(arm_commander,range=1,d=0.05)
 
     # increment_pose_go_ik_test(arm_commander)
