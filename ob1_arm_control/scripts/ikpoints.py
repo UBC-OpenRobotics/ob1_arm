@@ -3,10 +3,11 @@ from re import S
 import time
 import numpy as np
 import pickle
+from scipy.spatial import KDTree
 
 #Author: Yousif El-Wishahy
 #caclualtion functions for a database of inverse kinematics points
-#very unoptimized
+#use scipy's spacial kdtree to optimize search times
 
 class IKPoints():
     """
@@ -26,6 +27,9 @@ class IKPoints():
     joint_targets:np.ndarray = np.array([])
 
     _size:int 
+    
+    #kdtree for nearest point lookups
+    kdtree:KDTree
 
     def __init__(self, file_path):
         try:
@@ -48,6 +52,7 @@ class IKPoints():
             self._size = len(points)
             self.points = np.array(points)
             self.joint_targets = np.array(joint_targets)
+            self.kdtree = KDTree(self.points)
             print(self.points.shape,self.points.size)
         else:
             print("POINTS AND JOINT TARGET ARRAYS NOT THE SAME LENGTH.")
@@ -57,31 +62,48 @@ class IKPoints():
         @brief
         Given a point, returns a joint target to reach an area closest to that point
         
-        @param point: numpy array for 3d point, eg. np.array([x,y,z])
+        @param pt1: numpy array for 3d point, eg. np.array([x,y,z])
+
+        @return joint_target [j1,j2,j3,...] | None 
         """
 
         if type(pt1) is not np.ndarray and  pt1.size != 3:
             print("parameter is not a valid point; needs np.array([floatx,floaty,floatz])")
             return None
 
-        #perform a linear search to minimize vector magnitude
-        #todo: look into faster ways of doing this
-        index = -1
-        min_magnitude = -1
+        #tree search for closest point
         start = time.time()
-        for i in range(self._size):
-            pt2 = self.points[i]
-            dist = np.linalg.norm(pt1-pt2)
-            if dist < min_magnitude or min_magnitude < 0:
-                index = i
-                min_magnitude = dist
+        dist, index = self.kdtree.query(pt1)
         print("search duration: %s seconds" %(time.time()-start))
 
         if index >= 0 and index < self._size:
-            print("found point with promimity %s" % min_magnitude)
+            print("found point with promimity %s" % dist)
             return self.joint_targets[index].tolist()
         else:
             print("Could not find closest point and joint target")
+            return None
+
+    def get_nearest_neighbour_pt(self,pt1):
+        """
+        get closest point not equal to this point
+
+        @param pt1: numpy array for 3d point, eg. np.array([x,y,z])
+
+        @return 3d point ndarray : np.array([x,y,z])
+        """
+        min_magnitude = -1
+        index = -1
+        for i in range(self._size):
+            pt2 = self.points[i]
+            dist = np.linalg.norm(pt1-pt2)
+            if (dist < min_magnitude or min_magnitude < 0) and not np.array_equal(pt1,pt2):
+                index = i
+                min_magnitude = dist
+        
+        if index >= 0 and index < self._size:
+            print("found point with promimity %s" % min_magnitude)
+            return self.points[index]
+        else:
             return None
     
     def get_rand_point(self):
