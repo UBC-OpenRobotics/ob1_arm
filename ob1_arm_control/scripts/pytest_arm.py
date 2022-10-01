@@ -111,11 +111,12 @@ def test_go_rand_reachable_scene_object():
     p.pose.orientation.w = 1
     arm_commander.scene.add_sphere("sphere",p,0.1)
 
-    log.info("Detecting scene objects..")
-    objs = arm_commander.scene.get_objects()
-    assert len(objs) > 0, "Could not find any scene objects"
-    obj:CollisionObject = list(objs.items())[0][1]
-    pos = [obj.pose.position.x,obj.pose.position.y,obj.pose.position.z]
+    # log.info("Detecting scene objects..")
+    # objs = arm_commander.scene.get_objects()
+    # assert len(objs) > 0, "Could not find any scene objects"
+    # obj:CollisionObject = list(objs.items())[0][1]
+    # pos = [obj.pose.position.x,obj.pose.position.y,obj.pose.position.z]
+    pos = rand_pos
 
     log.info("Motion planning to scene object")
     res, target, joint_target = arm_commander.go_position_ikpoints(pos)
@@ -126,9 +127,7 @@ def test_go_rand_reachable_scene_object():
     log.info("Target type: %s" % type(target))
     assert_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
 
-    log.info("Clearing scene..")
-    arm_commander.scene.clear()
-
+#TODO IMPROVE LOGIC FOR SMART FINDING SCENE OBJECTS
 def test_go_rand_scene_object_smart():
     log.info("Starting go_rand_scene_object test")
 
@@ -145,14 +144,14 @@ def test_go_rand_scene_object_smart():
     p.pose.orientation.w = 1
     arm_commander.scene.add_sphere("sphere",p,0.1)
 
-    log.info("Detecting scene objects..")
-    objs = arm_commander.scene.get_objects()
+    # log.info("Detecting scene objects..")
+    # objs = arm_commander.scene.get_objects()
 
-    assert len(objs) > 0, "Could not find any scene objects"
+    # assert len(objs) > 0, "Could not find any scene objects"
 
-    obj:CollisionObject = list(objs.items())[0][1]
-    p1 = np.ndarray([obj.pose.position.x,obj.pose.position.y,obj.pose.position.z])
-
+    # obj:CollisionObject = list(objs.items())[0][1]
+    # p1 = np.ndarray([obj.pose.position.x,obj.pose.position.y,obj.pose.position.z])
+    p1 = np.array(rand_pos)
     log.info("Motion planning to scene object")
 
     res, target, joint_target = arm_commander.go_position_ikpoints(p1)
@@ -170,9 +169,6 @@ def test_go_rand_scene_object_smart():
     log.info("Boolean result: %s" % res)
     log.info("Target type: %s" % type(target))
     assert_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
-
-    log.info("Clearing scene..")
-    arm_commander.scene.clear()
 
 def test_go_rand_pose_loop():
     success_counter = 0
