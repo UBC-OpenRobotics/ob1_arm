@@ -12,6 +12,8 @@ import geometry_msgs
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import PoseStamped, Pose, Point
 from moveit_commander import MoveGroupCommander,RobotCommander, PlanningSceneInterface
+from shape_msgs.msg import SolidPrimitive
+from moveit_commander.planning_scene_interface import CollisionObject
 from moveit_msgs.msg import Grasp, GripperTranslation, MoveItErrorCodes,DisplayTrajectory
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from tf.transformations import quaternion_from_euler
@@ -28,7 +30,7 @@ from ikpoints import IKPoints
 class ArmCommander(object):
     _current_plan = None # current joint trajectory plan
     _current_pose_goal : PoseStamped = None #current pose goal 
-    _sample_time_out   = 50          # time out in seconds for Inverse Kinematic search
+    _sample_time_out   = 5             # time out in seconds for Inverse Kinematic search
     _sample_attempts   = 5             # num of planning attempts 
     _goal_tolerance    = 0.001
     _joint_tolerances = []
@@ -48,7 +50,7 @@ class ArmCommander(object):
     IKPOINTS_DATA_FILE_PATH = PACKAGE_PATH + "/data/5k_ikpoints_data.pickle"
     ikpoints:IKPoints = None
  
-    def __init__(self, sample_time_out=50, sample_attempts=5, goal_tolerance=0.001):
+    def __init__(self, sample_time_out=5, sample_attempts=5, goal_tolerance=0.05):
         '''
         @brief init arm command object, moveit commander, scene and movegroups for arm and arm gripper
         '''
@@ -63,11 +65,14 @@ class ArmCommander(object):
         self.arm_mvgroup.set_planning_time(sample_time_out)
         self.arm_mvgroup.set_num_planning_attempts(sample_attempts)
         self.arm_mvgroup.set_goal_tolerance(goal_tolerance)
-        self._goal_tolerance = goal_tolerance
         self.arm_mvgroup.set_max_velocity_scaling_factor(1)
         self.arm_mvgroup.set_max_acceleration_scaling_factor(0.3)
 
         self._num_joints = len(self.robot.get_active_joint_names())
+
+        self._goal_tolerance = goal_tolerance
+        self._sample_attempts = sample_attempts
+        self._sample_time_out = sample_time_out
 
         # self.arm_mvgroup.set_workspace([-50,-50,-50,50,50,50])
         
@@ -134,16 +139,70 @@ class ArmCommander(object):
             position_goal[2] = rand_pos.z
         elif type(position_goal) is not list:
             position_goal = convert_to_list(position_goal)
+        
+        self.arm_mvgroup.clear_pose_targets()
+        self.arm_mvgroup.set_position_target(position_goal, self.GRIPPER_LINK_NAME)
+        plan = self.arm_mvgroup.plan()
+        res = plan[0]
 
-        try:
-            self.arm_mvgroup.set_position_target(position_goal, self.GRIPPER_LINK_NAME)
+        if plan[0]:
             res = self.arm_mvgroup.go()
             self.arm_mvgroup.stop()
             self.arm_mvgroup.clear_pose_targets()
-            return res, position_goal
-        except Exception as err:
-            print(err)
 
+        self._current_plan = plan
+        return res, position_goal
+
+    def go_scene_object(self, object:CollisionObject, attempts=10, d=0.1):
+        """
+        @brief makes the end effector of the arm go to the proximity of a scene object
+        Finds optimal joint target based on ik points data base
+        The position of the object should be in the reference frame of the base link
+        Proximity is based on the closest reachable ikpoint to the scene object position
+
+        @param object: scene object with type moveit_commander.planning_scene_interface.CollisionObject
+        
+        @param(optional,defuault=10) attempts: number of different points to attempt near scene object
+
+        @param(optiona,default=0.1) d: distance resolution to scale vectors by when attempting to find nearby
+
+        @returns (execution result, object pose, successful_joint_target [j0,j1,j2,...] | None)
+        """
+    
+        pt_obj = np.array(convert_to_list(object.pose.position))
+        shape:SolidPrimitive = object.primitives[0]
+
+        if self.ikpoints.in_range(pt_obj,self._goal_tolerance):
+
+            joint_targets = self.ikpoints.get_nearest_joint_targets(pt_obj,num_pts=attempts)
+            successful_joint_target = None
+
+            for joints in joint_targets:
+                self.arm_mvgroup.set_joint_value_target(joints)
+                plan = self.arm_mvgroup.plan()
+                if plan[0]:
+                    successful_joint_target = joints
+                    break
+            
+            if not plan[0]:
+                for i in range(attempts):
+                    p2 = pt_obj * (1 - d*i)
+                    joints = self.ikpoints.get_nearest_joint_targets(p2)
+                    self.arm_mvgroup.set_joint_value_target(joints)
+                    plan = self.arm_mvgroup.plan()
+                    if plan[0]:
+                        successful_joint_target = joints
+                        break
+            
+            if plan[0]:
+                res = self.arm_mvgroup.go()
+                self.arm_mvgroup.stop()
+                self._current_plan = plan
+                return res, object.pose, successful_joint_target 
+
+        print("Could not complete motion planning for scene object")
+        return False, object.pose, None
+        
     def go_position_ikpoints(self, position_goal=None):
         """
         @brief makes the end effector of the arm go to a cartesian position (x,y,z)
@@ -168,7 +227,7 @@ class ArmCommander(object):
         elif type(position_goal) is not list:
             position_goal = convert_to_list(position_goal)
 
-        joint_target = self.ikpoints.get_nearest_joint_target(np.array(position_goal))
+        joint_target = self.ikpoints.get_nearest_joint_targets(np.array(position_goal))
         #res = (execution result, joint_target)
         res = self.go_joint(joint_target)
         return res[0], position_goal, res[1]
@@ -273,17 +332,6 @@ class ArmCommander(object):
 
     #     return result
 
-def assert_ik_result(current_state,target,tolerance:float):
-    def dist():
-        p1 = np.array(convert_to_list(current_state))
-        p2 = np.array(convert_to_list(target))
-        return np.linalg.norm(p1-p2)
-
-    if type(target) is PoseStamped and type(current_state) is PoseStamped:
-        assert target.header.frame_id == current_state.header.frame_id , "transform frame mismatch"
-    d = dist()
-    assert d <= tolerance, "Distance from target is too far, %s m" % d
-
 def all_close(goal, actual, tolerance):
     """
     From: https://github.com/ros-planning/moveit_tutorials/blob/master/doc/move_group_python_interface/scripts/move_group_python_interface_tutorial.py
@@ -316,7 +364,7 @@ def all_close(goal, actual, tolerance):
 
 def convert_to_list(obj):
     """
-    @brief helper function to convert geometry messages to point array [x,y,z]
+    @brief helper function to convert geometry messages to list [x,y,z]
 
     returns none if invalid input object
     """
