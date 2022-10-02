@@ -1,6 +1,7 @@
 import random
 from re import S
 import time
+from typing import Literal
 import numpy as np
 import pickle
 from scipy.spatial import KDTree
@@ -57,14 +58,16 @@ class IKPoints():
         else:
             print("POINTS AND JOINT TARGET ARRAYS NOT THE SAME LENGTH.")
 
-    def get_nearest_joint_target(self,pt1):
+    def get_nearest_joint_targets(self,pt1,num_pts=1):
         """
         @brief
         Given a point, returns a joint target to reach an area closest to that point
         
         @param pt1: numpy array for 3d point, eg. np.array([x,y,z])
 
-        @return joint_target [j1,j2,j3,...] | None 
+        @param(optional, default=1) num_pts: number of nearest points to find joint targets for
+
+        @return joint_target [j1,j2,j3,...] or list of joint targets 
         """
 
         if type(pt1) is not np.ndarray and  pt1.size != 3:
@@ -73,15 +76,19 @@ class IKPoints():
 
         #tree search for closest point
         start = time.time()
-        dist, index = self.kdtree.query(pt1)
+        dist, index = self.kdtree.query(pt1, k=num_pts)
         print("search duration: %s seconds" %(time.time()-start))
 
-        if index >= 0 and index < self._size:
+
+        if type(dist) is np.ndarray:
+            print("found %d closest points with avg distance %f cm" %(index.size, np.average(dist)*100))
+            joints = []
+            for i in index:
+                joints.append(self.joint_targets[i].tolist())
+            return joints
+        else:
             print("found point with promimity %s" % dist)
             return self.joint_targets[index].tolist()
-        else:
-            print("Could not find closest point and joint target")
-            return None
 
     def get_nearest_neighbour_pt(self,pt1):
         """
@@ -109,6 +116,20 @@ class IKPoints():
     def get_rand_point(self):
         index = random.randint(0, self._size)
         return self.points[index].tolist()
+
+    def in_range(self,pt,tolerance):
+        """
+        @pt1 returns true if pt is within tolerance range of ikpoint dataset
+
+        @param pt: np.ndarray [x,y,z]
+
+        @return bool
+        """
+
+        dist,_= self.kdtree.query(pt)
+
+        return dist <= tolerance
+
         
 
 

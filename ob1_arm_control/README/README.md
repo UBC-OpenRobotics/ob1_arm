@@ -22,7 +22,35 @@ WIP
 
 # Testing
 
-Ensure that test_arm.py is executible on your system
+Using pytest package for testcases. The tests are in `pytest_arm.py`.
+
+See pytest docs https://docs.pytest.org/en/7.1.x/contents.html. 
+
+## Installing pytest
+```
+$pip install pytest
+```
+
+## Running pytest test cases
+
+Run pytest command
+
+```
+pytest -o log_cli=true -q <path to pytest_arm.py>
+```
+
+`-o` enables live logging.
+
+`-k 'test case name pattern' ` allows for selection of a specific test case from the file.
+
+eg. 
+
+This command will run all test cases with object in their name:
+```
+pytest -o log_cli=true -q src/ob1_arm_control/scripts/pytest_arm.py -k 'object' 
+```
+
+## For older test cases
 Run:
 ```
 $ chmod +x test_arm.py
