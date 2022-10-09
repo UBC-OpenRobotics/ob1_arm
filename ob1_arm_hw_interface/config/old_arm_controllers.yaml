@@ -1,0 +1,34 @@
+# ros_control_boilerplate Settings -----------------------
+# Settings for ros_control control loop
+
+generic_hw_control_loop:
+  loop_hz: 200 # 250 to emulate serial pause COMMAND_PERIOD 0.0055 , SERIAL_PAUSE 0.004
+  cycle_time_error_threshold: 0.1
+
+# Settings for ros_control hardware interface (used in generic_hw_interface.cpp)
+hardware_interface:
+   joints:
+      - arm1_base_fixed_base_joint
+      - arm1_base_bridge_joint
+      - arm1_bridge_housing_joint
+      - arm1_housing_wrist_link_joint
+      - arm1_wrist_link_wrist_cuff_joint
+
+# Publish all joint states ----------------------------------
+# Creates the /joint_states topic necessary in ROS
+joint_state_controller:
+   type: joint_state_controller/JointStateController
+   publish_rate: 200
+
+# Joint Trajectory Controller -------------------------------
+# For detailed explanations of parameter see http://wiki.ros.org/joint_trajectory_controller
+position_trajectory_controller:
+   type: position_controllers/JointTrajectoryController
+   # These joints can likely just be copied from the hardware_interface list above
+   joints:
+      - arm1_base_fixed_base_joint
+      - arm1_base_bridge_joint
+      - arm1_bridge_housing_joint
+      - arm1_housing_wrist_link_joint
+      - arm1_wrist_link_wrist_cuff_joint
+  

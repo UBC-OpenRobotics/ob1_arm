@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>ob1_arm_control</name>
-  <version>0.0.0</version>
-  <description>The ob1_arm_control package</description>
+  <version>0.0.1</version>
+  <description>The ob1_arm_control package for controlling the ob1 arm</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="ubuntu@todo.todo">ubuntu</maintainer>
+  <maintainer email="yel.wishahy@gmail.com">Yousif El-Wishahy</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/ob1_arm_control</url> -->
+  <!-- <url type="website">http://wiki.ros.org/ob1_arm_description</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -49,6 +49,17 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>message_generation</depend>
+  <depend>message_runtime</depend>
+  <depend>moveit_msgs</depend>
+  <depend>actionlib</depend>
+  <depend>actionlib_msgs</depend>
+  <exec_depend>ob1_arm_moveit_config</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

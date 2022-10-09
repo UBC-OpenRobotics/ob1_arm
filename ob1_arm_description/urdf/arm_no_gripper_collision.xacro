@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robot">
+
+    <!-- ################################################### -->
+    <!-- # include statements, much like import statements -->
+    <!-- ################################################### -->
+    <xacro:include filename="$(find ob1_arm_description)/urdf/ob1_arm_urdf_no_gripper_collisions.xacro"/>
+
+
+
+    <!-- ################################################### -->
+    <!-- # constants -->
+    <!-- ################################################### -->
+    <xacro:property name="arm_prefix" value="ob1_arm" />
+    
+
+
+    <!-- ################################################### -->
+    <!-- # Etc -->
+    <!-- ################################################### -->
+    <!-- NOTE: order of execution of xacro does not matter -->
+
+    <!-- name must be kept as "world" for it is a Gazebo keyword for world origin -->
+    <link name="world"/>
+
+    <!-- using arm macro defined in arm_urdf.xacro to define robot -->
+    <xacro:ob1_arm prefix="${arm_prefix}"/>
+
+    <!-- connect the arm to world with fixed joint -->
+    <joint name="base_world" type="fixed">
+        <parent link="world" />
+        <child link="base_link" />
+    </joint>
+    
+</robot>
+

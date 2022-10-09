@@ -1,0 +1,66 @@
+<launch>
+ 
+ <!-- RVIZ Params -->
+   
+    <!-- Load the URDF to the parameter server -->
+    <param name="robot_description" textfile="$(find arm_urdf)/urdf/main.xacro"/>
+
+
+    <!-- Show in Rviz  -->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find ob1_arm_hw_interface)/default.rviz"/>
+
+
+
+
+ <!-- CORE  -->
+
+  <!-- Load controller settings  -->
+    <rosparam file="$(find ob1_arm_hw_interface)/config/old_arm_controllers.yaml" command="load"/>
+
+
+    <!-- Load hardware interface -->
+    <node name="ob1_arm_hw_main" pkg="ob1_arm_hw_interface" type="ob1_arm_hw_main" output="screen"/> 
+
+
+    <!-- Load scene -->
+    <!-- <node name="planning_scene_primatives" pkg="aubo_motion" type="planning_scene_primatives" output="screen"/>  -->
+
+
+
+    <!-- Load controller manager  -->
+    <node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
+    output="screen" args="spawn joint_state_controller position_trajectory_controller" />
+
+    <!-- Convert joint states to /tf tranforms -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+
+ 
+ <!-- MOVEIT -->
+
+    <!-- Load the URDF, SRDF and other .yaml configuration files on the param server -->
+    <include file="$(find moveit_config)/launch/planning_context.launch">
+    <arg name="load_robot_description" value="true"/>
+    </include>
+
+
+    <!-- Remap follow_joint_trajectory -->
+    <remap from="/joint_trajectory_action" to="/position_trajectory_controller/follow_joint_trajectory"/>
+  
+
+    <!-- Run the main MoveIt executable without trajectory execution (we do not have controllers configured by default) -->
+    <include file="$(find moveit_config)/launch/move_group.launch">
+    <arg name="allow_trajectory_execution" value="true"/>
+    <arg name="fake_execution_type" value="false"/>
+    <arg name="info" value="true"/> 
+    </include>
+
+ <!-- ROS SERIAL SERVER (for arduino publishing/subscribing) -->
+   <node name="serial_node"        pkg="rosserial_python"      type="serial_node.py">
+      <param name="port"              type="string"               value="/dev/ttyACM0"/>
+      <param name="baud"              type="int"                  value="57600"/>
+   </node>
+
+
+
+</launch>
