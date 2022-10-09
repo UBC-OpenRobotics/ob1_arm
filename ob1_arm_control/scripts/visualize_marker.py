@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 rp = rospkg.RosPack()
 PACKAGE_PATH = rp.get_path('ob1_arm_control')
-DATA_FILE_PATH = PACKAGE_PATH+"/data/5k_marker_data.pickle"
+DATA_FILE_PATH = PACKAGE_PATH+"/data/marker_data.pickle"
 
 def publish_markers():
     """

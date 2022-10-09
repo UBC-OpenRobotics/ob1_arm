@@ -2,7 +2,7 @@
 from __future__ import print_function
 import pickle
 import time
-from arm_commander import ArmCommander, assert_ik_result
+from arm_commander import ArmCommander
 import sys
 import rospy
 import moveit_commander
