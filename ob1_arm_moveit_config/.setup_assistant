@@ -1,11 +1,11 @@
 moveit_setup_assistant_config:
   URDF:
     package: ob1_arm_description
-    relative_path: urdf/robot.urdf
+    relative_path: urdf/arm_no_gripper_collision.xacro.urdf
     xacro_args: ""
   SRDF:
-    relative_path: config/ob1_arm_description.srdf
+    relative_path: config/robot.srdf
   CONFIG:
     author_name: Andrew Xie
     author_email: andrewxieax1@gmail.com
-    generated_timestamp: 1657945398
+    generated_timestamp: 1664697308

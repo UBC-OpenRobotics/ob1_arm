@@ -1,2 +1,9 @@
 controller_list:
-  []
+  - name: ""
+    action_ns: joint_trajectory_action
+    type: FollowJointTrajectory
+    joints:
+      - base_shoulder_joint
+      - shoulder_arm_joint
+      - arm_elbow_joint
+      - elbow_forearm_joint

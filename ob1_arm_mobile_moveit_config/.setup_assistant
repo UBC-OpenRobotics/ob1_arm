@@ -8,4 +8,4 @@ moveit_setup_assistant_config:
   CONFIG:
     author_name: Andrew Xie
     author_email: andrewxieax1@gmail.com
-    generated_timestamp: 1659661655
+    generated_timestamp: 1661560559
