@@ -21,12 +21,12 @@ AUTO_SAVE_INTERVAL = 0.1
 
 #reachability test joint space resolution, in radians
 #note: there are 4+ joints, so small resolutions will produce a LARGE amount of test values...
-JS_RESOLUTION = 0.3 #0.5
+JS_RESOLUTION = 0.4 #0.5
 
 ###########################################
 
 #arm commander class, intializes move group planning interface
-arm_commander:ArmCommander = ArmCommander(sample_attempts=1, sample_time_out=0.01,goal_tolerance=0.01)
+arm_commander:ArmCommander = ArmCommander(sample_attempts=1, sample_time_out=0.1,goal_tolerance=0.01)
 # ArmCommander(sample_attempts=5, sample_time_out=5,goal_tolerance=0.01)
 
 rp = rospkg.RosPack()
@@ -125,7 +125,7 @@ def calculate_js_reachability():
         print("Testing joint target %s/%s " %(counter,total))
         print(joints)
         start_t = time.time()
-        success = arm_commander.go_joint(joints)
+        success, _ = arm_commander.go_joint(joints)
         planning_t = time.time() - start_t
         counter+=1
         time_passed += (planning_t/3600)
@@ -160,6 +160,14 @@ def calculate_js_reachability():
         print("Time to Autosave: %s hours\n" %(last_autosave + AUTO_SAVE_INTERVAL - time_passed))
     
     save_marker_data()
+
+# def combine_pickles():
+#     with open(PACKAGE_PATH+"/data/15k_ikpoints_data.pickle","rb") as input_file:
+#         data_15k = pickle.load(input_file)
+#     with open(PACKAGE_PATH+"/data/5k_ikpoints_data.pickle","rb") as input_file:
+#         data_5k = pickle.load(input_file)
+#     with open(PACKAGE_PATH+"/data/20k_ikpoints_data.pickle", "wb") as output_file:
+#         pickle.dump(data_15k + data_5k, output_file)
 
 if __name__ == '__main__':
     calculate_js_reachability()
