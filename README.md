@@ -2,6 +2,8 @@
 
 **Maintained by:** Software-Mainpulation sub team
 
+- Yousif El-Wishahy (yel.wishahy@gmail.com)
+
 ## Table of Contents (READMEs):
 
 - [Hardware Interface](./ob1_arm_hw_interface/README/README.md)
