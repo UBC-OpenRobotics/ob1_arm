@@ -1,6 +1,9 @@
 # Arm Repository
 
-**Maintained by:** Software-Mainpulation sub team
+**Maintained by:** Manipulation Software Team 
+
+- Yousif El-Wishahy (yel.wishahy@gmail.com)
+- Andrew Xie 
 
 ## Table of Contents (READMEs):
 
