@@ -1,7 +1,7 @@
 moveit_setup_assistant_config:
   URDF:
     package: ob1_arm_description
-    relative_path: urdf/arm_no_gripper_collision.xacro.urdf
+    relative_path: urdf/main.xacro
     xacro_args: ""
   SRDF:
     relative_path: config/robot.srdf
