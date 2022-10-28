@@ -1,14 +1,1 @@
-{
-    "configuration": "default",
-    "documentId": "a29b6dbb98e670ba5eb44235",
-    "documentMicroversion": "fb13151013e306b88a80230f",
-    "documentVersion": "84f840db6c6fc2fc68d9d1c3",
-    "elementId": "719950777f27aec41221c6b4",
-    "fullConfiguration": "default",
-    "id": "MIAslhY8uuXaPNILp",
-    "isStandardContent": false,
-    "name": "Part 1 <4>",
-    "partId": "JHD",
-    "suppressed": false,
-    "type": "Part"
-}
+{"name": "Part 1 <1>", "suppressed": false, "id": "MID5fPOqZA+Fy34Oa", "type": "Part", "partId": "JHD", "isStandardContent": false, "fullConfiguration": "default", "configuration": "default", "documentId": "6bab68acc8bb6ce928721a11", "elementId": "65bcfa7906b03958f28e0c9f", "documentMicroversion": "7d2a736b60d96a9c585e4180"}
