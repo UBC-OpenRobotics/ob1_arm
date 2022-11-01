@@ -110,6 +110,9 @@ roslaunch moveit_config enviorment.launch use_gazebo:=true
 
 The ```use_gazebo``` parameter tells it to launch Gazebo when true or Rviz when false for simulator.  -->
 
+# IKFAST: Generating a Custom Inverse Kinematics Solver
+
+[Read me.](./README_ikfast.md)
 
 # Fixed Errors Notes:
 **Past errors encountered and fixed, noted for future encounters with the same error** 

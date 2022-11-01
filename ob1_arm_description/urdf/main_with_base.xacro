@@ -18,9 +18,9 @@
     <xacro:gripper prefix="${prefix}"/>
 
     <joint name="${prefix}_forearm_gripper_joint" type="revolute">
-        <origin xyz="-2.498e-16 -0.155 0.08285" rpy="-1.5708 -0.0972121 -2.17303e-14" />
+        <origin xyz="-2.46331e-16 -0.155 0.08285" rpy="-1.5708 0.278795 3.7292e-15" />
         <parent link="${prefix}_forearm_link" />
-        <child link="${prefix}_gripper_assembly_link" />
+        <child link="${prefix}_gripper_base_link" />
         <axis xyz="0 0 1"/>
         <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
         <joint_properties friction="0.0"/>
