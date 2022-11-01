@@ -198,8 +198,8 @@ def test_go_rand_scene_object_2(iterations):
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE
 
 @pytest.mark.parametrize("attempts", [10])
-@pytest.mark.parametrize("iterations", [1,10])
-@pytest.mark.parametrize("sphere_radius", [0.05])
+@pytest.mark.parametrize("iterations", [1,10,25])
+@pytest.mark.parametrize("sphere_radius", [0.03])
 def test_go_reachable_scene_object_smart(attempts,iterations,sphere_radius):
     test_log.info("Starting go_reachable_scene_object_smart test")
 

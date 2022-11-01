@@ -5,8 +5,8 @@
   <description>
      An automatically generated package with all the configuration and launch files for using the robot with the MoveIt Motion Planning Framework
   </description>
-  <author email="andrewxieax1@gmail.com">Andrew Xie</author>
-  <maintainer email="andrewxieax1@gmail.com">Andrew Xie</maintainer>
+  <author email="yel.wishahy@gmail.com">Yousif El-Wishahy</author>
+  <maintainer email="yel.wishahy@gmail.com">Yousif El-Wishahy</maintainer>
 
   <license>BSD</license>
 

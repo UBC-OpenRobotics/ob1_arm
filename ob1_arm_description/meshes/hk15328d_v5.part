@@ -1,14 +1,1 @@
-{
-    "configuration": "default",
-    "documentId": "a29b6dbb98e670ba5eb44235",
-    "documentMicroversion": "fb13151013e306b88a80230f",
-    "documentVersion": "84f840db6c6fc2fc68d9d1c3",
-    "elementId": "cbef8d9aeba221814eed7364",
-    "fullConfiguration": "default",
-    "id": "Mk4QAH14bhPfKMAli",
-    "isStandardContent": false,
-    "name": "HK15328D v5 <1>",
-    "partId": "JFD",
-    "suppressed": false,
-    "type": "Part"
-}
+{"name": "HK15328D v5 <2>", "suppressed": false, "id": "MIwbGd+VugkQ6AixK", "type": "Part", "partId": "JFH", "isStandardContent": false, "fullConfiguration": "default", "configuration": "default", "documentId": "6bab68acc8bb6ce928721a11", "elementId": "53593af4ab919767a15d2860", "documentMicroversion": "7d2a736b60d96a9c585e4180"}
