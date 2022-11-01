@@ -6,6 +6,6 @@ moveit_setup_assistant_config:
   SRDF:
     relative_path: config/robot.srdf
   CONFIG:
-    author_name: Andrew Xie
-    author_email: andrewxieax1@gmail.com
-    generated_timestamp: 1664697308
+    author_name: Yousif El-Wishahy
+    author_email: yel.wishahy@gmail.com
+    generated_timestamp: 1667267689

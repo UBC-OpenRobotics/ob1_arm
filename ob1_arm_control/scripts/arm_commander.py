@@ -35,6 +35,7 @@ class ArmCommander(object):
     _goal_tolerance    = 0.001
     _joint_tolerances = []
     _num_joints = 0
+    _gripper_offset = [0,-0.155,0.08285]
 
     #group and link anmes
     ARM_GROUP_NAME = "arm"
@@ -168,7 +169,7 @@ class ArmCommander(object):
 
         @returns (execution result, object pose, successful_joint_target [j0,j1,j2,...] | None)
         """
-    
+
         pt_obj = np.array(convert_to_list(object.pose.position))
         shape:SolidPrimitive = object.primitives[0]
 
@@ -176,14 +177,44 @@ class ArmCommander(object):
 
             joint_targets = self.ikpoints.get_nearest_joint_targets(pt_obj,num_pts=attempts)
             successful_joint_target = None
+            successful_pose_target = None
+            plan = [False]
 
-            for joints in joint_targets:
-                self.arm_mvgroup.set_joint_value_target(joints)
+            gripper_offset = np.linalg.norm(np.array(self._gripper_offset))
+            dist_poses = self.ikpoints.get_dist_pose_targets(pt_obj,gripper_offset)
+            dist_joint_targets = self.ikpoints.get_dist_joint_targets(pt_obj,0.05)
+            # if len(dist_poses) > 0:
+            #     for pose in dist_poses:
+            #         self.arm_mvgroup.clear_pose_targets()
+            #         plan = self.arm_mvgroup.set_pose_target(pose)
+            #         plan = self.arm_mvgroup.plan()
+            #         if plan[0]:
+            #             successful_pose_target = pose
+            #             break
+            if not plan[0]:
+                for joints in dist_joint_targets:
+                    self.arm_mvgroup.set_joint_value_target(joints)
+                    plan = self.arm_mvgroup.plan()
+                    if plan[0]:
+                        successful_joint_target = joints
+                        break
+
+            #first try pose planning
+            if not plan[0]:
+                self.arm_mvgroup.clear_pose_targets()
+                self.arm_mvgroup.set_pose_target(object.pose)
                 plan = self.arm_mvgroup.plan()
-                if plan[0]:
-                    successful_joint_target = joints
-                    break
-            
+
+            #query nearest ikpoints
+            if not plan[0]:
+                for joints in joint_targets:
+                    self.arm_mvgroup.set_joint_value_target(joints)
+                    plan = self.arm_mvgroup.plan()
+                    if plan[0]:
+                        successful_joint_target = joints
+                        break
+                
+            #move away from pt_obj and find nearest ikpoint there
             if not plan[0]:
                 for i in range(attempts):
                     p2 = pt_obj * (1 - d*i)
@@ -198,7 +229,7 @@ class ArmCommander(object):
                 res = self.arm_mvgroup.go()
                 self.arm_mvgroup.stop()
                 self._current_plan = plan
-                return res, object.pose, successful_joint_target 
+                return res, object.pose, successful_joint_target
 
         print("Could not complete motion planning for scene object")
         return False, object.pose, None

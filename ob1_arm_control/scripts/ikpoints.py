@@ -4,7 +4,8 @@ import time
 from typing import Literal
 import numpy as np
 import pickle
-from scipy.spatial import KDTree
+from scipy.spatial import KDTree, distance
+
 
 #Author: Yousif El-Wishahy
 #caclualtion functions for a database of inverse kinematics points
@@ -20,6 +21,9 @@ class IKPoints():
     """
     #list of ikpoints
     ikpoints:list = []
+
+    #list poses
+    pose_targets:list = list()
 
     #np array of 3d points
     points:np.ndarray = np.array([])
@@ -46,6 +50,7 @@ class IKPoints():
         joint_targets = []
         for ikpoint in self.ikpoints:
             joint_targets.append(ikpoint["joint_target"])
+            self.pose_targets.append(ikpoint["pose_stamped"].pose)
             p  = ikpoint["pose_stamped"].pose.position
             point = np.array([p.x,p.y,p.z])
             points.append(point)
@@ -58,6 +63,25 @@ class IKPoints():
         else:
             print("POINTS AND JOINT TARGET ARRAYS NOT THE SAME LENGTH.")
 
+    def get_nearest_points(self,pt1,num_pts=1):
+        """Queries kdtree and returns index of nearest point or sorted list (ascending) of indices of nearest points"""
+        if type(pt1) is not np.ndarray and  pt1.size != 3:
+            raise ValueError("parameter is not a valid point; needs np.array([floatx,floaty,floatz])")
+        return self.kdtree.query(pt1, k=num_pts)
+
+    def get_points_dist(self,pt1,dist,tolerance=0.01):
+        """Return a list of indices of points a certain distance away from pt1 with a specified tolerance"""
+        if type(pt1) is not np.ndarray and  pt1.size != 3:
+            raise ValueError("parameter is not a valid point; needs np.array([floatx,floaty,floatz])")
+        indices = self.kdtree.query_ball_point(pt1,dist)
+        out_indices = list()
+        for i in indices:
+            pt = self.points[i]
+            d = np.linalg.norm(pt-pt1)
+            if np.abs(dist-d) <= tolerance:
+                out_indices.append(i)
+        return out_indices
+
     def get_nearest_joint_targets(self,pt1,num_pts=1):
         """
         @brief
@@ -69,17 +93,7 @@ class IKPoints():
 
         @return joint_target [j1,j2,j3,...] or list of joint targets 
         """
-
-        if type(pt1) is not np.ndarray and  pt1.size != 3:
-            print("parameter is not a valid point; needs np.array([floatx,floaty,floatz])")
-            return None
-
-        #tree search for closest point
-        start = time.time()
-        dist, index = self.kdtree.query(pt1, k=num_pts)
-        print("search duration: %s seconds" %(time.time()-start))
-
-
+        dist, index = self.get_nearest_points(pt1,num_pts)
         if type(dist) is np.ndarray:
             print("found %d closest points with avg distance %f cm" %(index.size, np.average(dist)*100))
             joints = []
@@ -89,30 +103,45 @@ class IKPoints():
         else:
             print("found point with promimity %s" % dist)
             return self.joint_targets[index].tolist()
-
-    def get_nearest_neighbour_pt(self,pt1):
+    
+    def get_nearest_pose_targets(self,pt1,num_pts=1):
         """
-        get closest point not equal to this point
-
+        @brief
+        Given a point, returns a pose target to reach an area closest to that point
+        
         @param pt1: numpy array for 3d point, eg. np.array([x,y,z])
 
-        @return 3d point ndarray : np.array([x,y,z])
+        @param(optional, default=1) num_pts: number of nearest points to find joint targets for
+
+        @return joint_target [j1,j2,j3,...] or list of joint targets 
         """
-        min_magnitude = -1
-        index = -1
-        for i in range(self._size):
-            pt2 = self.points[i]
-            dist = np.linalg.norm(pt1-pt2)
-            if (dist < min_magnitude or min_magnitude < 0) and not np.array_equal(pt1,pt2):
-                index = i
-                min_magnitude = dist
-        
-        if index >= 0 and index < self._size:
-            print("found point with promimity %s" % min_magnitude)
-            return self.points[index]
+        dist, index = self.get_nearest_points(pt1,num_pts)
+        if type(dist) is np.ndarray:
+            print("found %d closest points with avg distance %f cm" %(index.size, np.average(dist)*100))
+            poses = []
+            for i in index:
+                poses.append(self.pose_targets[i])
+            return poses
         else:
-            return None
-    
+            print("found point with promimity %s" % dist)
+            return self.pose_targets[i]
+
+    def get_dist_pose_targets(self, pt1, dist):
+        poses = []
+        indices = self.get_points_dist(pt1,dist)
+        if len(indices) > 0:
+            for i in indices:
+                poses.append(self.pose_targets[i])
+        return poses
+
+    def get_dist_joint_targets(self, pt1, dist):
+        joints = []
+        indices = self.get_points_dist(pt1,dist)
+        if len(indices) > 0:
+            for i in indices:
+                joints.append(self.joint_targets[i].tolist())
+        return joints
+
     def get_rand_point(self):
         index = random.randint(0, self._size)
         return self.points[index].tolist()

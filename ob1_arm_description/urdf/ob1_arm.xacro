@@ -76,14 +76,14 @@
         </collision>
         <inertial>
         <origin xyz="0 0 0" rpy="0 0 0"/>
-        <mass value="0" />link name
+        <mass value="0" />
         <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
         </inertial>
         </link>
 
         <link name="${prefix}_shoulder_link">
         <visual>
-        <origin xyz="-2.6024e-17 0.15 0.067" rpy="-3.14159 1.29296e-31 1.06311e-31" />
+        <origin xyz="-2.59124e-17 0.15 0.067" rpy="3.14159 -2.02376e-31 3.10097e-18" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/shoulder_linkage_-_motor.stl"/>
         </geometry>
@@ -92,7 +92,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="-2.6024e-17 0.15 0.067" rpy="-3.14159 1.29296e-31 1.06311e-31" />
+        <origin xyz="-2.59124e-17 0.15 0.067" rpy="3.14159 -2.02376e-31 3.10097e-18" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/shoulder_linkage_-_motor.stl"/>
         </geometry>
@@ -101,7 +101,7 @@
         </material>
         </collision>
         <visual>
-        <origin xyz="8.73083e-16 5.96745e-16 0.067" rpy="-3.14159 5.82402e-30 3.40006e-16" />
+        <origin xyz="8.79071e-16 6.245e-16 0.067" rpy="-3.14159 6.26309e-30 3.30936e-16" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/bicep_y_motor.stl"/>
         </geometry>
@@ -110,7 +110,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="8.73083e-16 5.96745e-16 0.067" rpy="-3.14159 5.82402e-30 3.40006e-16" />
+        <origin xyz="8.79071e-16 6.245e-16 0.067" rpy="-3.14159 6.26309e-30 3.30936e-16" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/bicep_y_motor.stl"/>
         </geometry>
@@ -119,7 +119,7 @@
         </material>
         </collision>
         <visual>
-        <origin xyz="1.05176e-15 1.01308e-15 0.067" rpy="-3.14159 1.33273e-30 5.55112e-17" />
+        <origin xyz="1.03715e-15 1.04083e-15 0.067" rpy="-3.14159 1.39936e-30 -2.98503e-17" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/motor_front_support_-_bicep.stl"/>
         </geometry>
@@ -128,7 +128,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="1.05176e-15 1.01308e-15 0.067" rpy="-3.14159 1.33273e-30 5.55112e-17" />
+        <origin xyz="1.03715e-15 1.04083e-15 0.067" rpy="-3.14159 1.39936e-30 -2.98503e-17" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/motor_front_support_-_bicep.stl"/>
         </geometry>
@@ -137,7 +137,7 @@
         </material>
         </collision>
         <visual>
-        <origin xyz="1.05696e-15 1.0339e-15 0.067" rpy="-3.14159 8.66334e-31 -6.93889e-18" />
+        <origin xyz="1.05677e-15 1.06859e-15 0.067" rpy="-3.14159 1.84829e-30 -7.32146e-17" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/bicep_plate_-_real.stl"/>
         </geometry>
@@ -146,7 +146,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="1.05696e-15 1.0339e-15 0.067" rpy="-3.14159 8.66334e-31 -6.93889e-18" />
+        <origin xyz="1.05677e-15 1.06859e-15 0.067" rpy="-3.14159 1.84829e-30 -7.32146e-17" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/bicep_plate_-_real.stl"/>
         </geometry>
@@ -155,7 +155,7 @@
         </material>
         </collision>
         <visual>
-        <origin xyz="9.47676e-16 9.02056e-16 0.067" rpy="-3.14159 2.04671e-30 2.56739e-16" />
+        <origin xyz="9.52797e-16 9.57567e-16 0.067" rpy="-3.14159 1.97023e-30 1.36668e-16" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/shoulder_linkage_-_encoder.stl"/>
         </geometry>
@@ -164,7 +164,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="9.47676e-16 9.02056e-16 0.067" rpy="-3.14159 2.04671e-30 2.56739e-16" />
+        <origin xyz="9.52797e-16 9.57567e-16 0.067" rpy="-3.14159 1.97023e-30 1.36668e-16" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/shoulder_linkage_-_encoder.stl"/>
         </geometry>
@@ -173,7 +173,7 @@
         </material>
         </collision>
         <visual>
-        <origin xyz="1.11291e-15 1.02002e-15 0.067" rpy="-3.14159 -7.11387e-31 -6.93889e-18" />
+        <origin xyz="1.11651e-15 1.05471e-15 0.067" rpy="-3.14159 2.70566e-31 -7.32146e-17" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/motor_mid_support_-_bicep.stl"/>
         </geometry>
@@ -182,7 +182,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="1.11291e-15 1.02002e-15 0.067" rpy="-3.14159 -7.11387e-31 -6.93889e-18" />
+        <origin xyz="1.11651e-15 1.05471e-15 0.067" rpy="-3.14159 2.70566e-31 -7.32146e-17" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/motor_mid_support_-_bicep.stl"/>
         </geometry>
@@ -199,7 +199,7 @@
 
         <link name="${prefix}_arm_link">
         <visual>
-        <origin xyz="0.00366704 -1.16573e-15 0.0666521" rpy="-3.14159 0.18918 1.10363e-15" />
+        <origin xyz="0.00366704 -1.27676e-15 0.0666521" rpy="-3.14159 0.18918 1.80411e-15" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/forearm_z_motor_shaft_collar_-_9604t12_flange-mount_shaft_collar.stl"/>
         </geometry>
@@ -208,7 +208,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="0.00366704 -1.16573e-15 0.0666521" rpy="-3.14159 0.18918 1.10363e-15" />
+        <origin xyz="0.00366704 -1.27676e-15 0.0666521" rpy="-3.14159 0.18918 1.80411e-15" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/forearm_z_motor_shaft_collar_-_9604t12_flange-mount_shaft_collar.stl"/>
         </geometry>
@@ -217,7 +217,7 @@
         </material>
         </collision>
         <visual>
-        <origin xyz="-2.10075e-15 -2.77556e-17 0.067" rpy="-3.14159 -8.45674e-31 7.48062e-29" />
+        <origin xyz="-2.13371e-15 -1.38778e-16 0.067" rpy="-3.14159 2.13756e-29 -1.6944e-16" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/bicep_z_motor.stl"/>
         </geometry>
@@ -226,7 +226,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="-2.10075e-15 -2.77556e-17 0.067" rpy="-3.14159 -8.45674e-31 7.48062e-29" />
+        <origin xyz="-2.13371e-15 -1.38778e-16 0.067" rpy="-3.14159 2.13756e-29 -1.6944e-16" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/bicep_z_motor.stl"/>
         </geometry>
@@ -235,7 +235,7 @@
         </material>
         </collision>
         <visual>
-        <origin xyz="-2.10942e-15 8.60423e-16 0.067" rpy="-3.14159 -8.45674e-31 7.52006e-29" />
+        <origin xyz="-2.12851e-15 8.04912e-16 0.067" rpy="-3.14159 2.13756e-29 -1.6944e-16" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/bicep_linkage_-_encoder.stl"/>
         </geometry>
@@ -244,7 +244,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="-2.10942e-15 8.60423e-16 0.067" rpy="-3.14159 -8.45674e-31 7.52006e-29" />
+        <origin xyz="-2.12851e-15 8.04912e-16 0.067" rpy="-3.14159 2.13756e-29 -1.6944e-16" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/bicep_linkage_-_encoder.stl"/>
         </geometry>
@@ -253,7 +253,7 @@
         </material>
         </collision>
         <visual>
-        <origin xyz="1.97215e-31 0 0.067" rpy="3.14159 7.32047e-31 -1.35585e-31" />
+        <origin xyz="1.73472e-18 -2.77556e-17 0.067" rpy="-3.14159 -8.22245e-32 -2.84672e-18" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/bicep_linkage_-_motor.stl"/>
         </geometry>
@@ -262,7 +262,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="1.97215e-31 0 0.067" rpy="3.14159 7.32047e-31 -1.35585e-31" />
+        <origin xyz="1.73472e-18 -2.77556e-17 0.067" rpy="-3.14159 -8.22245e-32 -2.84672e-18" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/bicep_linkage_-_motor.stl"/>
         </geometry>
@@ -271,7 +271,7 @@
         </material>
         </collision>
         <visual>
-        <origin xyz="-2.04524e-15 2.08167e-15 0.067" rpy="-3.14159 7.32047e-31 7.48062e-29" />
+        <origin xyz="-2.0834e-15 2.02616e-15 0.067" rpy="-3.14159 3.58504e-30 -7.91075e-17" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/forearm_plate.stl"/>
         </geometry>
@@ -280,7 +280,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="-2.04524e-15 2.08167e-15 0.067" rpy="-3.14159 7.32047e-31 7.48062e-29" />
+        <origin xyz="-2.0834e-15 2.02616e-15 0.067" rpy="-3.14159 3.58504e-30 -7.91075e-17" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/forearm_plate.stl"/>
         </geometry>
@@ -297,7 +297,7 @@
 
         <link name="${prefix}_elbow_link">
         <visual>
-        <origin xyz="-6.10257e-17 0.0195 0.18" rpy="1.5708 -3.50057e-30 6.24005e-16" />
+        <origin xyz="-1.14492e-16 0.0195 0.18" rpy="1.5708 2.04915e-16 7.13982e-16" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/forearm_motor_support.stl"/>
         </geometry>
@@ -306,7 +306,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="-6.10257e-17 0.0195 0.18" rpy="1.5708 -3.50057e-30 6.24005e-16" />
+        <origin xyz="-1.14492e-16 0.0195 0.18" rpy="1.5708 2.04915e-16 7.13982e-16" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/forearm_motor_support.stl"/>
         </geometry>
@@ -315,7 +315,7 @@
         </material>
         </collision>
         <visual>
-        <origin xyz="-1.24534e-17 0.0195 0.18" rpy="1.5708 -1.47911e-31 1.94071e-32" />
+        <origin xyz="-1.56125e-17 0.0195 0.18" rpy="1.5708 4.02585e-18 2.26158e-19" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/forearm_intermediate_plate.stl"/>
         </geometry>
@@ -324,7 +324,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="-1.24534e-17 0.0195 0.18" rpy="1.5708 -1.47911e-31 1.94071e-32" />
+        <origin xyz="-1.56125e-17 0.0195 0.18" rpy="1.5708 4.02585e-18 2.26158e-19" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/forearm_intermediate_plate.stl"/>
         </geometry>
@@ -333,7 +333,7 @@
         </material>
         </collision>
         <visual>
-        <origin xyz="7.60004e-16 0.05285 -0.03115" rpy="1.5708 8.32667e-16 1.94491e-15" />
+        <origin xyz="7.32053e-16 0.05285 -0.03115" rpy="1.5708 1.05794e-15 1.82583e-15" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/part_1.stl"/>
         </geometry>
@@ -342,7 +342,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="7.60004e-16 0.05285 -0.03115" rpy="1.5708 8.32667e-16 1.94491e-15" />
+        <origin xyz="7.32053e-16 0.05285 -0.03115" rpy="1.5708 1.05794e-15 1.82583e-15" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/part_1.stl"/>
         </geometry>
@@ -359,7 +359,7 @@
 
         <link name="${prefix}_forearm_link">
         <visual>
-        <origin xyz="-1.4988e-15 0.21115 0.06335" rpy="6.48455e-30 -1.50196e-29 2.14577e-17" />
+        <origin xyz="-1.43635e-15 0.21115 0.06335" rpy="1.44226e-20 3.73615e-17 2.30593e-17" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/end_effector_plate.stl"/>
         </geometry>
@@ -368,7 +368,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="-1.4988e-15 0.21115 0.06335" rpy="6.48455e-30 -1.50196e-29 2.14577e-17" />
+        <origin xyz="-1.43635e-15 0.21115 0.06335" rpy="1.44226e-20 3.73615e-17 2.30593e-17" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/end_effector_plate.stl"/>
         </geometry>
@@ -377,7 +377,7 @@
         </material>
         </collision>
         <visual>
-        <origin xyz="1.56819e-15 0.21115 0.06335" rpy="4.6717e-30 -7.41629e-30 2.61753e-17" />
+        <origin xyz="1.5786e-15 0.21115 0.06335" rpy="-1.61808e-19 9.63599e-17 2.17225e-16" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/forearm_linkage_-_encoder.stl"/>
         </geometry>
@@ -386,7 +386,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="1.56819e-15 0.21115 0.06335" rpy="4.6717e-30 -7.41629e-30 2.61753e-17" />
+        <origin xyz="1.5786e-15 0.21115 0.06335" rpy="-1.61808e-19 9.63599e-17 2.17225e-16" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/forearm_linkage_-_encoder.stl"/>
         </geometry>
@@ -395,7 +395,7 @@
         </material>
         </collision>
         <visual>
-        <origin xyz="0 0.21115 0.06335" rpy="4.53788e-30 7.57625e-31 2.14577e-17" />
+        <origin xyz="-1.04083e-17 0.21115 0.06335" rpy="2.64017e-20 6.23759e-20 2.25943e-18" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/forearm_linkage_-_motor.stl"/>
         </geometry>
@@ -404,7 +404,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="0 0.21115 0.06335" rpy="4.53788e-30 7.57625e-31 2.14577e-17" />
+        <origin xyz="-1.04083e-17 0.21115 0.06335" rpy="2.64017e-20 6.23759e-20 2.25943e-18" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/forearm_linkage_-_motor.stl"/>
         </geometry>
@@ -413,7 +413,7 @@
         </material>
         </collision>
         <visual>
-        <origin xyz="4.38538e-15 0.21115 0.06335" rpy="5.07568e-30 -3.09221e-32 1.54084e-18" />
+        <origin xyz="4.17721e-15 0.21115 0.06335" rpy="-2.34386e-19 3.24406e-16 6.50284e-17" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/wrist_z_motor.stl"/>
         </geometry>
@@ -422,7 +422,7 @@
         </material>
         </visual>
         <collision>
-        <origin xyz="4.38538e-15 0.21115 0.06335" rpy="5.07568e-30 -3.09221e-32 1.54084e-18" />
+        <origin xyz="4.17721e-15 0.21115 0.06335" rpy="-2.34386e-19 3.24406e-16 6.50284e-17" />
         <geometry>
         <mesh filename="package://ob1_arm_description/meshes/wrist_z_motor.stl"/>
         </geometry>
@@ -438,7 +438,7 @@
         </link>
 
         <joint name="${prefix}_elbow_forearm_joint" type="revolute">
-        <origin xyz="7.84649e-16 0.08285 -0.03115" rpy="1.5708 0.220816 1.70392e-15" />
+        <origin xyz="7.71952e-16 0.08285 -0.03115" rpy="1.5708 0.0729385 1.34977e-15" />
         <parent link="${prefix}_elbow_link" />
         <child link="${prefix}_forearm_link" />
         <axis xyz="0 0 1"/>
@@ -448,7 +448,7 @@
         </joint>
 
         <joint name="${prefix}_arm_elbow_joint" type="revolute">
-        <origin xyz="-1.32468e-15 0.18 0.0475" rpy="1.5708 9.77638e-15 -5.07927e-15" />
+        <origin xyz="-1.33227e-15 0.18 0.0475" rpy="1.5708 0.00373826 -5.38613e-15" />
         <parent link="${prefix}_arm_link" />
         <child link="${prefix}_elbow_link" />
         <axis xyz="0 0 1"/>
@@ -457,8 +457,8 @@
         <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/>
         </joint>
 
-        <joint name="${prefix}_shoulder_arm" type="revolute">
-        <origin xyz="2.98296e-16 0.15 -8.32667e-16" rpy="2.02357e-15 -1.3664e-14 -5.20417e-16" />
+        <joint name="${prefix}_shoulder_arm_joint" type="revolute">
+        <origin xyz="2.90241e-16 0.15 -7.97973e-16" rpy="8.20328e-16 -1.37552e-14 -0.046259" />
         <parent link="${prefix}_shoulder_link" />
         <child link="${prefix}_arm_link" />
         <axis xyz="0 0 1"/>
@@ -467,8 +467,8 @@
         <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/>
         </joint>
 
-        <joint name="${prefix}_base_shoulder" type="revolute">
-        <origin xyz="8.04497e-17 0.0475 0.06" rpy="1.5708 -3.9066e-15 5.32612e-15" />
+        <joint name="${prefix}_base_shoulder_joint" type="revolute">
+        <origin xyz="8.1532e-17 0.0475 0.06" rpy="1.5708 -0.0134839 4.87562e-15" />
         <parent link="${prefix}_base_link" />
         <child link="${prefix}_shoulder_link" />
         <axis xyz="0 0 1"/>
@@ -476,7 +476,5 @@
         <joint_properties friction="0.0"/>
         <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/>
         </joint>
-
-
     </xacro:macro>
 </robot>
