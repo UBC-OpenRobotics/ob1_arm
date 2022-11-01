@@ -13,7 +13,7 @@ joint_limits:
     max_velocity: 20
     has_acceleration_limits: false
     max_acceleration: 0
-  ob1_arm_base_shoulder:
+  ob1_arm_base_shoulder_joint:
     has_velocity_limits: true
     max_velocity: 20
     has_acceleration_limits: false
@@ -28,7 +28,17 @@ joint_limits:
     max_velocity: 20
     has_acceleration_limits: false
     max_acceleration: 0
-  ob1_arm_shoulder_arm:
+  ob1_arm_gripper_lclaw_joint:
+    has_velocity_limits: true
+    max_velocity: 20
+    has_acceleration_limits: false
+    max_acceleration: 0
+  ob1_arm_gripper_rclaw_joint:
+    has_velocity_limits: true
+    max_velocity: 20
+    has_acceleration_limits: false
+    max_acceleration: 0
+  ob1_arm_shoulder_arm_joint:
     has_velocity_limits: true
     max_velocity: 20
     has_acceleration_limits: false
