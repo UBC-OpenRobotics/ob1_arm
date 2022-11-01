@@ -16,6 +16,14 @@ The vast majority of the URDF is defined in **ob1_arm_description/urdf/arm_no_ba
 
 The xacro file with path **arm_urdf/urdf/arm_no_base.xacro** is used to generate the urdf.
 
+# Converting Onshape CADs to URDF
+
+Onshape-to-robot is a python package used to convert onshape cads to urdf using onshape apis. This was used to generate the urdf for our custom robotic arm. Modifcations were made after.
+
+Useful links:
+* [Documentation](https://onshape-to-robot.readthedocs.io/en/latest/#:~:text=onshape%2Dto%2Drobot%20is%20a,frames%2C%20computing%20dynamics%20etc)
+* https://youtu.be/C8oK4uUmbRw
+
 # Usage:
 
 ## Example: define a new arm with prefix arm1 and attach it to world origin
