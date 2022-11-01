@@ -199,7 +199,7 @@ def test_go_rand_scene_object_2(iterations):
 
 @pytest.mark.parametrize("attempts", [10])
 @pytest.mark.parametrize("iterations", [1,10,25])
-@pytest.mark.parametrize("sphere_radius", [0.05])
+@pytest.mark.parametrize("sphere_radius", [0.03])
 def test_go_reachable_scene_object_smart(attempts,iterations,sphere_radius):
     log.info("Starting go_reachable_scene_object_smart test")
 

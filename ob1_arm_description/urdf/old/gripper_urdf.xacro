@@ -1,0 +1,301 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:macro name="gripper" params="prefix">
+        <link name="${prefix}_gripper_assembly_link">
+        <visual>
+        <origin xyz="-0.04015 0.0144875 -0.0347028" rpy="-1.22058e-12 -1.55917 -1.5708" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/hk15328d_v5.stl"/>
+        </geometry>
+        <material name="hk15328d_v5_material">
+        <color rgba="0.392157 0.403922 0.384314 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="-0.04015 0.0144875 -0.0347028" rpy="-1.22058e-12 -1.55917 -1.5708" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/hk15328d_v5.stl"/>
+        </geometry>
+        <material name="hk15328d_v5_material">
+        <color rgba="0.392157 0.403922 0.384314 1.0"/>
+        </material>
+        </collision>
+        <visual>
+        <origin xyz="3.05311e-16 0 8.88178e-16" rpy="3.14159 -2.96989e-17 -3.45476e-29" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_2.stl"/>
+        </geometry>
+        <material name="part_2_material">
+        <color rgba="0.917647 0.917647 0.917647 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="3.05311e-16 0 8.88178e-16" rpy="3.14159 -2.96989e-17 -3.45476e-29" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_2.stl"/>
+        </geometry>
+        <material name="part_2_material">
+        <color rgba="0.917647 0.917647 0.917647 1.0"/>
+        </material>
+        </collision>
+        <visual>
+        <origin xyz="0 0 0" rpy="-3.14159 -3.48945e-17 -1.70568e-30" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_1.stl"/>
+        </geometry>
+        <material name="part_1_material">
+        <color rgba="0.615686 0.811765 0.929412 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="0 0 0" rpy="-3.14159 -3.48945e-17 -1.70568e-30" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_1.stl"/>
+        </geometry>
+        <material name="part_1_material">
+        <color rgba="0.615686 0.811765 0.929412 1.0"/>
+        </material>
+        </collision>
+        <visual>
+        <origin xyz="-0.0182314 -0.029 -0.0656435" rpy="3.14159 -0.039707 1.65779e-14" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_1.stl"/>
+        </geometry>
+        <material name="part_1_material">
+        <color rgba="0.615686 0.811765 0.929412 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="-0.0182314 -0.029 -0.0656435" rpy="3.14159 -0.039707 1.65779e-14" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_1.stl"/>
+        </geometry>
+        <material name="part_1_material">
+        <color rgba="0.615686 0.811765 0.929412 1.0"/>
+        </material>
+        </collision>
+        <visual>
+        <origin xyz="0.0209978 -0.029 -0.0626659" rpy="3.14159 0.073635 1.24194e-14" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_1_mirror.stl"/>
+        </geometry>
+        <material name="part_1_mirror_material">
+        <color rgba="0.615686 0.811765 0.929412 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="0.0209978 -0.029 -0.0626659" rpy="3.14159 0.073635 1.24194e-14" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_1_mirror.stl"/>
+        </geometry>
+        <material name="part_1_mirror_material">
+        <color rgba="0.615686 0.811765 0.929412 1.0"/>
+        </material>
+        </collision>
+        <visual>
+        <origin xyz="0.0506217 -0.004 -0.0839523" rpy="3.14159 -7.66258e-17 -1.59772e-29" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_3_mirror.stl"/>
+        </geometry>
+        <material name="part_3_mirror_material">
+        <color rgba="0.231373 0.380392 0.705882 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="0.0506217 -0.004 -0.0839523" rpy="3.14159 -7.66258e-17 -1.59772e-29" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_3_mirror.stl"/>
+        </geometry>
+        <material name="part_3_mirror_material">
+        <color rgba="0.231373 0.380392 0.705882 1.0"/>
+        </material>
+        </collision>
+        <visual>
+        <origin xyz="0.0391983 -0.005 -0.0996329" rpy="-1.05872e-14 1.32595 4.17249e-14" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_2_mirror.stl"/>
+        </geometry>
+        <material name="part_2_mirror_material">
+        <color rgba="0.647059 0.647059 0.647059 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="0.0391983 -0.005 -0.0996329" rpy="-1.05872e-14 1.32595 4.17249e-14" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_2_mirror.stl"/>
+        </geometry>
+        <material name="part_2_mirror_material">
+        <color rgba="0.647059 0.647059 0.647059 1.0"/>
+        </material>
+        </collision>
+        <visual>
+        <origin xyz="0.04015 0.0144875 -0.0347028" rpy="-1.44379 -1.47887 -0.126477" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/hk15328d_v5.stl"/>
+        </geometry>
+        <material name="hk15328d_v5_material">
+        <color rgba="0.952941 0.796078 0.486275 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="0.04015 0.0144875 -0.0347028" rpy="-1.44379 -1.47887 -0.126477" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/hk15328d_v5.stl"/>
+        </geometry>
+        <material name="hk15328d_v5_material">
+        <color rgba="0.952941 0.796078 0.486275 1.0"/>
+        </material>
+        </collision>
+        <visual>
+        <origin xyz="-0.04015 0.0239869 -0.0345924" rpy="0.0260269 -1.10763 -0.0232858" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/spur_gear_(16_teeth).stl"/>
+        </geometry>
+        <material name="spur_gear_(16_teeth)_material">
+        <color rgba="0.615686 0.811765 0.929412 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="-0.04015 0.0239869 -0.0345924" rpy="0.0260269 -1.10763 -0.0232858" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/spur_gear_(16_teeth).stl"/>
+        </geometry>
+        <material name="spur_gear_(16_teeth)_material">
+        <color rgba="0.615686 0.811765 0.929412 1.0"/>
+        </material>
+        </collision>
+        <visual>
+        <origin xyz="-0.04 0.019 -0.0535151" rpy="3.14159 -0.174533 1.05951e-29" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/spur_gear_(36_teeth).stl"/>
+        </geometry>
+        <material name="spur_gear_(36_teeth)_material">
+        <color rgba="0.647059 0.647059 0.647059 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="-0.04 0.019 -0.0535151" rpy="3.14159 -0.174533 1.05951e-29" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/spur_gear_(36_teeth).stl"/>
+        </geometry>
+        <material name="spur_gear_(36_teeth)_material">
+        <color rgba="0.647059 0.647059 0.647059 1.0"/>
+        </material>
+        </collision>
+        <visual>
+        <origin xyz="0.04 0.024 -0.0535151" rpy="-2.80513e-15 -1.8242e-17 4.62474e-29" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/spur_gear_(36_teeth).stl"/>
+        </geometry>
+        <material name="spur_gear_(36_teeth)_material">
+        <color rgba="0.647059 0.647059 0.647059 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="0.04 0.024 -0.0535151" rpy="-2.80513e-15 -1.8242e-17 4.62474e-29" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/spur_gear_(36_teeth).stl"/>
+        </geometry>
+        <material name="spur_gear_(36_teeth)_material">
+        <color rgba="0.647059 0.647059 0.647059 1.0"/>
+        </material>
+        </collision>
+        <visual>
+        <origin xyz="-0.0506217 -0.004 -0.0839523" rpy="3.14159 -7.66258e-17 -1.59772e-29" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_3.stl"/>
+        </geometry>
+        <material name="part_3_material">
+        <color rgba="0.231373 0.380392 0.705882 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="-0.0506217 -0.004 -0.0839523" rpy="3.14159 -7.66258e-17 -1.59772e-29" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_3.stl"/>
+        </geometry>
+        <material name="part_3_material">
+        <color rgba="0.231373 0.380392 0.705882 1.0"/>
+        </material>
+        </collision>
+        <visual>
+        <origin xyz="0.04015 0.0239869 -0.0345924" rpy="0.127008 -1.47887 -0.126477" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/spur_gear_(16_teeth).stl"/>
+        </geometry>
+        <material name="spur_gear_(16_teeth)_material">
+        <color rgba="0.615686 0.811765 0.929412 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="0.04015 0.0239869 -0.0345924" rpy="0.127008 -1.47887 -0.126477" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/spur_gear_(16_teeth).stl"/>
+        </geometry>
+        <material name="spur_gear_(16_teeth)_material">
+        <color rgba="0.615686 0.811765 0.929412 1.0"/>
+        </material>
+        </collision>
+        <visual>
+        <origin xyz="-0.04015 0.0144875 -0.0347028" rpy="-1.54477 -1.10763 -0.0232858" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/hk15328d_v5.stl"/>
+        </geometry>
+        <material name="hk15328d_v5_material">
+        <color rgba="0.952941 0.796078 0.486275 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="-0.04015 0.0144875 -0.0347028" rpy="-1.54477 -1.10763 -0.0232858" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/hk15328d_v5.stl"/>
+        </geometry>
+        <material name="hk15328d_v5_material">
+        <color rgba="0.952941 0.796078 0.486275 1.0"/>
+        </material>
+        </collision>
+        <visual>
+        <origin xyz="-0.0382059 -0.005 -0.100345" rpy="-1.08188e-14 -1.35876 1.03505e-14" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_2.stl"/>
+        </geometry>
+        <material name="part_2_material">
+        <color rgba="0.647059 0.647059 0.647059 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="-0.0382059 -0.005 -0.100345" rpy="-1.08188e-14 -1.35876 1.03505e-14" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/part_2.stl"/>
+        </geometry>
+        <material name="part_2_material">
+        <color rgba="0.647059 0.647059 0.647059 1.0"/>
+        </material>
+        </collision>
+        <visual>
+        <origin xyz="0.04015 0.0144875 -0.0347028" rpy="-5.12734e-13 1.55917 1.5708" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/hk15328d_v5.stl"/>
+        </geometry>
+        <material name="hk15328d_v5_material">
+        <color rgba="0.392157 0.403922 0.384314 1.0"/>
+        </material>
+        </visual>
+        <collision>
+        <origin xyz="0.04015 0.0144875 -0.0347028" rpy="-5.12734e-13 1.55917 1.5708" />
+        <geometry>
+        <mesh filename="package://ob1_arm_description/meshes/gripper/hk15328d_v5.stl"/>
+        </geometry>
+        <material name="hk15328d_v5_material">
+        <color rgba="0.392157 0.403922 0.384314 1.0"/>
+        </material>
+        </collision>
+        <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0" />
+        <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+        </inertial>
+        </link>
+
+    </xacro:macro>
+</robot>

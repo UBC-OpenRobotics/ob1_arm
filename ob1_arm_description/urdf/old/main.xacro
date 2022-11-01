@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robot">
+
+    <!-- ################################################### -->
+    <!-- # include statements, much like import statements -->
+    <!-- ################################################### -->
+    <xacro:include filename="$(find ob1_arm_description)/urdf/ob1_arm_urdf.xacro"/>
+    <xacro:include filename="$(find ob1_arm_description)/urdf/gripper_urdf.xacro"/>
+
+    <xacro:property name="prefix" value="ob1_arm" />
+
+    <link name="world"/>
+
+    <xacro:arm prefix="${prefix}"/>
+    <xacro:gripper prefix="${prefix}"/>
+
+    <joint name="${prefix}_forearm_gripper_joint" type="revolute">
+        <origin xyz="-2.63678e-16 -0.155 0.08285" rpy="-1.5708 1.0223e-13 -2.03645e-14" />
+        <parent link="${prefix}_forearm_link" />
+        <child link="${prefix}_gripper_assembly_link" />
+        <axis xyz="0 0 1"/>
+        <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
+        <joint_properties friction="0.0"/>
+        <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/>
+    </joint>
+
+    <joint name="${prefix}_elbow_forearm_joint" type="revolute">
+        <origin xyz="0 0 0" rpy="1.5708 0.220816 1.70392e-15" />
+        <parent link="${prefix}_elbow_link" />
+        <child link="${prefix}_forearm_link" />
+        <axis xyz="0 0 1"/>
+        <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
+        <joint_properties friction="0.0"/>
+        <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/>
+    </joint>
+
+    <joint name="${prefix}_arm_elbow_joint" type="revolute">
+        <origin xyz="-0.00651515 -0.011 0.389858" rpy="-3.14159 1.69309e-15 -2.9342e-15" />
+        <parent link="${prefix}_arm_link" />
+        <child link="${prefix}_elbow_link" />
+        <axis xyz="0 0 1"/>
+        <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
+        <joint_properties friction="0.0"/>
+        <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/>
+    </joint>
+
+    <joint name="${prefix}_shoulder_arm_joint" type="revolute">
+        <origin xyz="0.15 -8.58807e-16 7.63278e-17" rpy="-1.21458e-15 -8.20286e-15 -1.5708" />
+        <parent link="${prefix}_shoulder_link" />
+        <child link="${prefix}_arm_link" />
+        <axis xyz="0 0 1"/>
+        <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
+        <joint_properties friction="0.0"/>
+        <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/>
+    </joint>
+
+    <joint name="${prefix}_base_shoulder_joint" type="revolute">
+        <origin xyz="9.08868e-17 0.0465 0.06" rpy="1.5708 -1.5708 0" />
+        <parent link="${prefix}_base_link" />
+        <child link="${prefix}_shoulder_link" />
+        <axis xyz="0 0 1"/>
+        <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
+        <joint_properties friction="0.0"/>
+        <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/>
+    </joint>
+
+    <!-- connect the arm to world with fixed joint -->
+    <joint name="base" type="fixed">
+        <parent link="world" />
+        <child link="${prefix}_base_link" />
+    </joint>
+
+</robot>
