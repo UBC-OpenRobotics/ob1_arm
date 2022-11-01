@@ -2,24 +2,20 @@
 from __future__ import print_function
 import pickle
 import sys
-from turtle import pos
 import rospy
 import moveit_commander
 from moveit_commander.conversions import pose_to_list
 import numpy as np
 from math import pi, tau, dist, fabs, cos
 import geometry_msgs
-from sensor_msgs.msg import JointState
 from geometry_msgs.msg import PoseStamped, Pose, Point
 from moveit_commander import MoveGroupCommander,RobotCommander, PlanningSceneInterface
 from shape_msgs.msg import SolidPrimitive
 from moveit_commander.planning_scene_interface import CollisionObject
 from moveit_msgs.msg import Grasp, GripperTranslation, MoveItErrorCodes,DisplayTrajectory
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from tf.transformations import quaternion_from_euler
-from copy import deepcopy
 import rospkg
 from ikpoints import IKPoints
+import logging
 
 # docs: https://github.com/ros-planning/moveit/tree/ee48dc5cedc981d0869352aa3db0b41469c2735c
 # Author: Yousif El-Wishahy
@@ -48,7 +44,7 @@ class ArmCommander(object):
     WORLD_REF_FRAME = "world"
 
     PACKAGE_PATH = rospkg.RosPack().get_path('ob1_arm_control')
-    IKPOINTS_DATA_FILE_PATH = PACKAGE_PATH + "/data/5k_ikpoints_data.pickle"
+    IKPOINTS_DATA_FILE_PATH = PACKAGE_PATH + "/data/20k_ikpoints_data.pickle"
     ikpoints:IKPoints = None
  
     def __init__(self, sample_time_out=5, sample_attempts=5, goal_tolerance=0.05):
@@ -57,6 +53,7 @@ class ArmCommander(object):
         '''
         moveit_commander.roscpp_initialize(sys.argv)
         rospy.init_node("arm_commander", anonymous=True)
+        rospy.loginfo("Initialized arm_commander node")
 
         self.robot:RobotCommander = moveit_commander.RobotCommander()
         self.scene:PlanningSceneInterface = moveit_commander.PlanningSceneInterface()
@@ -70,10 +67,14 @@ class ArmCommander(object):
         self.arm_mvgroup.set_max_acceleration_scaling_factor(0.3)
 
         self._num_joints = len(self.robot.get_active_joint_names())
-
         self._goal_tolerance = goal_tolerance
         self._sample_attempts = sample_attempts
         self._sample_time_out = sample_time_out
+
+        rospy.loginfo("==== Initialized arm move group")
+        rospy.loginfo("==== Sample time out: %s s" % self._sample_time_out)
+        rospy.loginfo("==== Sample attempts: %d " % self._sample_attempts)
+        rospy.loginfo("==== Goal Tolerance: %f m" % self._goal_tolerance)
 
         # self.arm_mvgroup.set_workspace([-50,-50,-50,50,50,50])
         
@@ -83,30 +84,31 @@ class ArmCommander(object):
         # self.gripper_mvgroup:MoveGroupCommander = moveit_commander.MoveGroupCommander(self.GRIPPER_GROUP_NAME)
         
         #debug print
-        print("============ Reference frame: %s" % self.arm_mvgroup.get_planning_frame())
+        rospy.loginfo("==== Planning Reference Frame: %s" % self.arm_mvgroup.get_planning_frame())
 
-        print("============ Pose Reference frame: %s" % self.arm_mvgroup.get_pose_reference_frame())
+        rospy.loginfo("==== Pose Reference Frame: %s" % self.arm_mvgroup.get_pose_reference_frame())
 
-        eef_link = self.arm_mvgroup.get_end_effector_link()
-        print("============ End effector: %s" % eef_link)
+        rospy.loginfo("==== End Effector: %s" % self.arm_mvgroup.get_end_effector_link())
 
-        print("============ Robot Groups:", self.robot.get_group_names())
+        rospy.loginfo("==== Robot Groups: %s" % self.robot.get_group_names() )
 
-        print("============ Robot Links:", self.robot.get_link_names())
+        rospy.loginfo("==== Robot Links ====\n\n%s\n\n" % self.robot.get_link_names())
 
-        print("============ Robot Joints:", self.robot.get_active_joint_names())
+        rospy.loginfo("==== Robot Joints ====\n\n%s\n\n" % self.robot.get_active_joint_names())
 
-        print("============ Printing robot state")
-        print(self.robot.get_current_state())
+        # print("============ Printing robot state")
+        # print(self.robot.get_current_state())
 
-        print("============ Printing MoveIt interface description")
-        print(self.arm_mvgroup.get_interface_description())
+        rospy.loginfo("==== MoveIt Interface Description ====\n\n%s\n" % self.arm_mvgroup.get_interface_description())
 
+        rospy.loginfo("==== Storing Joint Limits")
         for joint_name in self.arm_mvgroup.get_active_joints():
             joint = self.robot.get_joint(joint_name)
             self._joint_tolerances.append((joint.bounds()[0],joint.bounds()[1]))
 
+        rospy.loginfo("==== Loading IK Points ====")
         self.ikpoints = IKPoints(self.IKPOINTS_DATA_FILE_PATH)
+        rospy.loginfo("==== Done Loading IK Points ====")
 
     def register_gripper_edge_states(self):
         joint_vals_min = [0]

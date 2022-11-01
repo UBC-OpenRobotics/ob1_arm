@@ -30,10 +30,10 @@ import logging
 PLANNING_TOLERANCE = 0.1 #distance in metres
 SUCCESS_RATE_TOLERANCE = 0.80 #percentage of tests that pass
 
-log = logging.getLogger(__name__)
+test_log = logging.getLogger(__name__)
 
 arm_commander = ArmCommander(sample_time_out=5,goal_tolerance=0.1)
-log.info("Clearing scene..")
+test_log.info("Clearing scene..")
 arm_commander.scene.clear()
 
 def dist(p1,p2):
@@ -58,48 +58,48 @@ def compare_ik_result(current_state,target,tolerance:float):
         return False, "Distance from target is too far, %f cm" % (d*100)
 
 def test_go_rand_pose():
-    log.info("Starting go_rand_pose test")
-    log.info("Going to random pose...")
+    test_log.info("Starting go_rand_pose test")
+    test_log.info("Going to random pose...")
     res, target = arm_commander.go_pose()
     assert res , "motion planning failed"
-    log.info("Boolean result: %s" % res)
-    log.info("Target type: %s" % type(target))
+    test_log.info("Boolean result: %s" % res)
+    test_log.info("Target type: %s" % type(target))
     assert_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
 
 def test_go_rand_position():
-    log.info("Starting go_rand_position test")
-    log.info("Going to random position...")
+    test_log.info("Starting go_rand_position test")
+    test_log.info("Going to random position...")
     res, target = arm_commander.go_position()
     assert res , "motion planning failed"
-    log.info("Boolean result: %s" % res)
-    log.info("Target type: %s" % type(target))
+    test_log.info("Boolean result: %s" % res)
+    test_log.info("Target type: %s" % type(target))
     assert_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
 
 def test_go_rand_joint_target():
-    log.info("Starting go_rand_joint_target test")
-    log.info("Going to random joint target...")
+    test_log.info("Starting go_rand_joint_target test")
+    test_log.info("Going to random joint target...")
     res, target = arm_commander.go_joint()
     assert res , "motion planning failed"
-    log.info("Boolean result: %s" % res)
-    log.info("Target type: %s" % type(target))
+    test_log.info("Boolean result: %s" % res)
+    test_log.info("Target type: %s" % type(target))
     assert_ik_result(arm_commander.arm_mvgroup.get_current_joint_values(),target,PLANNING_TOLERANCE)
 
 def test_go_rand_ikpoint():
-    log.info("Starting go_rand_ikpoint test")
-    log.info("Generating random point and matching nearest ikpoint...")
+    test_log.info("Starting go_rand_ikpoint test")
+    test_log.info("Generating random point and matching nearest ikpoint...")
     res, target, joint_target = arm_commander.go_position_ikpoints()
     assert res , "motion planning failed"
-    log.info("Boolean result: %s" % res)
-    log.info("Target type: %s" % type(target))
+    test_log.info("Boolean result: %s" % res)
+    test_log.info("Target type: %s" % type(target))
     assert_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
 
 def test_go_reachable_scene_object_1():
-    log.info("Starting go_reachable_scene_object_1 test")
+    test_log.info("Starting go_reachable_scene_object_1 test")
 
-    log.info("Clearing scene..")
+    test_log.info("Clearing scene..")
     arm_commander.scene.clear()
 
-    log.info("Generating and placing scene object..")
+    test_log.info("Generating and placing scene object..")
     p = PoseStamped()
     p.header.frame_id = arm_commander.robot.get_planning_frame()
     rand_pos = arm_commander.ikpoints.get_rand_point()
@@ -111,25 +111,25 @@ def test_go_reachable_scene_object_1():
 
     time.sleep(5)
 
-    log.info("Detecting scene objects..")
+    test_log.info("Detecting scene objects..")
     objs = arm_commander.scene.get_objects()
     assert len(objs) > 0, "Could not find any scene objects"
     obj:CollisionObject = list(objs.items())[0][1]
     pos = [obj.pose.position.x,obj.pose.position.y,obj.pose.position.z]
     # pos = rand_pos
 
-    log.info("Motion planning to scene object")
+    test_log.info("Motion planning to scene object")
     res, target, joint_target = arm_commander.go_position_ikpoints(pos)
 
     assert res , "motion planning failed"
 
-    log.info("Boolean result: %s" % res)
-    log.info("Target type: %s" % type(target))
+    test_log.info("Boolean result: %s" % res)
+    test_log.info("Target type: %s" % type(target))
     assert_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
 
 @pytest.mark.parametrize("iterations", [1,5,10,15,20])
 def test_go_reachable_scene_object_2(iterations):
-    log.info("Starting go_rand_scene_object_3 test")
+    test_log.info("Starting go_rand_scene_object_3 test")
 
     success_counter = 0
     for _ in range(iterations):
@@ -157,16 +157,16 @@ def test_go_reachable_scene_object_2(iterations):
                     break
         
         compare_res, msg = compare_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
-        log.info(compare_res)
+        test_log.info(compare_res)
         if res and compare_res:
             success_counter+=1
     
-    log.info("Success rate: %f%%" %(success_counter/iterations*100))
+    test_log.info("Success rate: %f%%" %(success_counter/iterations*100))
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE
 
 @pytest.mark.parametrize("iterations", [1,5,10,15,20])
 def test_go_rand_scene_object_2(iterations):
-    log.info("Starting go_rand_scene_object_2 test")
+    test_log.info("Starting go_rand_scene_object_2 test")
 
     success_counter = 0
     for _ in range(iterations):
@@ -190,18 +190,18 @@ def test_go_rand_scene_object_2(iterations):
                     break
         
         compare_res, msg = compare_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
-        log.info(compare_res)
+        test_log.info(compare_res)
         if res and compare_res:
             success_counter+=1
     
-    log.info("Success rate: %f%%" %(success_counter/iterations*100))
+    test_log.info("Success rate: %f%%" %(success_counter/iterations*100))
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE
 
 @pytest.mark.parametrize("attempts", [10])
 @pytest.mark.parametrize("iterations", [1,10,25])
 @pytest.mark.parametrize("sphere_radius", [0.03])
 def test_go_reachable_scene_object_smart(attempts,iterations,sphere_radius):
-    log.info("Starting go_reachable_scene_object_smart test")
+    test_log.info("Starting go_reachable_scene_object_smart test")
 
     success_counter = 0
     dist_total = 0
@@ -222,21 +222,21 @@ def test_go_reachable_scene_object_smart(attempts,iterations,sphere_radius):
 
         objs = arm_commander.scene.get_objects()
         if len(objs) < 1:
-            log.warning("Could not find any scene objects")
+            test_log.warning("Could not find any scene objects")
             continue
         obj:CollisionObject = list(objs.items())[0][1]
 
         res, obj_pose, joint_target = arm_commander.go_scene_object(obj,attempts)
 
         compare_res, msg = compare_ik_result(arm_commander.get_end_effector_pose(), obj_pose, PLANNING_TOLERANCE)
-        log.info(msg)
+        test_log.info(msg)
 
         if res and compare_res:
             success_counter+=1
         dist_total+=dist(arm_commander.get_end_effector_pose(),obj_pose)
         
-    log.info("Motion planning success rate: %f%%" %(success_counter/iterations*100))
-    log.info("Motion planning avg tolerance: %f cm " %(dist_total/iterations*100))
+    test_log.info("Motion planning success rate: %f%%" %(success_counter/iterations*100))
+    test_log.info("Motion planning avg tolerance: %f cm " %(dist_total/iterations*100))
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
 
 @pytest.mark.parametrize("iterations", [1,10,25])
@@ -248,7 +248,7 @@ def test_go_rand_pose_loop(iterations):
         if res and compare_res:
             success_counter+=1
     
-    log.info("Motion planning success rate: %f%%" %(success_counter/iterations*100))
+    test_log.info("Motion planning success rate: %f%%" %(success_counter/iterations*100))
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
 
 @pytest.mark.parametrize("iterations", [1,10,25])
@@ -260,7 +260,7 @@ def test_go_rand_ikpoint_loop(iterations):
         if res and compare_res:
             success_counter+=1
     
-    log.info("Motion planning success rate: %f%%" %(success_counter/iterations*100))
+    test_log.info("Motion planning success rate: %f%%" %(success_counter/iterations*100))
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
 
 @pytest.mark.parametrize("iterations", [1,10,25])
@@ -272,7 +272,7 @@ def test_avg_go_ikpoint_dist(iterations):
             d+=dist(target,arm_commander.get_end_effector_pose())
     d_avg = d/iterations
 
-    log.info("Avg ik point distance: %s cm" %(d_avg*100))
+    test_log.info("Avg ik point distance: %s cm" %(d_avg*100))
     assert d_avg <= PLANNING_TOLERANCE, "Avg ik point distance too far: %s cm" %(d_avg*100)
         
 
