@@ -4,12 +4,13 @@ import time
 import rospy
 from copy import deepcopy
 from visualization_msgs.msg import Marker
-from geometry_msgs.msg import Pose, PoseStamped
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 from std_msgs.msg import ColorRGBA
 import pickle
 from arm_commander import ArmCommander
 import rospkg
 from dataclasses import dataclass
+import kinpy as kp
 
 # Author: Yousif El-Wishahy
 # Email: yel.wishahy@gmail.com
@@ -17,11 +18,11 @@ from dataclasses import dataclass
 
 ############ PARAMETERS ##################
 #auto save interval (hours)
-AUTO_SAVE_INTERVAL = 0.1
+AUTO_SAVE_INTERVAL = 0.01
 
 #reachability test joint space resolution, in radians
 #note: there are 4+ joints, so small resolutions will produce a LARGE amount of test values...
-JS_RESOLUTION = 0.4 #0.5
+JS_RESOLUTION = 0.1 #0.5
 
 ###########################################
 
@@ -29,7 +30,16 @@ JS_RESOLUTION = 0.4 #0.5
 arm_commander:ArmCommander = ArmCommander(sample_attempts=1, sample_time_out=0.1,goal_tolerance=0.01)
 # ArmCommander(sample_attempts=5, sample_time_out=5,goal_tolerance=0.01)
 
+
+#arm commander class, kinpy kinematics serial chain
 rp = rospkg.RosPack()
+urdf_path = rp.get_path('ob1_arm_description') + "/urdf/main.urdf"
+arm = kp.build_serial_chain_from_urdf(
+    open(urdf_path).read(),
+    root_link_name="ob1_arm_base_link",
+    end_link_name="ob1_arm_gripper_base_link"
+)
+
 PACKAGE_PATH = rp.get_path('ob1_arm_control')
 
 #std_msgs.mg.ColorRGBA ros clr msg for visual markers
@@ -81,10 +91,12 @@ def save_marker_data():
     with open(PACKAGE_PATH+"/data/ikpoints_data.pickle", "wb") as output_file:
         pickle.dump(ikpoints_list, output_file)
 
-def calculate_js_reachability():
+def calculate_js_reachability(fk_planner="MOVEIT"):
     """
     Function for calcualting reachability in joint space.
     Iterates over joint goals with a certain resolution and saves Pose results as green or red markers
+
+    @param fk_planner = 'MOVEIT' or 'KINPY'
     """
     joint_target = arm_commander.arm_mvgroup.get_current_joint_values()
     num_joints = len(joint_target)
@@ -97,7 +109,7 @@ def calculate_js_reachability():
         """
 
         if joint_index < num_joints:
-            min,max = arm_commander._joint_tolerances[joint_index-1]
+            min,max = arm_commander._joint_limits[joint_index-1]
             val = min
             while val < max:
                 val+=JS_RESOLUTION
@@ -121,32 +133,50 @@ def calculate_js_reachability():
     time_remaining = 0
     time_passed = 0
     last_autosave = 0
+
     for joints in joint_targets:
+        if not arm_commander._check_limits(joints):
+            continue
         print("Testing joint target %s/%s " %(counter,total))
         print(joints)
         start_t = time.time()
-        success, _ = arm_commander.go_joint(joints)
+        success = False
+        fk_sol = None
+        if fk_planner is 'MOVEIT':
+            success, _ = arm_commander.go_joint(joints)
+        elif fk_planner is 'KINPY':
+            fk_sol = arm.forward_kinematics(joints)
         planning_t = time.time() - start_t
         counter+=1
         time_passed += (planning_t/3600)
         time_remaining = time_passed/counter * (total-counter)
-        if success:
-            success_counter+=1
-            eef_pose_stamped = arm_commander.get_end_effector_pose()
-            position = eef_pose_stamped.pose.position
-            header = eef_pose_stamped.header
-
+        eef_pose_stamped = arm_commander.get_end_effector_pose()
+        header = eef_pose_stamped.header
+        def update_data():
             successful_pose_data.append(eef_pose_stamped)
             marker_data.points.append(position)
             marker_data.colors.append(GREEN)
             marker_data.header = header
-
             successful_joint_targets.append(joints)
-
             ikpoint = {"pose_stamped":eef_pose_stamped,"joint_target":joints}
             ikpoints_list.append(ikpoint)
-        else:
-            failed_joint_targets.append(joints)
+        if fk_planner is 'MOVEIT':
+            if success:
+                success_counter+=1
+                position = eef_pose_stamped.pose.position
+                update_data()
+            else:
+                failed_joint_targets.append(joints)
+        if fk_planner is 'KINPY':
+            if fk_sol is not None and type(fk_sol) is kp.Transform:
+                success_counter+=1
+                position = Point(fk_sol.pos[0],fk_sol.pos[1],fk_sol.pos[2])
+                rot = Quaternion(fk_sol.rot[0],fk_sol.rot[1],fk_sol.rot[2],fk_sol.rot[3])
+                eef_pose = Pose(position,rot)
+                eef_pose_stamped = PoseStamped(header, eef_pose)
+                update_data()
+            else:
+                failed_joint_targets.append(joints)
 
         if time_passed > last_autosave + AUTO_SAVE_INTERVAL:
             save_marker_data()
@@ -170,4 +200,4 @@ def calculate_js_reachability():
 #         pickle.dump(data_15k + data_5k, output_file)
 
 if __name__ == '__main__':
-    calculate_js_reachability()
+    calculate_js_reachability('KINPY')

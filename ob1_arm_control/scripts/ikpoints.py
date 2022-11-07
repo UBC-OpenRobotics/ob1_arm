@@ -102,7 +102,8 @@ class IKPoints():
             return joints
         else:
             print("found point with promimity %s" % dist)
-            return self.joint_targets[index].tolist()
+            joints:list = self.joint_targets[index].tolist()
+            return joints
     
     def get_nearest_pose_targets(self,pt1,num_pts=1):
         """

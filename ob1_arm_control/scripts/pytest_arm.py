@@ -32,7 +32,7 @@ SUCCESS_RATE_TOLERANCE = 0.80 #percentage of tests that pass
 
 test_log = logging.getLogger(__name__)
 
-arm_commander = ArmCommander(sample_time_out=5,goal_tolerance=0.1)
+arm_commander = ArmCommander(sample_time_out=5,goal_tolerance=0.001)
 test_log.info("Clearing scene..")
 arm_commander.scene.clear()
 
@@ -53,9 +53,9 @@ def compare_ik_result(current_state,target,tolerance:float):
             return False, "transform frame mismatch. Object pose is in %s frame" % target.header.frame_id
     d = dist(current_state,target)
     if d <= tolerance: 
-        return True, "Motion planning tolerance success. %f cm" % (d*100)
+        return True, d, "Motion planning tolerance success. %f cm" % (d*100)
     else:
-        return False, "Distance from target is too far, %f cm" % (d*100)
+        return False, d, "Distance from target is too far, %f cm" % (d*100)
 
 def test_go_rand_pose():
     test_log.info("Starting go_rand_pose test")
@@ -156,7 +156,7 @@ def test_go_reachable_scene_object_2(iterations):
                 if res:
                     break
         
-        compare_res, msg = compare_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
+        compare_res,d, msg = compare_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
         test_log.info(compare_res)
         if res and compare_res:
             success_counter+=1
@@ -189,7 +189,7 @@ def test_go_rand_scene_object_2(iterations):
                 if res:
                     break
         
-        compare_res, msg = compare_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
+        compare_res,d, msg = compare_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
         test_log.info(compare_res)
         if res and compare_res:
             success_counter+=1
@@ -228,7 +228,7 @@ def test_go_reachable_scene_object_smart(attempts,iterations,sphere_radius):
 
         res, obj_pose, joint_target = arm_commander.go_scene_object(obj,attempts)
 
-        compare_res, msg = compare_ik_result(arm_commander.get_end_effector_pose(), obj_pose, PLANNING_TOLERANCE)
+        compare_res,d, msg = compare_ik_result(arm_commander.get_end_effector_pose(), obj_pose, PLANNING_TOLERANCE)
         test_log.info(msg)
 
         if res and compare_res:
@@ -239,12 +239,27 @@ def test_go_reachable_scene_object_smart(attempts,iterations,sphere_radius):
     test_log.info("Motion planning avg tolerance: %f cm " %(dist_total/iterations*100))
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
 
-@pytest.mark.parametrize("iterations", [1,10,25])
+@pytest.mark.parametrize("iterations", [10])
 def test_go_rand_pose_loop(iterations):
     success_counter = 0
     for _ in range(iterations):
         res, target = arm_commander.go_pose()
-        compare_res, msg = compare_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
+        compare_res,d, msg = compare_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
+        test_log.info("Planning Result: %s, Tolerance %s"%(res,d*100))
+        if res and compare_res:
+            success_counter+=1
+    
+    test_log.info("Motion planning success rate: %f%%" %(success_counter/iterations*100))
+    assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
+
+@pytest.mark.parametrize("iterations", [1,10,25])
+def test_go_rand_pose_loop_kinpy(iterations):
+    success_counter = 0
+    for _ in range(iterations):
+        res, target = arm_commander.go_pose_kinpy()
+        time.sleep(5)
+        compare_res,d, msg = compare_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
+        test_log.info("Planning Result: %s, Tolerance %s"%(res,d*100))
         if res and compare_res:
             success_counter+=1
     
@@ -256,7 +271,8 @@ def test_go_rand_ikpoint_loop(iterations):
     success_counter = 0
     for _ in range(iterations):
         res, target, joint_target = arm_commander.go_position_ikpoints()
-        compare_res, msg = compare_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
+        compare_res,d, msg = compare_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
+        test_log.info("Planning Result: %s, Tolerance %s"%(res,d*100))
         if res and compare_res:
             success_counter+=1
     

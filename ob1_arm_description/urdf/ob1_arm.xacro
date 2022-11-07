@@ -442,7 +442,7 @@
         <parent link="${prefix}_elbow_link" />
         <child link="${prefix}_forearm_link" />
         <axis xyz="0 0 1"/>
-        <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
+        <limit effort="1" velocity="20" lower="-1.5787" upper="1.5787"/>
         <joint_properties friction="0.0"/>
         <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/>
         </joint>
@@ -462,7 +462,7 @@
         <parent link="${prefix}_shoulder_link" />
         <child link="${prefix}_arm_link" />
         <axis xyz="0 0 1"/>
-        <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
+        <limit effort="1" velocity="20" lower="-1.5787" upper="1.5787"/>
         <joint_properties friction="0.0"/>
         <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/>
         </joint>
@@ -472,7 +472,7 @@
         <parent link="${prefix}_base_link" />
         <child link="${prefix}_shoulder_link" />
         <axis xyz="0 0 1"/>
-        <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
+        <limit effort="1" velocity="20" lower="-1.5787" upper="1.5787"/>
         <joint_properties friction="0.0"/>
         <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/>
         </joint>
