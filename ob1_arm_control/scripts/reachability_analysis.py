@@ -135,7 +135,7 @@ def calculate_js_reachability(fk_planner="MOVEIT"):
     last_autosave = 0
 
     for joints in joint_targets:
-        if not arm_commander._check_limits(joints):
+        if not arm_commander._check_joint_limits(joints):
             continue
         print("Testing joint target %s/%s " %(counter,total))
         print(joints)

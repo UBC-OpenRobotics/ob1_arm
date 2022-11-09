@@ -1,6 +1,5 @@
 #!/usr/bin/env python3.8
 from __future__ import print_function
-import pickle
 import sys
 import rospy
 import moveit_commander
@@ -8,16 +7,18 @@ from moveit_commander.conversions import pose_to_list
 import numpy as np
 from math import pi, tau, dist, fabs, cos
 import geometry_msgs
-from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
+from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion, PointStamped
 from moveit_commander import MoveGroupCommander,RobotCommander, PlanningSceneInterface
 from shape_msgs.msg import SolidPrimitive
 from moveit_commander.planning_scene_interface import CollisionObject
-from moveit_msgs.msg import Grasp, GripperTranslation, MoveItErrorCodes,DisplayTrajectory
 import rospkg
 from ikpoints import IKPoints
-import logging
 import kinpy as kp
 from kinpy.chain import SerialChain
+import time
+import tf
+from tf import transformations
+from pyquaternion import Quaternion
 
 # Author: Yousif El-Wishahy
 
@@ -37,15 +38,13 @@ class ArmCommander(object):
     #group and link anmes
     ARM_GROUP_NAME = "arm"
     GRIPPER_GROUP_NAME = "gripper"
-    GRIPPER_LINK_NAME = "main_assembly"
-
-    #reference frames
-    ARM_REF_FRAME = "base_link"
-    GRIPPER_REF_FRAME = "main_assembly"
+    GRIPPER_LINK_NAME = "ob1_arm_gripper_base_link"
+    GRIPPER_LCLAW_LINK_NAME = "ob1_arm_lclaw_link"
+    GRIPPER_RCLAW_LINK_NAME = "ob1_arm_rclaw_link"
     WORLD_REF_FRAME = "world"
 
     PACKAGE_PATH = rospkg.RosPack().get_path('ob1_arm_control')
-    IKPOINTS_DATA_FILE_PATH = PACKAGE_PATH + "/data/2m_ikpoints_data.pickle"
+    IKPOINTS_DATA_FILE_PATH = PACKAGE_PATH + "/data/2m_ikpoints_data.json"
     ikpoints:IKPoints = None
 
     URDF_PATH = rospkg.RosPack().get_path('ob1_arm_description') + "/urdf/main.urdf"
@@ -61,6 +60,8 @@ class ArmCommander(object):
 
         self.robot:RobotCommander = moveit_commander.RobotCommander()
         self.scene:PlanningSceneInterface = moveit_commander.PlanningSceneInterface()
+        self.tf_listener = tf.TransformListener()
+        self.tf_broadcaster = tf.TransformBroadcaster()
 
         #init arm move group 
         self.arm_mvgroup:MoveGroupCommander = moveit_commander.MoveGroupCommander(self.ARM_GROUP_NAME)
@@ -113,10 +114,19 @@ class ArmCommander(object):
             self._joint_limits.append((joint.bounds()[0],joint.bounds()[1]))
 
         rospy.loginfo("==== Loading IK Points ====")
+        start = time.time()
         self.ikpoints = IKPoints(self.IKPOINTS_DATA_FILE_PATH)
+        load_time = time.time() - start
+        rospy.loginfo("=== Loaded IK points in %d seconds" % load_time)
         rospy.loginfo("==== Done Loading IK Points ====")
+    
+    def _check_pose_goal(self,pose):
+        if type(pose) is PoseStamped:
+            if pose.header.frame_id == self.arm_mvgroup.get_planning_frame():
+                return True
+        return False
 
-    def _enforce_limits(self,joints):
+    def _enforce_joint_limits(self,joints):
         """
         @brief helper function to ensure joint limits
 
@@ -131,7 +141,7 @@ class ArmCommander(object):
             print(joints[i])
         return joints
 
-    def _check_limits(self,joints):
+    def _check_joint_limits(self,joints):
         """
         @brief check that joint values do not exceed limits
 
@@ -139,6 +149,8 @@ class ArmCommander(object):
 
         @return bool
         """
+        if len(joints) != self._num_joints:
+            return False
         for i in range(self._num_joints):
             if joints[i] < self._joint_limits[i][0] or joints[i] > self._joint_limits[i][1]:
                 return False
@@ -288,25 +300,23 @@ class ArmCommander(object):
 
     def go_pose_kinpy(self, pose_goal:PoseStamped=None):
         if pose_goal == None:
+            print('selecting random pose goal')
             pose_goal = self.arm_mvgroup.get_random_pose()
-
+        if not self._check_pose_goal(pose_goal):
+            print('invalid pose goal')
+            return False, pose_goal, None
         rot = np.array(convert_to_list(pose_goal.pose.orientation))
         pos = np.array(convert_to_list(pose_goal.pose.position))
         pose_tf = kp.Transform(rot,pos)
         ik_sol_joints = convert_to_list(self.kinpy_arm.inverse_kinematics(pose_tf))
-        ik_sol_joints = self._enforce_limits(ik_sol_joints)
-        self.arm_mvgroup.set_joint_value_target(ik_sol_joints)
-        plan = self.arm_mvgroup.plan()
-        res = plan[0]
-        if plan[0]:
-            res = self.arm_mvgroup.go()
-            self.arm_mvgroup.stop()
-            self.arm_mvgroup.clear_pose_targets()
-        self._current_plan = plan
-        self._current_pose_goal = pose_goal
-        return res, pose_goal
+        if self._check_joint_limits(ik_sol_joints):
+            res, _ = self.go_joint(ik_sol_joints)
+            return res, pose_goal, ik_sol_joints
+        else:
+            print('invalid joint goal')
+            return False, pose_goal, ik_sol_joints
 
-    def go_scene_object(self, object:CollisionObject, attempts=10, d=0.1):
+    def go_scene_object(self, object:CollisionObject, orientation_tolerance=0.5):
         """
         @brief makes the end effector of the arm go to the proximity of a scene object
         Finds optimal joint target based on ik points data base
@@ -317,54 +327,112 @@ class ArmCommander(object):
         
         @param(optional,defuault=10) attempts: number of different points to attempt near scene object
 
-        @param(optiona,default=0.1) d: distance resolution to scale vectors by when attempting to find nearby
-
         @returns (execution result, object pose, successful_joint_target [j0,j1,j2,...] | None)
         """
 
-        pt_obj = np.array(convert_to_list(object.pose.position))
-        shape:SolidPrimitive = object.primitives[0]
-
-        if self.ikpoints.in_range(pt_obj,self._goal_tolerance):
-
-            joint_targets = self.ikpoints.get_nearest_joint_targets(pt_obj,num_pts=attempts)
-            successful_joint_target = None
-            plan = [False]
-
-            #first try pose planning
-            if not plan[0]:
-                self.arm_mvgroup.clear_pose_targets()
-                self.arm_mvgroup.set_pose_target(object.pose)
-                plan = self.arm_mvgroup.plan()
-
-            #query nearest ikpoints
-            if not plan[0]:
-                for joints in joint_targets:
-                    self.arm_mvgroup.set_joint_value_target(joints)
-                    plan = self.arm_mvgroup.plan()
-                    if plan[0]:
-                        successful_joint_target = joints
-                        break
-                
-            #move away from pt_obj and find nearest ikpoint there
-            if not plan[0]:
-                for i in range(attempts):
-                    p2 = pt_obj * (1 - d*i)
-                    joints = self.ikpoints.get_nearest_joint_targets(p2)
-                    self.arm_mvgroup.set_joint_value_target(joints)
-                    plan = self.arm_mvgroup.plan()
-                    if plan[0]:
-                        successful_joint_target = joints
-                        break
+        def broadcast_pose(pose:Pose,child:str,parent:str):
+            """
+            helper function to broadcase pose to transform tree
             
-            if plan[0]:
-                res = self.arm_mvgroup.go()
-                self.arm_mvgroup.stop()
-                self._current_plan = plan
-                return res, object.pose, successful_joint_target
+            @param pose: rospy Pose() object
+            @param child: child tf frame name
+            @param parent: parent tf frame name
+            """
+            obj_tr = pose.position
+            obj_tr = (obj_tr.x,obj_tr.y,obj_tr.z)
+            obj_rot = pose.orientation
+            obj_rot = (obj_rot.x,obj_rot.y,obj_rot.z,obj_rot.w)
+            self.tf_broadcaster.sendTransform(obj_tr, obj_rot, rospy.Time.now(), child, parent)
 
-        print("Could not complete motion planning for scene object")
-        return False, object.pose, None
+        #add object transform to transform topic
+        broadcast_pose(object.pose,object.id,object.header.frame_id)
+
+        pt_obj = np.array(convert_to_list(object.pose.position)) #object point (frame: world)
+
+        #TO DO : better check for in range (since we do more complex searches)
+        if not self.ikpoints.in_range(pt_obj,0.01):
+            return False, object.pose, None 
+
+        t_claw = np.array([-0.05,-0.07,0])
+        # shape:SolidPrimitive = object.primitives[0]
+
+        #find all points a 'claw offset' distance away from the centre of the object
+        claw_offset = np.linalg.norm(t_claw)
+        start = time.time()
+        pose_targets, joint_targets = self.ikpoints.get_dist_joint_targets(pt_obj, claw_offset, tolerance=0.05)
+        search_dur = time.time()- start
+        print("found %d pose targets matching distance %.5f in %.5f seconds" % (len(pose_targets),claw_offset,search_dur))
+        assert len(joint_targets) == len(pose_targets), "pose targets and joint targets list not same size"
+        size = len(pose_targets)
+
+        #filter through poses
+        start = time.time()
+        fjoint_targets = []
+        for i in range(size):
+            p:Pose = pose_targets[i]
+            pt_t = np.array(convert_to_list(p.position))
+            dir = pt_obj - pt_t #direction vector pose pt -> obj pt
+            q1 = Quaternion(1,dir[0],dir[1],dir[2]) #dir quaternion with w=1
+            q2 = Quaternion(p.orientation.w,p.orientation.x,p.orientation.y,p.orientation.z)
+            d = Quaternion.absolute_distance(q1,q2) #abs distance between direction quat and pose quat
+            if d <= orientation_tolerance: #rotational similarity within tolerance
+                fjoint_targets.append(joint_targets[i])
+        del(joint_targets)
+        joint_targets = fjoint_targets
+        filter_dur = time.time()- start
+        print("filtered %d pose targets in %.5f seconds" % (size-len(joint_targets), filter_dur))
+        print("%d joint targets to test" % len(joint_targets))
+
+        #get target pose for claw
+        #this is the point between both grippers
+        # claw_pose = PoseStamped()
+        # p = Point(t_claw[0],t_claw[1],t_claw[2]) #these values were determined visually in rviz
+        # q = Quaternion(0,0,0,1) #identity quaternion
+        # claw_pose.pose = Pose(p, q)
+        # claw_pose.header.frame_id = self.GRIPPER_RCLAW_LINK_NAME #currently in frame: right claw
+        # claw_pose = self.tf_listener.transformPose('/world', claw_pose).pose #transform to world frame
+        # broadcast_pose(claw_pose,'claw_target','world')
+
+        # claw_point = PointStamped()
+        # claw_point.point = p
+        # claw_point.header.frame_id = self.GRIPPER_RCLAW_LINK_NAME
+        # claw_point = self.tf_listener.transformPoint('/'+self.GRIPPER_LINK_NAME, claw_point).point
+        # pt_claw = np.array(convert_to_list(claw_point))
+
+        # pt_target = pt_obj - pt_claw
+        # p = Point(pt_target[0],pt_target[1],pt_target[2])
+        # pose_target = Pose(p,q)
+        # broadcast_pose(pose_target,'eef_target','world')
+        
+        #visualize claw target pose in world frame
+        # pose_viz = self.tf_listener.transformPose('/world',claw_target_pose_stamped)
+        # self.scene.add_sphere("viz_sphere",pose_viz,0.03)
+        # time.sleep(1)
+        # self.scene.remove_world_object("viz_sphere")
+
+        # pose_stamped_target = PoseStamped()
+        # p_target = Point(pt_target[0],pt_target[1],pt_target[2])
+        # q_target = Quaternion(0,0,0,1)
+        # pose_target = Pose(p_target,q_target)
+        # pose_stamped_target.pose = pose_target
+        # pose_stamped_target.header.frame_id = "world"
+        # res, _, joints = self.go_pose_kinpy(pose_stamped_target)
+        # if res:
+        #     print('go pose kinpy succeeded')
+        #     return res, object.pose, joints
+        # else:
+        #     joints = self._enforce_joint_limits(joints)
+        #     res, _ = self.go_joint(joints)
+        #     if res:
+        #         print('go pose kinpy enforced limits passed')
+        #         return res, object.pose, joints
+
+        for joints in joint_targets:
+            res, _ = self.go_joint(joints)
+            if res:
+                return res, object.pose, joints
+        return False, object.pose, None 
+            
 
 def all_close(goal, actual, tolerance):
     """

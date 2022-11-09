@@ -11,7 +11,7 @@ from moveit_commander.conversions import pose_to_list
 import numpy as np
 from math import pi, tau, dist, fabs, cos
 import geometry_msgs
-from geometry_msgs.msg import PoseStamped, Pose, Vector3Stamped, Quaternion
+from geometry_msgs.msg import PoseStamped, Pose, Vector3Stamped, Quaternion, Point
 from moveit_commander import MoveGroupCommander,RobotCommander, PlanningSceneInterface
 from moveit_commander.planning_scene_interface import CollisionObject
 from moveit_msgs.msg import Grasp, GripperTranslation, MoveItErrorCodes,DisplayTrajectory
@@ -32,7 +32,7 @@ SUCCESS_RATE_TOLERANCE = 0.80 #percentage of tests that pass
 
 test_log = logging.getLogger(__name__)
 
-arm_commander = ArmCommander(sample_time_out=5,goal_tolerance=0.001)
+arm_commander = ArmCommander(sample_time_out=0.1,goal_tolerance=0.02)
 test_log.info("Clearing scene..")
 arm_commander.scene.clear()
 
@@ -197,10 +197,10 @@ def test_go_rand_scene_object_2(iterations):
     test_log.info("Success rate: %f%%" %(success_counter/iterations*100))
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE
 
-@pytest.mark.parametrize("attempts", [10])
+@pytest.mark.parametrize("orientation_tolerance", [0.5,0.25,0.1])
 @pytest.mark.parametrize("iterations", [1,10,25])
 @pytest.mark.parametrize("sphere_radius", [0.03])
-def test_go_reachable_scene_object_smart(attempts,iterations,sphere_radius):
+def test_go_reachable_scene_object_smart(orientation_tolerance,iterations,sphere_radius):
     test_log.info("Starting go_reachable_scene_object_smart test")
 
     success_counter = 0
@@ -226,7 +226,7 @@ def test_go_reachable_scene_object_smart(attempts,iterations,sphere_radius):
             continue
         obj:CollisionObject = list(objs.items())[0][1]
 
-        res, obj_pose, joint_target = arm_commander.go_scene_object(obj,attempts)
+        res, obj_pose, joint_target = arm_commander.go_scene_object(obj, orientation_tolerance)
 
         compare_res,d, msg = compare_ik_result(arm_commander.get_end_effector_pose(), obj_pose, PLANNING_TOLERANCE)
         test_log.info(msg)
@@ -234,10 +234,44 @@ def test_go_reachable_scene_object_smart(attempts,iterations,sphere_radius):
         if res and compare_res:
             success_counter+=1
         dist_total+=dist(arm_commander.get_end_effector_pose(),obj_pose)
+        time.sleep(10)
         
     test_log.info("Motion planning success rate: %f%%" %(success_counter/iterations*100))
     test_log.info("Motion planning avg tolerance: %f cm " %(dist_total/iterations*100))
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
+
+@pytest.mark.parametrize("sphere_radius", [0.03])
+@pytest.mark.parametrize("scale_trans", [
+    (0.1,[0,-0.05,0]),
+    (0.2,[0,-0.05,0]),
+    (0.3,[0,-0.05,0]),
+    (0.4,[0,-0.05,0]),
+    (0.5,[0,-0.05,0]),
+    (0.1,[0,-0.05,0]),
+    (0.1,[0.05,-0.05,0]),
+    (0.1,[-0.05,-0.05,0])
+    ])
+def test_viz_target(scale_trans,sphere_radius):
+    arm_commander.scene.remove_world_object()
+
+    def get_pose_viz(scale:float,translate:list):
+        trans,rot = arm_commander.tf_listener.lookupTransform('/'+arm_commander.GRIPPER_LCLAW_LINK_NAME, '/'+arm_commander.GRIPPER_RCLAW_LINK_NAME, rospy.Time(0))
+        trans = np.array([trans[0],trans[1],trans[2]]) #relative offset from rclaw to lcalw
+        trans=trans*scale + np.array(translate) #translate to between claws and upwards in frame
+        pt_mid = Point(trans[0],trans[1],trans[2])
+        q_mid = Quaternion(rot[0],rot[1],rot[2],rot[3])
+        pose_mid = Pose(pt_mid,q_mid)
+        posestamped_mid = PoseStamped()
+        posestamped_mid.pose = pose_mid
+        posestamped_mid.header.frame_id = arm_commander.GRIPPER_RCLAW_LINK_NAME
+        return arm_commander.tf_listener.transformPose('/world',posestamped_mid)
+
+    scale, trans = scale_trans
+    pose_viz = get_pose_viz(scale,trans)
+    arm_commander.scene.add_sphere("viz_sphere",pose_viz,sphere_radius)
+    test_log.info("Trans: %s, Scale: %s" %(trans,scale))
+    time.sleep(15)
+    arm_commander.scene.remove_world_object("viz_sphere")
 
 @pytest.mark.parametrize("iterations", [10])
 def test_go_rand_pose_loop(iterations):
