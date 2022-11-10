@@ -20,7 +20,7 @@ import time
 import tf
 from tf import transformations
 from pyquaternion import Quaternion
-from ob1_arm_control.srv import IKPointsRequest
+from ob1_arm_control.srv import IKPointsServiceRequest
 from ikpoints_service import ikpoints_service_client
 
 # Author: Yousif El-Wishahy
@@ -245,8 +245,8 @@ class ArmCommander(object):
         elif type(position_goal) is not list:
             position_goal = convert_to_list(position_goal)
 
-        req = IKPointsRequest()
-        req.request = 'get_nearest_joint_targets'
+        req = IKPointsServiceRequest()
+        req.request = 'get nearest joint targets'
         req.point = Point(position_goal[0],position_goal[1],position_goal[2])
         joint_target = ikpoints_service_client(req)[1]
         res, _ = self.go_joint(joint_target)
@@ -287,8 +287,8 @@ class ArmCommander(object):
             self.arm_mvgroup.stop()
             self.arm_mvgroup.clear_pose_targets()
         else:
-            req = IKPointsRequest()
-            req.request = 'get_nearest_joint_targets'
+            req = IKPointsServiceRequest()
+            req.request = 'get nearest joint targets'
             req.point = pose_goal.pose.position
             joint_target = ikpoints_service_client(req)[1]
             res, _ = self.go_joint(joint_target)
@@ -368,8 +368,8 @@ class ArmCommander(object):
         pt_obj = np.array(convert_to_list(object.pose.position)) #object point (frame: world)
 
         #TO DO : better check for in range (since we do more complex searches)
-        req = IKPointsRequest()
-        req.request = 'in_range'
+        req = IKPointsServiceRequest()
+        req.request = "in range"
         req.point = object.pose.position
         req.tolerance = 0.01
         if not ikpoints_service_client(req)[2]:
@@ -381,8 +381,8 @@ class ArmCommander(object):
         #find all points a 'claw offset' distance away from the centre of the object
         claw_offset = np.linalg.norm(t_claw)
         start = time.time()
-        req = IKPointsRequest()
-        req.request = 'get_dist_targets'
+        req = IKPointsServiceRequest()
+        req.request = 'get dist targets'
         req.point = object.pose.position
         req.distance = claw_offset
         req.tolerance = 0.05
