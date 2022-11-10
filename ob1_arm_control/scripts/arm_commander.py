@@ -7,7 +7,8 @@ from moveit_commander.conversions import pose_to_list
 import numpy as np
 from math import pi, tau, dist, fabs, cos
 import geometry_msgs
-from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion, PointStamped
+from geometry_msgs.msg import PoseStamped, Pose, Point, PointStamped
+import geometry_msgs.msg as gm
 from moveit_commander import MoveGroupCommander,RobotCommander, PlanningSceneInterface
 from shape_msgs.msg import SolidPrimitive
 from moveit_commander.planning_scene_interface import CollisionObject
@@ -19,6 +20,8 @@ import time
 import tf
 from tf import transformations
 from pyquaternion import Quaternion
+from ob1_arm_control.srv import IKPointsRequest
+from ikpoints_service import ikpoints_service_client
 
 # Author: Yousif El-Wishahy
 
@@ -42,10 +45,6 @@ class ArmCommander(object):
     GRIPPER_LCLAW_LINK_NAME = "ob1_arm_lclaw_link"
     GRIPPER_RCLAW_LINK_NAME = "ob1_arm_rclaw_link"
     WORLD_REF_FRAME = "world"
-
-    PACKAGE_PATH = rospkg.RosPack().get_path('ob1_arm_control')
-    IKPOINTS_DATA_FILE_PATH = PACKAGE_PATH + "/data/2m_ikpoints_data.json"
-    ikpoints:IKPoints = None
 
     URDF_PATH = rospkg.RosPack().get_path('ob1_arm_description') + "/urdf/main.urdf"
     kinpy_arm:SerialChain = None
@@ -113,13 +112,6 @@ class ArmCommander(object):
             joint = self.robot.get_joint(joint_name)
             self._joint_limits.append((joint.bounds()[0],joint.bounds()[1]))
 
-        rospy.loginfo("==== Loading IK Points ====")
-        start = time.time()
-        self.ikpoints = IKPoints(self.IKPOINTS_DATA_FILE_PATH)
-        load_time = time.time() - start
-        rospy.loginfo("=== Loaded IK points in %d seconds" % load_time)
-        rospy.loginfo("==== Done Loading IK Points ====")
-    
     def _check_pose_goal(self,pose):
         if type(pose) is PoseStamped:
             if pose.header.frame_id == self.arm_mvgroup.get_planning_frame():
@@ -252,8 +244,11 @@ class ArmCommander(object):
             position_goal = convert_to_list(self.arm_mvgroup.get_random_pose().pose.position)
         elif type(position_goal) is not list:
             position_goal = convert_to_list(position_goal)
-        
-        joint_target = self.ikpoints.get_nearest_joint_targets(np.array(position_goal))
+
+        req = IKPointsRequest()
+        req.request = 'get_nearest_joint_targets'
+        req.point = Point(position_goal[0],position_goal[1],position_goal[2])
+        joint_target = ikpoints_service_client(req)[1]
         res, _ = self.go_joint(joint_target)
     
         return res, position_goal, joint_target
@@ -292,8 +287,10 @@ class ArmCommander(object):
             self.arm_mvgroup.stop()
             self.arm_mvgroup.clear_pose_targets()
         else:
-            pos = convert_to_list(pose_goal.pose.position)
-            joint_target = self.ikpoints.get_nearest_joint_targets(np.array(pos))
+            req = IKPointsRequest()
+            req.request = 'get_nearest_joint_targets'
+            req.point = pose_goal.pose.position
+            joint_target = ikpoints_service_client(req)[1]
             res, _ = self.go_joint(joint_target)
 
         return res, pose_goal
@@ -316,7 +313,7 @@ class ArmCommander(object):
             print('invalid joint goal')
             return False, pose_goal, ik_sol_joints
 
-    def go_scene_object(self, object:CollisionObject, orientation_tolerance=0.5):
+    def go_scene_object(self, object:CollisionObject, orientation_tolerance=0.1):
         """
         @brief makes the end effector of the arm go to the proximity of a scene object
         Finds optimal joint target based on ik points data base
@@ -324,7 +321,7 @@ class ArmCommander(object):
         Proximity is based on the closest reachable ikpoint to the scene object position
 
         @param object: scene object with type moveit_commander.planning_scene_interface.CollisionObject
-        
+
         @param(optional,defuault=10) attempts: number of different points to attempt near scene object
 
         @returns (execution result, object pose, successful_joint_target [j0,j1,j2,...] | None)
@@ -344,14 +341,39 @@ class ArmCommander(object):
             obj_rot = (obj_rot.x,obj_rot.y,obj_rot.z,obj_rot.w)
             self.tf_broadcaster.sendTransform(obj_tr, obj_rot, rospy.Time.now(), child, parent)
 
+        def transform_pose(tf_44, pose:Pose):
+            """
+            @brief helper function to transform a pose with a 4x4 transformation matrix
+            
+            @param tf_44 , numpy 4x4 matrix
+            @param pose: geometry_msgs/Pose object
+
+            @return transformed pose
+            """
+            pos_44 = transformations.translation_matrix((pose.position.x,pose.position.y,pose.position.z))
+            quat_44 = transformations.quaternion_matrix((pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w))
+            pose_44 = np.dot(pos_44,quat_44)
+
+            #apply transformation
+            tpose_44 = np.dot(tf_44,pose_44)
+
+            pos = tuple(transformations.translation_from_matrix(tpose_44))[:3]
+            quat = tuple(transformations.quaternion_from_matrix(tpose_44))
+
+            return Pose(Point(*pos), Quaternion(*quat))
+
         #add object transform to transform topic
         broadcast_pose(object.pose,object.id,object.header.frame_id)
 
         pt_obj = np.array(convert_to_list(object.pose.position)) #object point (frame: world)
 
         #TO DO : better check for in range (since we do more complex searches)
-        if not self.ikpoints.in_range(pt_obj,0.01):
-            return False, object.pose, None 
+        req = IKPointsRequest()
+        req.request = 'in_range'
+        req.point = object.pose.position
+        req.tolerance = 0.01
+        if not ikpoints_service_client(req)[2]:
+            return False, object.pose, None
 
         t_claw = np.array([-0.05,-0.07,0])
         # shape:SolidPrimitive = object.primitives[0]
@@ -359,25 +381,57 @@ class ArmCommander(object):
         #find all points a 'claw offset' distance away from the centre of the object
         claw_offset = np.linalg.norm(t_claw)
         start = time.time()
-        pose_targets, joint_targets = self.ikpoints.get_dist_joint_targets(pt_obj, claw_offset, tolerance=0.05)
+        req = IKPointsRequest()
+        req.request = 'get_dist_targets'
+        req.point = object.pose.position
+        req.distance = claw_offset
+        req.tolerance = 0.05
+        pose_targets, joint_targets, _ = ikpoints_service_client(req)
         search_dur = time.time()- start
         print("found %d pose targets matching distance %.5f in %.5f seconds" % (len(pose_targets),claw_offset,search_dur))
         assert len(joint_targets) == len(pose_targets), "pose targets and joint targets list not same size"
         size = len(pose_targets)
 
-        #filter through poses
+        #look up translations and rotations to each claw from gripper base
+        rtrans, rrot = self.tf_listener.lookupTransform('/'+self.GRIPPER_RCLAW_LINK_NAME, '/'+self.GRIPPER_LINK_NAME, rospy.Time(0))
+        ltrans, lrot = self.tf_listener.lookupTransform('/'+self.GRIPPER_LCLAW_LINK_NAME, '/'+self.GRIPPER_LINK_NAME, rospy.Time(0))
+        #4x4 transform matrices from gripper base (eef) to each claw 
+        rclaw_tf_44 = self.tf_listener.fromTranslationRotation(rtrans, rrot)
+        lclaw_tf_44 = self.tf_listener.fromTranslationRotation(ltrans, lrot)
+
+        #filter through poses by calculation quaternion absolute distances
+        #this roughly determines if pose orientation is facing object
         start = time.time()
         fjoint_targets = []
+        fpose_targets = []
         for i in range(size):
             p:Pose = pose_targets[i]
             pt_t = np.array(convert_to_list(p.position))
-            dir = pt_obj - pt_t #direction vector pose pt -> obj pt
-            q1 = Quaternion(1,dir[0],dir[1],dir[2]) #dir quaternion with w=1
+            dir = -1*(pt_obj - pt_t) #direction vector pose pt -> obj pt
+            q1 = Quaternion(0,dir[0],dir[1],dir[2]).normalised #dir quaternion with w=1
             q2 = Quaternion(p.orientation.w,p.orientation.x,p.orientation.y,p.orientation.z)
             d = Quaternion.absolute_distance(q1,q2) #abs distance between direction quat and pose quat
-            if d <= orientation_tolerance: #rotational similarity within tolerance
-                fjoint_targets.append(joint_targets[i])
+            if d >= orientation_tolerance: #orientation not similar enough
+                continue
+            broadcast_pose(p,'pose_target','/world')
+            p_dir = Pose(p.position, gm.Quaternion(q1.x,q1.y,q1.z,q1.w))
+            broadcast_pose(p_dir,'pose_dir','/world')
+            #find claw poses
+            # pose_rclaw = transform_pose(rclaw_tf_44, p)
+            # pose_lclaw = transform_pose(lclaw_tf_44, p)
+            # broadcast_pose(pose_rclaw,'rclaw_target','/world')
+            # broadcast_pose(pose_lclaw,'lclaw_target','/world')
+            # pt_rclaw = np.array(convert_to_list(pose_rclaw))
+            # pt_lclaw = np.array(convert_to_list(pose_lclaw))
+            # d_rclaw = np.linalg.norm(pt_obj-pt_rclaw)
+            # d_lclaw = np.linalg.norm(pt_obj-pt_lclaw)
+            # if d_rclaw > 0.1 or d_lclaw > 0.1: #is this a useful metric?
+            #     continue    
+            fjoint_targets.append(joint_targets[i])
+            fpose_targets.append(pose_targets[i])
         del(joint_targets)
+        del(pose_targets)
+        pose_targets = fpose_targets
         joint_targets = fjoint_targets
         filter_dur = time.time()- start
         print("filtered %d pose targets in %.5f seconds" % (size-len(joint_targets), filter_dur))
@@ -403,7 +457,7 @@ class ArmCommander(object):
         # p = Point(pt_target[0],pt_target[1],pt_target[2])
         # pose_target = Pose(p,q)
         # broadcast_pose(pose_target,'eef_target','world')
-        
+
         #visualize claw target pose in world frame
         # pose_viz = self.tf_listener.transformPose('/world',claw_target_pose_stamped)
         # self.scene.add_sphere("viz_sphere",pose_viz,0.03)

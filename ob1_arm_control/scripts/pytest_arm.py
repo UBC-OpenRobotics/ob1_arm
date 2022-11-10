@@ -102,10 +102,7 @@ def test_go_reachable_scene_object_1():
     test_log.info("Generating and placing scene object..")
     p = PoseStamped()
     p.header.frame_id = arm_commander.robot.get_planning_frame()
-    rand_pos = arm_commander.ikpoints.get_rand_point()
-    p.pose.position.x = rand_pos[0]
-    p.pose.position.y = rand_pos[1]
-    p.pose.position.z = rand_pos[2]
+    p.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
     p.pose.orientation.w = 1
     arm_commander.scene.add_sphere("sphere",p,0.1)
 
@@ -211,10 +208,7 @@ def test_go_reachable_scene_object_smart(orientation_tolerance,iterations,sphere
 
         p = PoseStamped()
         p.header.frame_id = arm_commander.robot.get_planning_frame()
-        rand_pos = arm_commander.ikpoints.get_rand_point()
-        p.pose.position.x = rand_pos[0]
-        p.pose.position.y = rand_pos[1]
-        p.pose.position.z = rand_pos[2]
+        p.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
         p.pose.orientation.w = 1
         arm_commander.scene.add_sphere("sphere",p,sphere_radius)
 
