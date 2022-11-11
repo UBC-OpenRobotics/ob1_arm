@@ -62,19 +62,21 @@ def ikpoints_service_client(request):
         bool condition
     """
     rospy.wait_for_service('ik_points')
+    print(request.request)
     try:
         resp = rospy.ServiceProxy('ik_points', IKPointsService)(request)
+        print(resp)
         pose_targets:list = resp.pose_targets
         joint_targets:list = convert_Joint_Targets_to_joint_targets(resp.joint_targets)
         condition:bool = resp.condition
+        print(pose_targets, joint_targets, condition)
         return pose_targets, joint_targets, condition
     except rospy.ServiceException as e:
-        print("Service call failed: %s"%e)
+        rospy.logwarn("Service call failed: %s"%e)
         return [], [], False
 
 def handle_ikpoint_request(req):
-    rospy.loginfo("===ik_points service call received")
-    rospy.loginfo(req)
+    rospy.loginfo("===ik_points: service call received")
     cmd = req.request
     pt = np.array([req.point.x, req.point.y, req.point.z])
     num_pts = req.num_pts
@@ -98,10 +100,8 @@ def handle_ikpoint_request(req):
     elif cmd == 'get dist targets':
         pose_targets, joint_targets = ikpoints.get_dist_targets(pt, dist, tolerance)
     joint_targets = convert_joint_targets_to_Joint_Targets(joint_targets)
-    rospy.loginfo(joint_targets)
     out = IKPointsServiceResponse(pose_targets, joint_targets, condition)
-    rospy.loginfo("Processed service call")
-    rospy.loginfo(out)
+    rospy.loginfo("ik_points: processed service call")
     return out
 
 def ik_points_server():

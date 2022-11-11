@@ -8,6 +8,7 @@ import pickle
 from scipy.spatial import KDTree, distance
 import _compat_pickle
 from rospy_msg_converter import convert_dictionary_to_ros_message
+import multiprocessing as mp
 
 
 #Author: Yousif El-Wishahy
@@ -28,11 +29,11 @@ class IKPoints():
     #list poses
     pose_targets:list = list()
 
-    #np array of 3d points
-    points:np.ndarray = np.array([])
+    #list of 3d points
+    points:list = list()
 
     #np array of joint targets to reach corresponding point
-    joint_targets:np.ndarray = np.array([])
+    joint_targets:list = list()
 
     _size:int 
     
@@ -45,32 +46,99 @@ class IKPoints():
                 self.ikpoints = pickle.load(input_file)
             if file_path.split('.')[1] == 'json':
                 self.ikpoints = orjson.loads(input_file.read())
+        print("============ Loaded ik points data file")
+        print("============ Processing %d data objects on %d CPU Cores..." % (len(self.ikpoints),mp.cpu_count()))
 
         #populate np arrays
-        points = []
-        joint_targets = []
-        for ikpoint in self.ikpoints:
-            joint_targets.append(ikpoint["joint_target"])
-            if type(ikpoint["pose_stamped"]) is dict:
-                self.pose_targets.append(convert_dictionary_to_ros_message('geometry_msgs/Pose', ikpoint["pose_stamped"]["pose"]))
-            else:
-                self.pose_targets.append(ikpoint["pose_stamped"].pose)
-            p  = ikpoint["pose_stamped"]
-            if type(p) is dict:
-                p = p["pose"]["position"]
-                point = np.array([p['x'],p['y'],p['z']])
-            else:
-                p = p.pose.position
-                point = np.array([p.x,p.y,p.z])
-            points.append(point)
-        if len(points) == len(joint_targets):
-            self._size = len(points)
-            self.points = np.array(points)
-            self.joint_targets = np.array(joint_targets)
+        self.pose_targets, self.joint_targets, self.points = IKPoints.parallel_process(self.ikpoints)
+
+        if len(self.points) == len(self.joint_targets):
+            self._size = len(self.points)
+            print('generating kd-tree...')
             self.kdtree = KDTree(self.points)
         else:
             print("POINTS AND JOINT TARGET ARRAYS NOT THE SAME LENGTH.")
         print("============ Loaded %s ik points" % (len(self.ikpoints)))
+
+    @staticmethod
+    def parallel_process(ikpoints:list, timeout=20):
+        """
+        Utilize multiple processor cores to load ikpoints faster
+
+        @param ikpoints list as a loaded pickle or yaml
+        
+        @return tuple of lists (pose_targets, joint_targets, points)
+        """
+
+        def split_ikpoints(ikpoints_all, n_split:int):
+            size = len(ikpoints_all)
+            seg = int(size/n_split)
+            split_ikpoints = []
+            for i in range(n_split):
+                start = i*seg
+                end = (i+1)*seg
+                if start >= size:
+                    break
+                if end >= size:
+                    end = size - 1
+                split_ikpoints.append(ikpoints_all[start:end])
+            print("CPU Cores: %d, Batch Size: %d"  %(len(split_ikpoints), len(split_ikpoints[0])))
+            return split_ikpoints
+        
+        def process(ikpoints_batch, q, shared_counter):
+            """
+            Function to process ikpoints_batch
+            Ideally run on multiple cpu cores in parallel
+            """
+            joint_targets = []
+            pose_targets = []
+            points = []
+            for ikpoint in ikpoints_batch:
+                joint_targets.append(ikpoint["joint_target"])
+                if type(ikpoint["pose_stamped"]) is dict:
+                    pose_targets.append(convert_dictionary_to_ros_message('geometry_msgs/Pose', ikpoint["pose_stamped"]["pose"]))
+                else:
+                    pose_targets.append(ikpoint["pose_stamped"].pose)
+                p  = ikpoint["pose_stamped"]
+                if type(p) is dict:
+                    p = p["pose"]["position"]
+                    point = np.array([p['x'],p['y'],p['z']])
+                else:
+                    p = p.pose.position
+                    point = np.array([p.x,p.y,p.z])
+                points.append(point)
+            if not q.empty():
+                prev = q.get()
+                q.put((pose_targets+prev[0], joint_targets+prev[1], points+prev[2]))
+            else:
+                q.put((pose_targets, joint_targets, points))
+            q.close()
+            shared_counter.value+=1
+            return
+
+        ikpoints_batch_list = split_ikpoints(ikpoints, mp.cpu_count())
+        procs = []
+        queue = mp.Queue()
+        shared_counter = mp.Value('i', 0)
+
+        #start the processes
+        for ikpoints_batch in ikpoints_batch_list:
+            proc = mp.Process(target=process, args=(ikpoints_batch,queue,shared_counter,))
+            procs.append(proc)
+            proc.start()
+
+        #wait for the processes to finish (indicated by shared counter)
+        start = time.time()
+        while time.time() < start + timeout:
+            if shared_counter.value >= mp.cpu_count():
+                break
+        
+        #terminate all child processes
+        for proc in procs:
+            proc.terminate()
+            print('ik_points_process: child process terminated successfully')
+
+        return queue.get()
 
     def get_nearest_points(self,pt1,num_pts=1):
         """Queries kdtree and returns index of nearest point or sorted list (ascending) of indices of nearest points"""
@@ -116,11 +184,11 @@ class IKPoints():
             print("[IK Points] Found %d closest points with avg distance %.5f cm in %.5f seconds" %(index.size, np.average(dist)*100, search_dur))
             joints = []
             for i in index:
-                joints.append(self.joint_targets[i].tolist())
+                joints.append(self.joint_targets[i])
             return joints
         else:
             print("[IK Points] Found point with promimity %.5f m in %.5f s" % (dist, search_dur))
-            joints:list = self.joint_targets[index].tolist()
+            joints:list = self.joint_targets[index]
             return joints
     
     def get_nearest_pose_targets(self,pt1,num_pts=1):
@@ -177,10 +245,10 @@ class IKPoints():
         indices = self.get_points_dist(pt1, dist, tolerance)
         if len(indices) > 0:
             for i in indices:
-                joints.append(self.joint_targets[i].tolist())
+                joints.append(self.joint_targets[i])
         return joints
     
-    def get_dist_joint_targets(self, pt1, dist, tolerance = 0.01):
+    def get_dist_targets(self, pt1, dist, tolerance = 0.01):
         """
         @brief Returns both search results of get_dist_pose_targets and get_dist_joint_targets
 
@@ -198,7 +266,7 @@ class IKPoints():
         indices = self.get_points_dist(pt1, dist, tolerance)
         if len(indices) > 0:
             for i in indices:
-                joints.append(self.joint_targets[i].tolist())
+                joints.append(self.joint_targets[i])
                 poses.append(self.pose_targets[i])
         return poses, joints
 
@@ -214,8 +282,9 @@ class IKPoints():
 
         @return bool
         """
-
+        print('querying in range with %s and tolerance %s' %(pt, tolerance))
         dist,_= self.kdtree.query(pt)
+        print(dist, _)
 
         return dist <= tolerance
 
