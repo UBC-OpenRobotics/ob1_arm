@@ -9,6 +9,7 @@ from scipy.spatial import KDTree, distance
 import _compat_pickle
 from rospy_msg_converter import convert_dictionary_to_ros_message
 import multiprocessing as mp
+from threading import Thread
 
 
 #Author: Yousif El-Wishahy
