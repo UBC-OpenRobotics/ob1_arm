@@ -18,7 +18,7 @@ import kinpy as kp
 from kinpy.chain import SerialChain
 import time
 import tf
-from tf import transformations
+from tf_helpers import *
 from pyquaternion import Quaternion
 from ob1_arm_control.srv import IKPointsServiceRequest
 from ikpoints_service import ikpoints_service_client
@@ -28,7 +28,7 @@ from ikpoints_service import ikpoints_service_client
 ##############################
 # arm command class to be called by robot loop
 ##############################
-class ArmCommander(object):
+class ArmCommander:
     _current_plan = None # current joint trajectory plan
     _current_pose_goal : PoseStamped = None #current pose goal 
     _sample_time_out   = 5             # time out in seconds for Inverse Kinematic search
@@ -178,12 +178,14 @@ class ArmCommander(object):
 
         @returns (command result, joint_target [j0,j1,j2,...])
         """
-        if type(joints) is not list or len(joints) != self._num_joints:
+        if type(joints) is not list:
             if type(joints) is np.ndarray:
                 joints = joints.tolist()
-            else:
-                print('getting random joint values')
-                joints:list = self.arm_mvgroup.get_random_joint_values()
+            elif type(joints) is tuple:
+                joints = list(joints)
+        if type(joints) is not list or len(joints) != self._num_joints: 
+            print('getting random joint values due to joints type = %s' % type(joints))
+            joints:list = self.arm_mvgroup.get_random_joint_values()
 
         self.arm_mvgroup.clear_pose_targets()
         self.arm_mvgroup.set_joint_value_target(joints)
@@ -327,43 +329,8 @@ class ArmCommander(object):
         @returns (execution result, object pose, successful_joint_target [j0,j1,j2,...] | None)
         """
 
-        def broadcast_pose(pose:Pose,child:str,parent:str):
-            """
-            helper function to broadcase pose to transform tree
-            
-            @param pose: rospy Pose() object
-            @param child: child tf frame name
-            @param parent: parent tf frame name
-            """
-            obj_tr = pose.position
-            obj_tr = (obj_tr.x,obj_tr.y,obj_tr.z)
-            obj_rot = pose.orientation
-            obj_rot = (obj_rot.x,obj_rot.y,obj_rot.z,obj_rot.w)
-            self.tf_broadcaster.sendTransform(obj_tr, obj_rot, rospy.Time.now(), child, parent)
-
-        def transform_pose(tf_44, pose:Pose):
-            """
-            @brief helper function to transform a pose with a 4x4 transformation matrix
-            
-            @param tf_44 , numpy 4x4 matrix
-            @param pose: geometry_msgs/Pose object
-
-            @return transformed pose
-            """
-            pos_44 = transformations.translation_matrix((pose.position.x,pose.position.y,pose.position.z))
-            quat_44 = transformations.quaternion_matrix((pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w))
-            pose_44 = np.dot(pos_44,quat_44)
-
-            #apply transformation
-            tpose_44 = np.dot(tf_44,pose_44)
-
-            pos = tuple(transformations.translation_from_matrix(tpose_44))[:3]
-            quat = tuple(transformations.quaternion_from_matrix(tpose_44))
-
-            return Pose(Point(*pos), Quaternion(*quat))
-
         #add object transform to transform topic
-        broadcast_pose(object.pose,object.id,object.header.frame_id)
+        broadcast_pose(self.tf_broadcaster, object.pose, object.id, object.header.frame_id)
 
         pt_obj = np.array(convert_to_list(object.pose.position)) #object point (frame: world)
 
@@ -375,11 +342,16 @@ class ArmCommander(object):
         if not ikpoints_service_client(req)[2]:
             return False, object.pose, None
 
-        t_claw = np.array([-0.05,-0.07,0])
-        # shape:SolidPrimitive = object.primitives[0]
+        pt_tclaw = np.array([-0.05,-0.07,0])
+        pose_tclaw = Pose(Point(*tuple(pt_tclaw)), Quaternion(w=1))
+        rclaw_tclaw_mat44 = pose_to_mat(pose_tclaw)
+        t, r = self.tf_listener.lookupTransform('/'+self.GRIPPER_LINK_NAME, '/'+self.GRIPPER_RCLAW_LINK_NAME, rospy.Time(0))
+        eef_rclaw_mat44 = t_r_to_mat(t,r)
+        #need this tansformation for later
+        eef_tclaw_mat44 = np.dot(eef_rclaw_mat44,rclaw_tclaw_mat44)
 
         #find all points a 'claw offset' distance away from the centre of the object
-        claw_offset = np.linalg.norm(t_claw)
+        claw_offset = np.linalg.norm(pt_tclaw)
         start = time.time()
         req = IKPointsServiceRequest()
         req.request = 'get dist targets'
@@ -392,41 +364,30 @@ class ArmCommander(object):
         assert len(joint_targets) == len(pose_targets), "pose targets and joint targets list not same size"
         size = len(pose_targets)
 
-        #look up translations and rotations to each claw from gripper base
-        rtrans, rrot = self.tf_listener.lookupTransform('/'+self.GRIPPER_RCLAW_LINK_NAME, '/'+self.GRIPPER_LINK_NAME, rospy.Time(0))
-        ltrans, lrot = self.tf_listener.lookupTransform('/'+self.GRIPPER_LCLAW_LINK_NAME, '/'+self.GRIPPER_LINK_NAME, rospy.Time(0))
-        #4x4 transform matrices from gripper base (eef) to each claw 
-        rclaw_tf_44 = self.tf_listener.fromTranslationRotation(rtrans, rrot)
-        lclaw_tf_44 = self.tf_listener.fromTranslationRotation(ltrans, lrot)
-
         #filter through poses by calculation quaternion absolute distances
         #this roughly determines if pose orientation is facing object
         start = time.time()
         fjoint_targets = []
         fpose_targets = []
         for i in range(size):
-            p:Pose = pose_targets[i]
-            pt_t = np.array(convert_to_list(p.position))
+            pose_target:Pose = pose_targets[i]
+            pt_t = np.array(convert_to_list(pose_target.position))
             dir = -1*(pt_obj - pt_t) #direction vector pose pt -> obj pt
             q1 = Quaternion(0,dir[0],dir[1],dir[2]).normalised #dir quaternion with w=1
-            q2 = Quaternion(p.orientation.w,p.orientation.x,p.orientation.y,p.orientation.z)
+            q2 = Quaternion(pose_target.orientation.w,pose_target.orientation.x,pose_target.orientation.y,pose_target.orientation.z)
             d = Quaternion.absolute_distance(q1,q2) #abs distance between direction quat and pose quat
             if d >= orientation_tolerance: #orientation not similar enough
                 continue
-            broadcast_pose(p,'pose_target','/world')
-            p_dir = Pose(p.position, gm.Quaternion(q1.x,q1.y,q1.z,q1.w))
-            broadcast_pose(p_dir,'pose_dir','/world')
-            #find claw poses
-            # pose_rclaw = transform_pose(rclaw_tf_44, p)
-            # pose_lclaw = transform_pose(lclaw_tf_44, p)
-            # broadcast_pose(pose_rclaw,'rclaw_target','/world')
-            # broadcast_pose(pose_lclaw,'lclaw_target','/world')
-            # pt_rclaw = np.array(convert_to_list(pose_rclaw))
-            # pt_lclaw = np.array(convert_to_list(pose_lclaw))
-            # d_rclaw = np.linalg.norm(pt_obj-pt_rclaw)
-            # d_lclaw = np.linalg.norm(pt_obj-pt_lclaw)
-            # if d_rclaw > 0.1 or d_lclaw > 0.1: #is this a useful metric?
-            #     continue    
+
+            w_eef_mat44 = pose_to_mat(pose_target)
+            w_tclaw_mat44 = np.dot(w_eef_mat44, eef_tclaw_mat44)
+            pose_tclaw = mat_to_pose(w_tclaw_mat44)
+            pt_tclaw = np.array(convert_to_list(pose_tclaw.position))
+            d_tclaw = np.linalg.norm(pt_obj-pt_tclaw)
+            broadcast_pose(self.tf_broadcaster, pose_tclaw, 'tclaw_target', 'world')
+            if d_tclaw >= 0.05:
+                continue
+
             fjoint_targets.append(joint_targets[i])
             fpose_targets.append(pose_targets[i])
         del(joint_targets)
@@ -440,9 +401,7 @@ class ArmCommander(object):
         #get target pose for claw
         #this is the point between both grippers
         # claw_pose = PoseStamped()
-        # p = Point(t_claw[0],t_claw[1],t_claw[2]) #these values were determined visually in rviz
-        # q = Quaternion(0,0,0,1) #identity quaternion
-        # claw_pose.pose = Pose(p, q)
+        # claw_pose.pose = Pose(Point(*tuple(t_claw)), Quaternion(w=1))
         # claw_pose.header.frame_id = self.GRIPPER_RCLAW_LINK_NAME #currently in frame: right claw
         # claw_pose = self.tf_listener.transformPose('/world', claw_pose).pose #transform to world frame
         # broadcast_pose(claw_pose,'claw_target','world')
