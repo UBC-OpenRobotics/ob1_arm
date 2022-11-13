@@ -301,9 +301,8 @@ class ArmCommander:
         self.scene.remove_attached_object(self.EEF_LINK_NAME, name=object.id)
         time.sleep(2) #delay for scene update
         return not self.scene.get_attached_objects([object.id])
-    
-    def pick(self, object:CollisionObject):
-        print("Picking object: %s" % object.id)
+
+    def pick_object(self, object:CollisionObject, attempts=100):
         def close_gripper_around_object():
             self.gripper_mvgroup.set_planning_time(0.1)
             self.gripper_mvgroup.set_num_planning_attempts(1)
@@ -319,9 +318,27 @@ class ArmCommander:
                         if self.gripper_mvgroup.go():
                             return True
             return False
-
+        
+        print("Picking object: %s" % object.id)
         self.open_gripper()
-        res = self.go_position_ikpoints(object.pose.position)[0]
+
+        req = IKPointsServiceRequest()
+        req.request = "in range"
+        req.point = object.pose.position
+        req.tolerance = 0.01
+        if not ikpoints_service_client(req)[2]:
+            return False
+
+        req = IKPointsServiceRequest()
+        req.request = 'get nearest joint targets'
+        req.point = object.pose.position
+        req.num_pts = attempts
+        joint_targets = ikpoints_service_client(req)[1]
+        for joints in joint_targets:
+            res = self.go_joint(joints)[0]
+            if res:
+                break
+        # res = self.go_position_ikpoints(object.pose.position)[0]
         if res:
             res = close_gripper_around_object()
             if res:
