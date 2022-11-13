@@ -21,6 +21,8 @@ from copy import deepcopy
 import rospkg
 import pytest
 import logging
+from tf_helpers import broadcast_pose
+import kinpy as kp
 
 ##TEST PARAMS
 # rp = rospkg.RosPack()
@@ -35,6 +37,19 @@ test_log = logging.getLogger(__name__)
 arm_commander = ArmCommander(sample_time_out=0.1,goal_tolerance=0.02)
 test_log.info("Clearing scene..")
 arm_commander.scene.clear()
+
+def spawn_random_sphere(r):
+    """
+    @brief spawn random sphere in scene with name 'sphere'
+    @param r: float sphere radium in metres
+    """
+    p = PoseStamped()
+    p.header.frame_id = arm_commander.robot.get_planning_frame()
+    p.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
+    p.pose.orientation.w = 1
+    arm_commander.scene.add_sphere("sphere",p,r)
+
+    time.sleep(2)
 
 def all_close(goal, actual, tolerance):
     """
@@ -166,30 +181,23 @@ def test_go_reachable_scene_object_smart(claw_search_tolerance,orientation_searc
     test_log.info("Motion planning avg tolerance: %f cm " %(dist_total/iterations*100))
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
 
-@pytest.mark.parametrize("iterations", [5])
-@pytest.mark.parametrize("sphere_radius", [0.03])
+@pytest.mark.parametrize("iterations", [5,10,25])
+@pytest.mark.parametrize("sphere_radius", [0.03, 0.05])
 def test_go_reachable_scene_object_pose(iterations,sphere_radius):
-    test_log.info("Starting go_reachable_scene_object_smart test")
+    test_log.info("Starting go_reachable_scene_object_pose test")
 
     success_counter = 0
     dist_total = 0
     for _ in range(iterations):
 
         arm_commander.scene.clear()
-
-        p = PoseStamped()
-        p.header.frame_id = arm_commander.robot.get_planning_frame()
-        p.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
-        p.pose.orientation.w = 1
-        arm_commander.scene.add_sphere("sphere",p,sphere_radius)
-
-        time.sleep(2)
-
+        spawn_random_sphere(sphere_radius)
         objs = arm_commander.scene.get_objects()
         if len(objs) < 1:
             test_log.warning("Could not find any scene objects")
             continue
         obj:CollisionObject = list(objs.items())[0][1]
+        broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'sphere','world')
 
         res, target, _ = arm_commander.go_position_ikpoints(obj.pose.position)
 
@@ -204,6 +212,50 @@ def test_go_reachable_scene_object_pose(iterations,sphere_radius):
     test_log.info("Motion planning avg tolerance: %f cm " %(dist_total/iterations*100))
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
 
+@pytest.mark.parametrize("iterations", [5])
+@pytest.mark.parametrize("sphere_radius", [0.03])
+def test_pick(iterations,sphere_radius):
+    test_log.info("Starting pickt test")
+
+    success_counter = 0
+    for _ in range(iterations):
+
+        arm_commander.scene.clear()
+        spawn_random_sphere(sphere_radius)
+        objs = arm_commander.scene.get_objects()
+        if len(objs) < 1:
+            test_log.warning("Could not find any scene objects")
+            continue
+        obj:CollisionObject = list(objs.items())[0][1]
+        broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'sphere','world')
+
+        res = arm_commander.pick(obj)
+        test_log.info(res)
+
+        if res :
+            success_counter+=1
+
+    test_log.info("Motion planning success rate: %f%%" %(success_counter/iterations*100))
+    assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
+
+@pytest.mark.parametrize("sphere_radius", [0.03])
+def test_pick_and_move(sphere_radius):
+    test_log.info("Starting pick and move test")
+
+    arm_commander.scene.clear()
+    spawn_random_sphere(sphere_radius)
+    objs = arm_commander.scene.get_objects()
+    assert len(objs) >= 0, 'could not find any scene objects'
+    obj:CollisionObject = list(objs.items())[0][1]
+    broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'sphere','world')
+
+    assert arm_commander.pick(obj), 'failed to pick object'
+    
+    assert arm_commander.go_position_ikpoints()[0], 'failed to move arm after attaching object'
+
+    assert arm_commander.detach_object(obj), 'failed to detach object'
+
+    assert arm_commander.open_gripper(), 'failed to open gripper after detaching object'
 
 @pytest.mark.parametrize("sphere_radius", [0.03])
 @pytest.mark.parametrize("scale_trans", [
@@ -252,12 +304,19 @@ def test_go_rand_pose_loop(iterations):
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
 
 @pytest.mark.parametrize("iterations", [1,10,25])
-def _test_go_rand_pose_loop_kinpy(iterations):
+def test_go_pose_kinpy(iterations):
     success_counter = 0
     for _ in range(iterations):
-        res, target = arm_commander.go_pose_kinpy()
-        time.sleep(5)
-        compare_res,d, msg = compare_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
+        pose_goal = arm_commander.arm_mvgroup.get_random_pose().pose
+        broadcast_pose(arm_commander.tf_broadcaster, pose_goal, 'target', 'world')
+        rot = np.array(convert_to_list(pose_goal.orientation))
+        pos = np.array(convert_to_list(pose_goal.position))
+        pose_tf =  kp.Transform(rot,pos)
+        ik_sol_joints = convert_to_list(arm_commander.kinpy_arm.inverse_kinematics(pose_tf))
+        res = False
+        if arm_commander._check_joint_limits(ik_sol_joints):
+            res, _ = arm_commander.go_joint(ik_sol_joints)
+        compare_res,d, msg = compare_ik_result(arm_commander.get_end_effector_pose(),pose_goal,PLANNING_TOLERANCE)
         test_log.info("Planning Result: %s, Tolerance %s"%(res,d*100))
         if res and compare_res:
             success_counter+=1

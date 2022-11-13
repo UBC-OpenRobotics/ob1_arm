@@ -38,11 +38,11 @@
         <joint name="ob1_arm_forearm_gripper_joint" value="0.2602"/>
         <joint name="ob1_arm_shoulder_arm_joint" value="0.2006"/>
     </group_state>
-    <group_state name="gripper_open" group="gripper">
-        <joint name="ob1_arm_gripper_lclaw_joint" value="-0.9888"/>
-        <joint name="ob1_arm_gripper_rclaw_joint" value="0.8501"/>
+    <group_state name="open" group="gripper">
+        <joint name="ob1_arm_gripper_lclaw_joint" value="-1.54"/>
+        <joint name="ob1_arm_gripper_rclaw_joint" value="1.54"/>
     </group_state>
-    <group_state name="gripper closed" group="gripper">
+    <group_state name="close" group="gripper">
         <joint name="ob1_arm_gripper_lclaw_joint" value="0.1561"/>
         <joint name="ob1_arm_gripper_rclaw_joint" value="-0.052"/>
     </group_state>
