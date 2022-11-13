@@ -53,31 +53,6 @@ def transform_pose(tf, p:Pose):
     tp_mat44 = np.dot(tf, p_mat44)
     return mat_to_pose(tp_mat44)
 
-# def transform_pose(p1:Pose, p2:Pose):
-#     """
-#     @brief do a transformation p1 dot p2
-
-#     @param p1: Pose 1
-#     @param p2: Pose 2
-#     @return transformed pose
-
-#     **Logic**
-#     Pass in translation and rotation from frame1 to frame2
-#     Create 4x4 tf matrix from this
-#     Create 4x4 matrix of pose
-#     tf dot pose
-#     extract trans and quat from result
-#     """
-
-#     p1_mat44 = pose_to_mat(p1)
-#     p1_mat44 = transformations.inverse_matrix(p1_mat44)
-#     p2_mat44 = pose_to_mat(p2)
-
-#     p3_mat = np.dot(p1_mat44,p2_mat44)
-#     pos = tuple(transformations.translation_from_matrix(p3_mat))[:3]
-#     quat = tuple(transformations.quaternion_from_matrix(p3_mat))
-#     return Pose(Point(*pos), Quaternion(*quat))
-
 def transform_pose_with_tr(translation, rotation, pose:Pose):
     """
     @brief helper function to transform a pose with a 4x4 transformation matrix

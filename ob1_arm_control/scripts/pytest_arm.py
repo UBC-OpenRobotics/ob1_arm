@@ -194,10 +194,11 @@ def test_go_rand_scene_object_2(iterations):
     test_log.info("Success rate: %f%%" %(success_counter/iterations*100))
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE
 
-@pytest.mark.parametrize("orientation_tolerance", [0.1,0.2,0.3])
+@pytest.mark.parametrize("claw_search_tolerance", [0.05,0.1])
+@pytest.mark.parametrize("orientation_search_tolerance", [0.1,0.25,0.5,1])
 @pytest.mark.parametrize("iterations", [5])
 @pytest.mark.parametrize("sphere_radius", [0.03])
-def test_go_reachable_scene_object_smart(orientation_tolerance,iterations,sphere_radius):
+def test_go_reachable_scene_object_smart(claw_search_tolerance,orientation_search_tolerance,iterations,sphere_radius):
     test_log.info("Starting go_reachable_scene_object_smart test")
 
     success_counter = 0
@@ -220,7 +221,7 @@ def test_go_reachable_scene_object_smart(orientation_tolerance,iterations,sphere
             continue
         obj:CollisionObject = list(objs.items())[0][1]
 
-        res, obj_pose, joint_target = arm_commander.go_scene_object(obj, orientation_tolerance)
+        res, obj_pose, joint_target = arm_commander.go_scene_object(obj, claw_search_tolerance,orientation_search_tolerance )
 
         compare_res,d, msg = compare_ik_result(arm_commander.get_end_effector_pose(), obj_pose, PLANNING_TOLERANCE)
         test_log.info(msg)
@@ -228,11 +229,11 @@ def test_go_reachable_scene_object_smart(orientation_tolerance,iterations,sphere
         if res and compare_res:
             success_counter+=1
         dist_total+=dist(arm_commander.get_end_effector_pose(),obj_pose)
-        time.sleep(10)
         
     test_log.info("Motion planning success rate: %f%%" %(success_counter/iterations*100))
     test_log.info("Motion planning avg tolerance: %f cm " %(dist_total/iterations*100))
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
+
 
 @pytest.mark.parametrize("sphere_radius", [0.03])
 @pytest.mark.parametrize("scale_trans", [

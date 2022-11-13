@@ -286,7 +286,6 @@ class IKPoints():
         @return bool
         """
         dist,_= self.kdtree.query(pt)
-        print(dist, _)
 
         return dist <= tolerance
 

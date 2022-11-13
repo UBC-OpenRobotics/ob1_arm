@@ -315,7 +315,7 @@ class ArmCommander:
             print('invalid joint goal')
             return False, pose_goal, ik_sol_joints
 
-    def go_scene_object(self, object:CollisionObject, orientation_tolerance=0.1):
+    def go_scene_object(self, object:CollisionObject, claw_search_tolerance=0.05, orientation_search_tolerance = 0.5):
         """
         @brief makes the end effector of the arm go to the proximity of a scene object
         Finds optimal joint target based on ik points data base
@@ -331,7 +331,6 @@ class ArmCommander:
 
         #add object transform to transform topic
         broadcast_pose(self.tf_broadcaster, object.pose, object.id, object.header.frame_id)
-
         pt_obj = np.array(convert_to_list(object.pose.position)) #object point (frame: world)
 
         #TO DO : better check for in range (since we do more complex searches)
@@ -348,7 +347,12 @@ class ArmCommander:
         t, r = self.tf_listener.lookupTransform('/'+self.GRIPPER_LINK_NAME, '/'+self.GRIPPER_RCLAW_LINK_NAME, rospy.Time(0))
         eef_rclaw_mat44 = t_r_to_mat(t,r)
         #need this tansformation for later
+        w_eef_mat44 = pose_to_mat(self.get_end_effector_pose().pose)
         eef_tclaw_mat44 = np.dot(eef_rclaw_mat44,rclaw_tclaw_mat44)
+
+        w_tclaw_pose =  mat_to_pose(np.dot(w_eef_mat44,eef_tclaw_mat44))
+        broadcast_pose(self.tf_broadcaster, w_tclaw_pose, 'og_pose_tclaw', 'world')
+
 
         #find all points a 'claw offset' distance away from the centre of the object
         claw_offset = np.linalg.norm(pt_tclaw)
@@ -367,78 +371,40 @@ class ArmCommander:
         #filter through poses by calculation quaternion absolute distances
         #this roughly determines if pose orientation is facing object
         start = time.time()
-        fjoint_targets = []
-        fpose_targets = []
+        f_ikpoints = []
         for i in range(size):
             pose_target:Pose = pose_targets[i]
-            pt_t = np.array(convert_to_list(pose_target.position))
-            dir = -1*(pt_obj - pt_t) #direction vector pose pt -> obj pt
-            q1 = Quaternion(0,dir[0],dir[1],dir[2]).normalised #dir quaternion with w=1
-            q2 = Quaternion(pose_target.orientation.w,pose_target.orientation.x,pose_target.orientation.y,pose_target.orientation.z)
-            d = Quaternion.absolute_distance(q1,q2) #abs distance between direction quat and pose quat
-            if d >= orientation_tolerance: #orientation not similar enough
-                continue
+            # pt_t = np.array(convert_to_list(pose_target.position))
+            # dir = -1*(pt_obj - pt_t) #direction vector pose pt -> obj pt
+            # q1 = Quaternion(0,dir[0],dir[1],dir[2]).normalised #dir quaternion with w=1
+            # q2 = Quaternion(pose_target.orientation.w,pose_target.orientation.x,pose_target.orientation.y,pose_target.orientation.z)
+            # d = Quaternion.absolute_distance(q1,q2) #abs distance between direction quat and pose quat
+            # if d >= orientation_search_tolerance: #orientation not similar enough
+            #     continue
 
             w_eef_mat44 = pose_to_mat(pose_target)
             w_tclaw_mat44 = np.dot(w_eef_mat44, eef_tclaw_mat44)
             pose_tclaw = mat_to_pose(w_tclaw_mat44)
             pt_tclaw = np.array(convert_to_list(pose_tclaw.position))
             d_tclaw = np.linalg.norm(pt_obj-pt_tclaw)
-            broadcast_pose(self.tf_broadcaster, pose_tclaw, 'tclaw_target', 'world')
-            if d_tclaw >= 0.05:
+            if d_tclaw > claw_search_tolerance:
                 continue
+            broadcast_pose(self.tf_broadcaster, pose_tclaw, 'pose_tclaw', 'world')
 
-            fjoint_targets.append(joint_targets[i])
-            fpose_targets.append(pose_targets[i])
-        del(joint_targets)
+            f_ikpoints.append((d_tclaw,pose_targets[i],joint_targets[i]))
+
         del(pose_targets)
-        pose_targets = fpose_targets
-        joint_targets = fjoint_targets
+        del(joint_targets)
+
+        from functools import cmp_to_key
+        sorted(f_ikpoints, key=cmp_to_key(lambda t1, t2: t2[0]-t1[0]))
+        joint_targets = [t[2] for t in f_ikpoints]
+        pose_targets = [t[1] for t in f_ikpoints]
+        print(f_ikpoints[0][0], f_ikpoints[-1][0])
+
         filter_dur = time.time()- start
         print("filtered %d pose targets in %.5f seconds" % (size-len(joint_targets), filter_dur))
         print("%d joint targets to test" % len(joint_targets))
-
-        #get target pose for claw
-        #this is the point between both grippers
-        # claw_pose = PoseStamped()
-        # claw_pose.pose = Pose(Point(*tuple(t_claw)), Quaternion(w=1))
-        # claw_pose.header.frame_id = self.GRIPPER_RCLAW_LINK_NAME #currently in frame: right claw
-        # claw_pose = self.tf_listener.transformPose('/world', claw_pose).pose #transform to world frame
-        # broadcast_pose(claw_pose,'claw_target','world')
-
-        # claw_point = PointStamped()
-        # claw_point.point = p
-        # claw_point.header.frame_id = self.GRIPPER_RCLAW_LINK_NAME
-        # claw_point = self.tf_listener.transformPoint('/'+self.GRIPPER_LINK_NAME, claw_point).point
-        # pt_claw = np.array(convert_to_list(claw_point))
-
-        # pt_target = pt_obj - pt_claw
-        # p = Point(pt_target[0],pt_target[1],pt_target[2])
-        # pose_target = Pose(p,q)
-        # broadcast_pose(pose_target,'eef_target','world')
-
-        #visualize claw target pose in world frame
-        # pose_viz = self.tf_listener.transformPose('/world',claw_target_pose_stamped)
-        # self.scene.add_sphere("viz_sphere",pose_viz,0.03)
-        # time.sleep(1)
-        # self.scene.remove_world_object("viz_sphere")
-
-        # pose_stamped_target = PoseStamped()
-        # p_target = Point(pt_target[0],pt_target[1],pt_target[2])
-        # q_target = Quaternion(0,0,0,1)
-        # pose_target = Pose(p_target,q_target)
-        # pose_stamped_target.pose = pose_target
-        # pose_stamped_target.header.frame_id = "world"
-        # res, _, joints = self.go_pose_kinpy(pose_stamped_target)
-        # if res:
-        #     print('go pose kinpy succeeded')
-        #     return res, object.pose, joints
-        # else:
-        #     joints = self._enforce_joint_limits(joints)
-        #     res, _ = self.go_joint(joints)
-        #     if res:
-        #         print('go pose kinpy enforced limits passed')
-        #         return res, object.pose, joints
 
         for joints in joint_targets:
             res, _ = self.go_joint(joints)
