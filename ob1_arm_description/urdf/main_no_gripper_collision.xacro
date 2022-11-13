@@ -5,7 +5,7 @@
     <!-- # include statements, much like import statements -->
     <!-- ################################################### -->
     <xacro:include filename="$(find ob1_arm_description)/urdf/ob1_arm.xacro"/>
-    <xacro:include filename="$(find ob1_arm_description)/urdf/gripper.xacro"/>
+    <xacro:include filename="$(find ob1_arm_description)/urdf/gripper_no_collision.xacro"/>
 
     <xacro:property name="prefix" value="ob1_arm" />
 
