@@ -7,7 +7,7 @@ from moveit_commander.conversions import pose_to_list
 import numpy as np
 from math import pi, tau, dist, fabs, cos
 import geometry_msgs
-from geometry_msgs.msg import PoseStamped, Pose, Point, PointStamped
+from geometry_msgs.msg import PoseStamped, Pose, Point, PointStamped, Quaternion
 import geometry_msgs.msg as gm
 from moveit_commander import MoveGroupCommander,RobotCommander, PlanningSceneInterface
 from shape_msgs.msg import SolidPrimitive
@@ -19,7 +19,6 @@ from kinpy.chain import SerialChain
 import time
 import tf
 from tf_helpers import *
-from pyquaternion import Quaternion
 from ob1_arm_control.srv import IKPointsServiceRequest
 from ikpoints_service import ikpoints_service_client
 
@@ -111,6 +110,7 @@ class ArmCommander:
         for joint_name in self.arm_mvgroup.get_active_joints():
             joint = self.robot.get_joint(joint_name)
             self._joint_limits.append((joint.bounds()[0],joint.bounds()[1]))
+        self.register_gripper_edge_states()
 
     def _check_pose_goal(self,pose):
         if type(pose) is PoseStamped:
@@ -291,23 +291,15 @@ class ArmCommander:
 
         return res, pose_goal
 
-    def go_pose_kinpy(self, pose_goal:PoseStamped=None):
-        if pose_goal == None:
-            print('selecting random pose goal')
-            pose_goal = self.arm_mvgroup.get_random_pose()
-        if not self._check_pose_goal(pose_goal):
-            print('invalid pose goal')
-            return False, pose_goal, None
-        rot = np.array(convert_to_list(pose_goal.pose.orientation))
-        pos = np.array(convert_to_list(pose_goal.pose.position))
-        pose_tf = kp.Transform(rot,pos)
-        ik_sol_joints = convert_to_list(self.kinpy_arm.inverse_kinematics(pose_tf))
-        if self._check_joint_limits(ik_sol_joints):
-            res, _ = self.go_joint(ik_sol_joints)
-            return res, pose_goal, ik_sol_joints
-        else:
-            print('invalid joint goal')
-            return False, pose_goal, ik_sol_joints
+    def close_gripper(self):
+        joints = self.gripper_mvgroup.get_remembered_joint_values("close")
+        return self.gripper_mvgroup.go(joints)
+    
+    def pick(self, object:CollisionObject):
+        res, pos_target, joint_target = self.go_position_ikpoints(object.pose.position)
+        if res:
+            res = self.close_gripper()
+        return res
 
     def go_scene_object(self, object:CollisionObject, claw_search_tolerance=0.05, orientation_search_tolerance = 0.5):
         """
@@ -368,13 +360,6 @@ class ArmCommander:
         f_ikpoints = []
         for i in range(size):
             pose_target:Pose = pose_targets[i]
-            # pt_t = np.array(convert_to_list(pose_target.position))
-            # dir = -1*(pt_obj - pt_t) #direction vector pose pt -> obj pt
-            # q1 = Quaternion(0,dir[0],dir[1],dir[2]).normalised #dir quaternion with w=1
-            # q2 = Quaternion(pose_target.orientation.w,pose_target.orientation.x,pose_target.orientation.y,pose_target.orientation.z)
-            # d = Quaternion.absolute_distance(q1,q2) #abs distance between direction quat and pose quat
-            # if d >= orientation_search_tolerance: #orientation not similar enough
-            #     continue
 
             w_eef_mat44 = pose_to_mat(pose_target)
             w_tclaw_mat44 = np.dot(w_eef_mat44, eef_tclaw_mat44)
