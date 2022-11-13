@@ -22,5 +22,5 @@ for pickle_file_name in pickle_file_names:
         for i in range(len(data)):
             data[i]["pose_stamped"] = convert_ros_message_to_dictionary(data[i]["pose_stamped"])
         with open(json_file_name,"w") as jf:
-            print('Saved %s to %s' % (pickle_file_name,json_file_name))
             json.dump(data, jf)
+            print('Saved %s to %s' % (pickle_file_name,json_file_name))

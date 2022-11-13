@@ -18,10 +18,9 @@ def convert_joint_targets_to_Joint_Targets(joint_targets):
     return output
 
 def convert_Joint_Targets_to_joint_targets(Joint_Targets):
-    output = []
-    for joints in Joint_Targets:
-        output.append(joints.joint_target)
-    return output
+    if len(Joint_Targets) == 1:
+        return Joint_Targets[0].joint_target
+    return [joints.joint_target for joints in Joint_Targets]
 
 def ikpoints_service_client(request):
     """
@@ -77,7 +76,7 @@ class IKPointsServiceServer:
         #init and load ikpoints
         rospy.loginfo("==== Loading IK Points ====")
         start = time.time()
-        IKPointsServiceServer.ikpoints = IKPoints(rospkg.RosPack().get_path('ob1_arm_control') + "/data/2m_ikpoints_data.json")
+        IKPointsServiceServer.ikpoints = IKPoints(rospkg.RosPack().get_path('ob1_arm_control') + "/data/2m_ikpoints_data2.json")
         load_time = time.time() - start
         rospy.loginfo("=== Loaded IK points in %d seconds" % load_time)
         rospy.loginfo("==== Done Loading IK Points ====")

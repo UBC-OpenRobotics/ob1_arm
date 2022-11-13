@@ -10,7 +10,7 @@
     <!--CHAINS: When a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group-->
     <!--SUBGROUPS: Groups can also be formed by referencing to already defined group names-->
     <group name="arm">
-        <chain base_link="ob1_arm_base_link" tip_link="ob1_arm_gripper_base_link"/>
+        <chain base_link="ob1_arm_base_link" tip_link="ob1_arm_eef_link"/>
     </group>
     <group name="gripper">
         <joint name="ob1_arm_gripper_lclaw_joint"/>
@@ -47,7 +47,7 @@
         <joint name="ob1_arm_gripper_rclaw_joint" value="-0.052"/>
     </group_state>
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
-    <end_effector name="gripper" parent_link="ob1_arm_forearm_link" group="gripper" parent_group="arm"/>
+    <end_effector name="gripper" parent_link="ob1_arm_gripper_base_link" group="gripper" parent_group="arm"/>
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
     <disable_collisions link1="ob1_arm_arm_link" link2="ob1_arm_base_link" reason="Never"/>
     <disable_collisions link1="ob1_arm_arm_link" link2="ob1_arm_elbow_link" reason="Adjacent"/>
