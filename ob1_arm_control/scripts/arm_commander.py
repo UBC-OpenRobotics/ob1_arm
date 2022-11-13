@@ -270,10 +270,10 @@ class ArmCommander:
         '''
 
         if pose_goal == None:
-            self._current_pose_goal = self.arm_mvgroup.get_random_pose()
+            pose_goal = self.arm_mvgroup.get_random_pose()
         if type(pose_goal) is not PoseStamped:
             raise ValueError("Input goal is not a PoseStamped")
-        if self.robot.get_planning_frame() != self._current_pose_goal.header.frame_id:
+        if self.robot.get_planning_frame() != pose_goal.header.frame_id:
             print("Incorrect planning frame for pose goal, got %s instead of %s \n" \
                     %(self._current_pose_goal.header.frame_id,self.robot.get_planning_frame()))
             self._current_pose_goal = None
@@ -288,12 +288,6 @@ class ArmCommander:
             res = self.arm_mvgroup.go()
             self.arm_mvgroup.stop()
             self.arm_mvgroup.clear_pose_targets()
-        else:
-            req = IKPointsServiceRequest()
-            req.request = 'get nearest joint targets'
-            req.point = pose_goal.pose.position
-            joint_target = ikpoints_service_client(req)[1]
-            res, _ = self.go_joint(joint_target)
 
         return res, pose_goal
 
@@ -410,38 +404,7 @@ class ArmCommander:
             res, _ = self.go_joint(joints)
             if res:
                 return res, object.pose, joints
-        return False, object.pose, None 
-            
-
-def all_close(goal, actual, tolerance):
-    """
-    From: https://github.com/ros-planning/moveit_tutorials/blob/master/doc/move_group_python_interface/scripts/move_group_python_interface_tutorial.py
-    Convenience method for testing if the values in two lists are within a tolerance of each other.
-    For Pose and PoseStamped inputs, the angle between the two quaternions is compared (the angle
-    between the identical orientations q and -q is calculated correctly).
-    @param: goal       A list of floats, a Pose or a PoseStamped
-    @param: actual     A list of floats, a Pose or a PoseStamped
-    @param: tolerance  A float
-    @returns: bool
-    """
-    if type(goal) is list:
-        for index in range(len(goal)):
-            if abs(actual[index] - goal[index]) > tolerance:
-                return False
-
-    elif type(goal) is geometry_msgs.msg.PoseStamped:
-        return all_close(goal.pose, actual.pose, tolerance)
-
-    elif type(goal) is geometry_msgs.msg.Pose:
-        x0, y0, z0, qx0, qy0, qz0, qw0 = pose_to_list(actual)
-        x1, y1, z1, qx1, qy1, qz1, qw1 = pose_to_list(goal)
-        # Euclidean distance
-        d = dist((x1, y1, z1), (x0, y0, z0))
-        # phi = angle between orientations
-        cos_phi_half = fabs(qx0 * qx1 + qy0 * qy1 + qz0 * qz1 + qw0 * qw1)
-        return d <= tolerance and cos_phi_half >= cos(tolerance / 2.0)
-
-    return True
+        return False, object.pose, None
 
 def convert_to_list(obj):
     """
@@ -449,15 +412,15 @@ def convert_to_list(obj):
 
     returns none if invalid input object
     """
-    if type(obj) is Point:
+    if type(obj) is gm.Point:
         return [obj.x,obj.y,obj.z]
-    if type(obj) is Quaternion:
+    if type(obj) is gm.Quaternion:
         return [obj.x,obj.y,obj.z,obj.w]
-    elif type(obj) is Pose:
+    elif type(obj) is gm.Pose:
         return [ obj.position.x,
                  obj.position.y,
                  obj.position.z ]
-    elif type(obj) is PoseStamped:
+    elif type(obj) is gm.PoseStamped:
         return [ obj.pose.position.x,
                  obj.pose.position.y,
                  obj.pose.position.z ]

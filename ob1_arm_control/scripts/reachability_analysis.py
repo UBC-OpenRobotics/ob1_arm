@@ -37,7 +37,7 @@ urdf_path = rp.get_path('ob1_arm_description') + "/urdf/main.urdf"
 arm = kp.build_serial_chain_from_urdf(
     open(urdf_path).read(),
     root_link_name="ob1_arm_base_link",
-    end_link_name="ob1_arm_gripper_base_link"
+    end_link_name="ob1_arm_eef_link"
 )
 
 PACKAGE_PATH = rp.get_path('ob1_arm_control')

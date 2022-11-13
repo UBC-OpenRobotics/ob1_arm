@@ -36,6 +36,36 @@ arm_commander = ArmCommander(sample_time_out=0.1,goal_tolerance=0.02)
 test_log.info("Clearing scene..")
 arm_commander.scene.clear()
 
+def all_close(goal, actual, tolerance):
+    """
+    From: https://github.com/ros-planning/moveit_tutorials/blob/master/doc/move_group_python_interface/scripts/move_group_python_interface_tutorial.py
+    Convenience method for testing if the values in two lists are within a tolerance of each other.
+    For Pose and PoseStamped inputs, the angle between the two quaternions is compared (the angle
+    between the identical orientations q and -q is calculated correctly).
+    @param: goal       A list of floats, a Pose or a PoseStamped
+    @param: actual     A list of floats, a Pose or a PoseStamped
+    @param: tolerance  A float
+    @returns: bool
+    """
+    if type(goal) is list:
+        for index in range(len(goal)):
+            if abs(actual[index] - goal[index]) > tolerance:
+                return False
+
+    elif type(goal) is geometry_msgs.msg.PoseStamped:
+        return all_close(goal.pose, actual.pose, tolerance)
+
+    elif type(goal) is geometry_msgs.msg.Pose:
+        x0, y0, z0, qx0, qy0, qz0, qw0 = pose_to_list(actual)
+        x1, y1, z1, qx1, qy1, qz1, qw1 = pose_to_list(goal)
+        # Euclidean distance
+        d = dist((x1, y1, z1), (x0, y0, z0))
+        # phi = angle between orientations
+        cos_phi_half = fabs(qx0 * qx1 + qy0 * qy1 + qz0 * qz1 + qw0 * qw1)
+        return d <= tolerance and cos_phi_half >= cos(tolerance / 2.0)
+
+    return True
+
 def dist(p1,p2):
     p1 = np.array(convert_to_list(p1))
     p2 = np.array(convert_to_list(p2))
@@ -56,12 +86,15 @@ def compare_ik_result(current_state,target,tolerance:float):
         return True, d, "Motion planning tolerance success. %f cm" % (d*100)
     else:
         return False, d, "Distance from target is too far, %f cm" % (d*100)
+    
+###########################################################################3
 
 def test_go_rand_pose():
     test_log.info("Starting go_rand_pose test")
     test_log.info("Going to random pose...")
     res, target = arm_commander.go_pose()
     assert res , "motion planning failed"
+    assert all_close(target, arm_commander.arm_mvgroup.get_current_joint_values()) , "joint target not within tolerance"
     test_log.info("Boolean result: %s" % res)
     test_log.info("Target type: %s" % type(target))
     assert_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
@@ -92,107 +125,6 @@ def test_go_rand_ikpoint():
     test_log.info("Boolean result: %s" % res)
     test_log.info("Target type: %s" % type(target))
     assert_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
-
-def test_go_reachable_scene_object_1():
-    test_log.info("Starting go_reachable_scene_object_1 test")
-
-    test_log.info("Clearing scene..")
-    arm_commander.scene.clear()
-
-    test_log.info("Generating and placing scene object..")
-    p = PoseStamped()
-    p.header.frame_id = arm_commander.robot.get_planning_frame()
-    p.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
-    p.pose.orientation.w = 1
-    arm_commander.scene.add_sphere("sphere",p,0.1)
-
-    time.sleep(5)
-
-    test_log.info("Detecting scene objects..")
-    objs = arm_commander.scene.get_objects()
-    assert len(objs) > 0, "Could not find any scene objects"
-    obj:CollisionObject = list(objs.items())[0][1]
-    pos = [obj.pose.position.x,obj.pose.position.y,obj.pose.position.z]
-    # pos = rand_pos
-
-    test_log.info("Motion planning to scene object")
-    res, target, joint_target = arm_commander.go_position_ikpoints(pos)
-
-    assert res , "motion planning failed"
-
-    test_log.info("Boolean result: %s" % res)
-    test_log.info("Target type: %s" % type(target))
-    assert_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
-
-@pytest.mark.parametrize("iterations", [1,5,10,15,20])
-def test_go_reachable_scene_object_2(iterations):
-    test_log.info("Starting go_rand_scene_object_3 test")
-
-    success_counter = 0
-    for _ in range(iterations):
-
-        arm_commander.scene.clear()
-
-        p = PoseStamped()
-        p.header.frame_id = arm_commander.robot.get_planning_frame()
-        rand_pos = arm_commander.ikpoints.get_rand_point()
-        p.pose.position.x = rand_pos[0]
-        p.pose.position.y = rand_pos[1]
-        p.pose.position.z = rand_pos[2]
-        p.pose.orientation.w = 1
-        arm_commander.scene.add_sphere("sphere",p,0.05)
-
-        p1 = np.array(rand_pos)
-
-        res, target, joint_target = arm_commander.go_position_ikpoints(p1)
-        if not res:
-            dx = 0.1
-            for i in range(iterations):
-                p2 = p1 * (1 - dx*i)
-                res, target, joint_target = arm_commander.go_position_ikpoints(p2)
-                if res:
-                    break
-        
-        compare_res,d, msg = compare_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
-        test_log.info(compare_res)
-        if res and compare_res:
-            success_counter+=1
-    
-    test_log.info("Success rate: %f%%" %(success_counter/iterations*100))
-    assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE
-
-@pytest.mark.parametrize("iterations", [1,5,10,15,20])
-def test_go_rand_scene_object_2(iterations):
-    test_log.info("Starting go_rand_scene_object_2 test")
-
-    success_counter = 0
-    for _ in range(iterations):
-
-        arm_commander.scene.clear()
-
-        p = arm_commander.arm_mvgroup.get_random_pose()
-        p.header.frame_id = arm_commander.robot.get_planning_frame()
-        p.pose.orientation = Quaternion()
-        arm_commander.scene.add_sphere("sphere",p,0.05)
-
-        p1 = np.array(convert_to_list(p.pose))
-
-        res, target, joint_target = arm_commander.go_position_ikpoints(p1)
-        if not res:
-            dx = 0.1
-            for i in range(iterations):
-                p2 = p1 * (1 - dx*i)
-                res, target, joint_target = arm_commander.go_position_ikpoints(p2)
-                if res:
-                    break
-        
-        compare_res,d, msg = compare_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
-        test_log.info(compare_res)
-        if res and compare_res:
-            success_counter+=1
-    
-    test_log.info("Success rate: %f%%" %(success_counter/iterations*100))
-    assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE
 
 @pytest.mark.parametrize("claw_search_tolerance", [0.05,0.1])
 @pytest.mark.parametrize("orientation_search_tolerance", [0.1,0.25,0.5,1])
@@ -234,6 +166,44 @@ def test_go_reachable_scene_object_smart(claw_search_tolerance,orientation_searc
     test_log.info("Motion planning avg tolerance: %f cm " %(dist_total/iterations*100))
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
 
+@pytest.mark.parametrize("iterations", [5])
+@pytest.mark.parametrize("sphere_radius", [0.03])
+def test_go_reachable_scene_object_pose(iterations,sphere_radius):
+    test_log.info("Starting go_reachable_scene_object_smart test")
+
+    success_counter = 0
+    dist_total = 0
+    for _ in range(iterations):
+
+        arm_commander.scene.clear()
+
+        p = PoseStamped()
+        p.header.frame_id = arm_commander.robot.get_planning_frame()
+        p.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
+        p.pose.orientation.w = 1
+        arm_commander.scene.add_sphere("sphere",p,sphere_radius)
+
+        time.sleep(2)
+
+        objs = arm_commander.scene.get_objects()
+        if len(objs) < 1:
+            test_log.warning("Could not find any scene objects")
+            continue
+        obj:CollisionObject = list(objs.items())[0][1]
+
+        res, target, _ = arm_commander.go_position_ikpoints(obj.pose.position)
+
+        compare_res,d, msg = compare_ik_result(arm_commander.get_end_effector_pose(), target, PLANNING_TOLERANCE)
+        test_log.info(msg)
+
+        if res and compare_res:
+            success_counter+=1
+        dist_total+=dist(arm_commander.get_end_effector_pose(),target)
+        
+    test_log.info("Motion planning success rate: %f%%" %(success_counter/iterations*100))
+    test_log.info("Motion planning avg tolerance: %f cm " %(dist_total/iterations*100))
+    assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
+
 
 @pytest.mark.parametrize("sphere_radius", [0.03])
 @pytest.mark.parametrize("scale_trans", [
@@ -246,7 +216,7 @@ def test_go_reachable_scene_object_smart(claw_search_tolerance,orientation_searc
     (0.1,[0.05,-0.05,0]),
     (0.1,[-0.05,-0.05,0])
     ])
-def test_viz_target(scale_trans,sphere_radius):
+def _test_viz_target(scale_trans,sphere_radius):
     arm_commander.scene.remove_world_object()
 
     def get_pose_viz(scale:float,translate:list):
@@ -282,7 +252,7 @@ def test_go_rand_pose_loop(iterations):
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
 
 @pytest.mark.parametrize("iterations", [1,10,25])
-def test_go_rand_pose_loop_kinpy(iterations):
+def _test_go_rand_pose_loop_kinpy(iterations):
     success_counter = 0
     for _ in range(iterations):
         res, target = arm_commander.go_pose_kinpy()
