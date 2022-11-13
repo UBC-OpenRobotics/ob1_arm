@@ -33,14 +33,16 @@ class ArmCommander:
     _sample_time_out   = 5             # time out in seconds for Inverse Kinematic search
     _sample_attempts   = 5             # num of planning attempts 
     _goal_tolerance    = 0.001
-    _joint_limits = []
+    _arm_joint_limits = []
+    _gripper_joint_limits = []
     _num_joints = 0
     _gripper_offset = [0,-0.155,0.08285]
 
     #group and link anmes
     ARM_GROUP_NAME = "arm"
     GRIPPER_GROUP_NAME = "gripper"
-    GRIPPER_LINK_NAME = "ob1_arm_gripper_base_link"
+    EEF_LINK_NAME = "ob1_arm_eef_link"
+    GRIPPER_BASE_LINK_NAME = "ob1_arm_gripper_base_link"
     GRIPPER_LCLAW_LINK_NAME = "ob1_arm_lclaw_link"
     GRIPPER_RCLAW_LINK_NAME = "ob1_arm_rclaw_link"
     WORLD_REF_FRAME = "world"
@@ -109,8 +111,10 @@ class ArmCommander:
         rospy.loginfo("==== Storing Joint Limits")
         for joint_name in self.arm_mvgroup.get_active_joints():
             joint = self.robot.get_joint(joint_name)
-            self._joint_limits.append((joint.bounds()[0],joint.bounds()[1]))
-        self.register_gripper_edge_states()
+            self._arm_joint_limits.append((joint.bounds()[0],joint.bounds()[1]))
+        for joint_name in self.gripper_mvgroup.get_active_joints():
+            joint = self.robot.get_joint(joint_name)
+            self._gripper_joint_limits.append((joint.bounds()[0],joint.bounds()[1]))
 
     def _check_pose_goal(self,pose):
         if type(pose) is PoseStamped:
@@ -126,10 +130,10 @@ class ArmCommander:
 
         @return list of joint values clamped to their limits (as defined by the urdf)
         """
-        if len(self._joint_limits) < 0 :
+        if len(self._arm_joint_limits) < 0 :
             return joints
         for i in range(self._num_joints):
-            joints[i] = np.clip(joints[i], self._joint_limits[i][0], self._joint_limits[i][1])
+            joints[i] = np.clip(joints[i], self._arm_joint_limits[i][0], self._arm_joint_limits[i][1])
             print(joints[i])
         return joints
 
@@ -144,21 +148,9 @@ class ArmCommander:
         if len(joints) != self._num_joints:
             return False
         for i in range(self._num_joints):
-            if joints[i] < self._joint_limits[i][0] or joints[i] > self._joint_limits[i][1]:
+            if joints[i] < self._arm_joint_limits[i][0] or joints[i] > self._arm_joint_limits[i][1]:
                 return False
         return True
-
-    def register_gripper_edge_states(self):
-        joint_vals_min = [0]
-        joint_vals_max = [0]
-        for joint_name in self.gripper_mvgroup.get_joints():
-            joint = self.robot.get_joint(joint_name)
-            joint_vals_min.append(joint.bounds()[0])
-            joint_vals_max.append(joint.bounds()[1])
-
-        #todo: test these remembered joint states
-        self.gripper_mvgroup.remember_joint_values("open", values=joint_vals_max)
-        self.gripper_mvgroup.remember_joint_values("close", values=joint_vals_min)
 
     def get_end_effector_pose(self):
         """
@@ -217,7 +209,7 @@ class ArmCommander:
 
         #plan to original position goal
         self.arm_mvgroup.clear_pose_targets()
-        self.arm_mvgroup.set_position_target(position_goal, self.GRIPPER_LINK_NAME)
+        self.arm_mvgroup.set_position_target(position_goal, self.GRIPPER_BASE_LINK_NAME)
         plan = self.arm_mvgroup.plan()
         self._current_plan = plan
 
@@ -292,13 +284,48 @@ class ArmCommander:
         return res, pose_goal
 
     def close_gripper(self):
-        joints = self.gripper_mvgroup.get_remembered_joint_values("close")
-        return self.gripper_mvgroup.go(joints)
+        joints_close = list(self.gripper_mvgroup.get_named_target_values("close").values())
+        return self.gripper_mvgroup.go(joints_close)
+
+    def open_gripper(self):
+        joints_close = list(self.gripper_mvgroup.get_named_target_values("open").values())
+        return self.gripper_mvgroup.go(joints_close)
+
+    def attach_object(self, object:CollisionObject):
+        touch_links = self.robot.get_link_names(group=self.GRIPPER_GROUP_NAME)
+        self.scene.attach_box(self.EEF_LINK_NAME, object.id, touch_links=touch_links)
+        time.sleep(2) #delay for scene update
+        return self.scene.get_attached_objects([object.id]) #empty dictionaries eval as false in python
+    
+    def detach_object(self, object:CollisionObject):
+        self.scene.remove_attached_object(self.EEF_LINK_NAME, name=object.id)
+        time.sleep(2) #delay for scene update
+        return not self.scene.get_attached_objects([object.id])
     
     def pick(self, object:CollisionObject):
-        res, pos_target, joint_target = self.go_position_ikpoints(object.pose.position)
+        print("Picking object: %s" % object.id)
+        def close_gripper_around_object():
+            self.gripper_mvgroup.set_planning_time(0.1)
+            self.gripper_mvgroup.set_num_planning_attempts(1)
+            joints_open = list(self.gripper_mvgroup.get_named_target_values("open").values())
+            joints_close = list(self.gripper_mvgroup.get_named_target_values("close").values())
+            js_0 = np.linspace(joints_close[0], joints_open[0], 10)
+            js_1 = np.linspace(joints_close[1], joints_open[1], 10)
+            for a0 in js_0:
+                for a1 in js_1:
+                    self.gripper_mvgroup.set_joint_value_target([a0,a1])
+                    plan = self.gripper_mvgroup.plan()
+                    if plan[0]:
+                        if self.gripper_mvgroup.go():
+                            return True
+            return False
+
+        self.open_gripper()
+        res = self.go_position_ikpoints(object.pose.position)[0]
         if res:
-            res = self.close_gripper()
+            res = close_gripper_around_object()
+            if res:
+                res = self.attach_object(object)
         return res
 
     def go_scene_object(self, object:CollisionObject, claw_search_tolerance=0.05, orientation_search_tolerance = 0.5):
@@ -330,7 +357,7 @@ class ArmCommander:
         pt_tclaw = np.array([-0.05,-0.07,0])
         pose_tclaw = Pose(Point(*tuple(pt_tclaw)), Quaternion(w=1))
         rclaw_tclaw_mat44 = pose_to_mat(pose_tclaw)
-        t, r = self.tf_listener.lookupTransform('/'+self.GRIPPER_LINK_NAME, '/'+self.GRIPPER_RCLAW_LINK_NAME, rospy.Time(0))
+        t, r = self.tf_listener.lookupTransform('/'+self.GRIPPER_BASE_LINK_NAME, '/'+self.GRIPPER_RCLAW_LINK_NAME, rospy.Time(0))
         eef_rclaw_mat44 = t_r_to_mat(t,r)
         #need this tansformation for later
         w_eef_mat44 = pose_to_mat(self.get_end_effector_pose().pose)

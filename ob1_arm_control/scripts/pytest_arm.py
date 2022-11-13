@@ -212,8 +212,8 @@ def test_go_reachable_scene_object_pose(iterations,sphere_radius):
     test_log.info("Motion planning avg tolerance: %f cm " %(dist_total/iterations*100))
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
 
-@pytest.mark.parametrize("iterations", [5,10,25])
-@pytest.mark.parametrize("sphere_radius", [0.03, 0.05])
+@pytest.mark.parametrize("iterations", [5])
+@pytest.mark.parametrize("sphere_radius", [0.03])
 def test_pick(iterations,sphere_radius):
     test_log.info("Starting pickt test")
 
@@ -237,6 +237,25 @@ def test_pick(iterations,sphere_radius):
 
     test_log.info("Motion planning success rate: %f%%" %(success_counter/iterations*100))
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
+
+@pytest.mark.parametrize("sphere_radius", [0.03])
+def test_pick_and_move(sphere_radius):
+    test_log.info("Starting pick and move test")
+
+    arm_commander.scene.clear()
+    spawn_random_sphere(sphere_radius)
+    objs = arm_commander.scene.get_objects()
+    assert len(objs) >= 0, 'could not find any scene objects'
+    obj:CollisionObject = list(objs.items())[0][1]
+    broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'sphere','world')
+
+    assert arm_commander.pick(obj), 'failed to pick object'
+    
+    assert arm_commander.go_position_ikpoints()[0], 'failed to move arm after attaching object'
+
+    assert arm_commander.detach_object(obj), 'failed to detach object'
+
+    assert arm_commander.open_gripper(), 'failed to open gripper after detaching object'
 
 @pytest.mark.parametrize("sphere_radius", [0.03])
 @pytest.mark.parametrize("scale_trans", [

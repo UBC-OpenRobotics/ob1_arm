@@ -109,7 +109,7 @@ def calculate_js_reachability(fk_planner="MOVEIT"):
         """
 
         if joint_index < num_joints:
-            min,max = arm_commander._joint_limits[joint_index-1]
+            min,max = arm_commander._arm_joint_limits[joint_index-1]
             val = min
             while val < max:
                 val+=JS_RESOLUTION
