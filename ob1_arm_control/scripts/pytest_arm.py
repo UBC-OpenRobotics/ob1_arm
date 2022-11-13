@@ -229,7 +229,7 @@ def test_pick(iterations,sphere_radius):
         obj:CollisionObject = list(objs.items())[0][1]
         broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'sphere','world')
 
-        res = arm_commander.pick(obj)
+        res = arm_commander.pick_object(obj)
         test_log.info(res)
 
         if res :
@@ -249,7 +249,33 @@ def test_pick_and_move(sphere_radius):
     obj:CollisionObject = list(objs.items())[0][1]
     broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'sphere','world')
 
-    assert arm_commander.pick(obj), 'failed to pick object'
+    assert arm_commander.pick_object(obj), 'failed to pick object'
+    
+    assert arm_commander.go_position_ikpoints()[0], 'failed to move arm after attaching object'
+
+    assert arm_commander.detach_object(obj), 'failed to detach object'
+
+    assert arm_commander.open_gripper(), 'failed to open gripper after detaching object'
+
+def test_pick_cylinder_and_move():
+    test_log.info("Starting pick and move test")
+
+    arm_commander.scene.clear()
+
+    p = PoseStamped()
+    p.header.frame_id = arm_commander.robot.get_planning_frame()
+    p.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
+    p.pose.orientation.w = 1
+    arm_commander.scene.add_cylinder('cylinder', p, height=0.15, radius=0.03)
+
+    time.sleep(2)
+
+    objs = arm_commander.scene.get_objects()
+    assert len(objs) >= 0, 'could not find any scene objects'
+    obj:CollisionObject = list(objs.items())[0][1]
+    broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'cylinder','world')
+
+    assert arm_commander.pick_object(obj), 'failed to pick object'
     
     assert arm_commander.go_position_ikpoints()[0], 'failed to move arm after attaching object'
 
