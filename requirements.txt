@@ -1,0 +1,10 @@
+#required python packages for ob1 arm repo
+numpy
+kinpy
+matplotlib
+orsjon
+scipy
+pytest
+pytest-repeat
+rospy
+rospkg

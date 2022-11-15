@@ -23,6 +23,7 @@ import pytest
 import logging
 from tf_helpers import broadcast_pose
 import kinpy as kp
+print(sys.version)
 
 ##TEST PARAMS
 # rp = rospkg.RosPack()

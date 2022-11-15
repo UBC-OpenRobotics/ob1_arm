@@ -6,6 +6,7 @@
 - Andrew Xie 
 
 ## Table of Contents (READMEs):
+- [Setup Guide](./setup.md)
 
 - [Hardware Interface](./ob1_arm_hw_interface/README/README.md)
 
