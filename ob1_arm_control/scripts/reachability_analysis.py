@@ -22,7 +22,7 @@ AUTO_SAVE_INTERVAL = 0.01
 
 #reachability test joint space resolution, in radians
 #note: there are 4+ joints, so small resolutions will produce a LARGE amount of test values...
-JS_RESOLUTION = 0.1 #0.5
+JS_RESOLUTION = 0.7 #0.5
 
 ###########################################
 
@@ -102,13 +102,12 @@ def calculate_js_reachability(fk_planner="MOVEIT"):
     num_joints = len(joint_target)
 
     joint_targets.append(deepcopy(joint_target))
-
     def generate_joint_space_recursively(joint_index=1):
         """
         recursive helper method to generate the test space of joint values
         """
 
-        if joint_index < num_joints:
+        if joint_index <= num_joints:
             min,max = arm_commander._arm_joint_limits[joint_index-1]
             val = min
             while val < max:
@@ -142,9 +141,9 @@ def calculate_js_reachability(fk_planner="MOVEIT"):
         start_t = time.time()
         success = False
         fk_sol = None
-        if fk_planner is 'MOVEIT':
+        if fk_planner == 'MOVEIT':
             success, _ = arm_commander.go_joint(joints)
-        elif fk_planner is 'KINPY':
+        elif fk_planner == 'KINPY':
             fk_sol = arm.forward_kinematics(joints)
         planning_t = time.time() - start_t
         counter+=1
@@ -160,14 +159,14 @@ def calculate_js_reachability(fk_planner="MOVEIT"):
             successful_joint_targets.append(joints)
             ikpoint = {"pose_stamped":eef_pose_stamped,"joint_target":joints}
             ikpoints_list.append(ikpoint)
-        if fk_planner is 'MOVEIT':
+        if fk_planner == 'MOVEIT':
             if success:
                 success_counter+=1
                 position = eef_pose_stamped.pose.position
                 update_data()
             else:
                 failed_joint_targets.append(joints)
-        if fk_planner is 'KINPY':
+        if fk_planner == 'KINPY':
             if fk_sol is not None and type(fk_sol) is kp.Transform:
                 success_counter+=1
                 position = Point(fk_sol.pos[0],fk_sol.pos[1],fk_sol.pos[2])
