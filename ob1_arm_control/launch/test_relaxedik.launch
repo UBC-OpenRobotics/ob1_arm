@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+    <include file="$(find test_moveit_config)/launch/demo.launch"/>
+    <include file="$(find relaxed_ik)/launch/relaxed_ik_service.launch"/>
+</launch>

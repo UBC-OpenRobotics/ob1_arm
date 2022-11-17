@@ -115,6 +115,16 @@ def test_go_rand_pose():
     test_log.info("Target type: %s" % type(target))
     assert_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
 
+def test_go_rand_pose_relaxedik():
+    res, target, joints = arm_commander.go_pose_relaxedik()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    time.sleep(2)
+    assert res , "motion planning failed"
+    assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(),0.05)
+    test_log.info("Boolean result: %s" % res)
+    test_log.info("Target type: %s" % type(target))
+    assert_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
+
 def test_go_rand_position():
     test_log.info("Starting go_rand_position test")
     test_log.info("Going to random position...")

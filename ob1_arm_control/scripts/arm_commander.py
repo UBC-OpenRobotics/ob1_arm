@@ -1,32 +1,80 @@
 #!/usr/bin/env python3.8
+"""
+Author: Yousif El-Wishahy
+Email: yel.wishahy@gmail.com 
+
+Arm commander class for controlling UBC Open Robotics' Ob1 Arm
+"""
+###########################################################33
 from __future__ import print_function
 import sys
 import rospy
 import moveit_commander
 from moveit_commander.conversions import pose_to_list
 import numpy as np
-from math import pi, tau, dist, fabs, cos
 import geometry_msgs
 from geometry_msgs.msg import PoseStamped, Pose, Point, PointStamped, Quaternion
 import geometry_msgs.msg as gm
 from moveit_commander import MoveGroupCommander,RobotCommander, PlanningSceneInterface
 from shape_msgs.msg import SolidPrimitive
 from moveit_commander.planning_scene_interface import CollisionObject
-import rospkg
-from ikpoints import IKPoints
-import kinpy as kp
-from kinpy.chain import SerialChain
 import time
 import tf
 from tf_helpers import *
 from ob1_arm_control.srv import IKPointsServiceRequest
 from ikpoints_service import ikpoints_service_client
+from relaxed_ik.msg import EEPoseGoals, JointAngles
+from relaxed_ik.srv import RelaxedIKService, RelaxedIKServiceRequest
 
-# Author: Yousif El-Wishahy
+def relaxedik_service_client(request):
+    """
+    @brief Client function for relaxed ik service
 
-##############################
-# arm command class to be called by robot loop
-##############################
+    @param request: RelaxedIKServiceRequest (read below)
+
+    @return joint target list [angle1,angle2,...]
+
+    Relaxed IK Service Request
+
+    relaxed_ik/EEPoseGoals pose_goals
+        std_msgs/Header header
+            uint32 seq
+            time stamp
+            string frame_id
+        geometry_msgs/Pose[] ee_poses
+            geometry_msgs/Point position
+            float64 x
+            float64 y
+            float64 z
+            geometry_msgs/Quaternion orientation
+            float64 x
+            float64 y
+            float64 z
+            float64 w
+
+    Relaxed IK Service Response
+
+    relaxed_ik/JointAngles joint_angles
+        std_msgs/Header header
+            uint32 seq
+            time stamp
+            string frame_id
+        std_msgs/Float32[] angles
+            float32 data
+    """
+    try:
+        rospy.wait_for_service('relaxed_ik_service', timeout=60)
+    except Exception as err_msg:
+        rospy.logwarn(err_msg)
+        return JointAngles()
+
+    try:
+        resp = rospy.ServiceProxy('relaxed_ik_service', RelaxedIKService)(request)
+        return [a.data for a in resp.joint_angles.angles]
+    except rospy.ServiceException as e:
+        rospy.logwarn("Service call failed: %s"%e)
+        return JointAngles()
+
 class ArmCommander:
     _current_plan = None # current joint trajectory plan
     _current_pose_goal : PoseStamped = None #current pose goal 
@@ -46,9 +94,6 @@ class ArmCommander:
     GRIPPER_LCLAW_LINK_NAME = "ob1_arm_lclaw_link"
     GRIPPER_RCLAW_LINK_NAME = "ob1_arm_rclaw_link"
     WORLD_REF_FRAME = "world"
-
-    URDF_PATH = rospkg.RosPack().get_path('ob1_arm_description') + "/urdf/main.urdf"
-    kinpy_arm:SerialChain = None
  
     def __init__(self, sample_time_out=5, sample_attempts=5, goal_tolerance=0.05):
         '''
@@ -75,13 +120,6 @@ class ArmCommander:
         self._goal_tolerance = goal_tolerance
         self._sample_attempts = sample_attempts
         self._sample_time_out = sample_time_out
-
-        self.kinpy_arm = kp.build_serial_chain_from_urdf(
-            open(self.URDF_PATH).read(),
-            root_link_name="ob1_arm_base_link",
-            end_link_name="ob1_arm_gripper_base_link"
-        )
-        rospy.loginfo("==== Initialized kinpy arm serial chain")
 
         rospy.loginfo("==== Initialized arm move group")
         rospy.loginfo("==== Sample time out: %s s" % self._sample_time_out)
@@ -434,6 +472,25 @@ class ArmCommander:
             if res:
                 return res, object.pose, joints
         return False, object.pose, None
+
+    def go_pose_relaxedik(self, pose_goal:PoseStamped = None):
+        if pose_goal == None:
+            pose_goal = self.arm_mvgroup.get_random_pose()
+        if type(pose_goal) is not PoseStamped:
+            raise ValueError("Input goal is not a PoseStamped")
+        if self.robot.get_planning_frame() != pose_goal.header.frame_id:
+            print("Incorrect planning frame for pose goal, got %s instead of %s \n" \
+                    %(self._current_pose_goal.header.frame_id,self.robot.get_planning_frame()))
+            self._current_pose_goal = None
+            return False, None
+        self._current_pose_goal = pose_goal
+
+        req = RelaxedIKServiceRequest()
+        req.pose_goals.header = pose_goal.header
+        req.pose_goals.ee_poses = [pose_goal.pose]
+        joints = relaxedik_service_client(req)
+        res, _ = self.go_joint(joints)
+        return res, pose_goal, joints
 
 def convert_to_list(obj):
     """
