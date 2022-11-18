@@ -17,6 +17,24 @@ def broadcast_pose(tf_broadcaster:tf.TransformBroadcaster, pose:Pose,child:str,p
     obj_rot = (obj_rot.x,obj_rot.y,obj_rot.z,obj_rot.w)
     tf_broadcaster.sendTransform(obj_tr, obj_rot, rospy.Time.now(), child, parent)
 
+def broadcast_point(tf_broadcaster:tf.TransformBroadcaster, point, child:str,parent:str):
+    """
+    @brief helper function to broadcase point to transofrm tree
+    @param pose: Point object , or list [x,y,z], or tuple (x,y,z) or np.array([x,y,z])
+    @param child: child tf frame name
+    @param parent: parent tf frame name
+    """
+    if type(point) is tuple:
+        obj_tr = point
+    elif type(point) is list:
+        obj_tr = tuple(point)
+    elif type(point) is Point:
+        obj_tr = (point.x,point.y,point.z)
+    elif type(point) is np.ndarray:
+        obj_tr = tuple(point.tolist())
+    obj_rot = (0,0,0,1)
+    tf_broadcaster.sendTransform(obj_tr, obj_rot, rospy.Time.now(), child, parent)
+
 def point_to_mat(p:Point):
     """@brief convert a ros point to 4x4 ndarray matrix"""
     return transformations.translation_matrix((p.x,p.y,p.z))

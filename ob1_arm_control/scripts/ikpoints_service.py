@@ -22,7 +22,7 @@ def convert_Joint_Targets_to_joint_targets(Joint_Targets):
         return Joint_Targets[0].joint_target
     return [joints.joint_target for joints in Joint_Targets]
 
-def ikpoints_service_client(request):
+def ikpoints_service_client(request, timeout=10):
     """
     @brief Client function for ikpoints service
 
@@ -57,7 +57,7 @@ def ikpoints_service_client(request):
             float64[] joint_target
         bool condition
     """
-    rospy.wait_for_service('ik_points')
+    rospy.wait_for_service('ik_points', timeout=timeout)
     try:
         resp = rospy.ServiceProxy('ik_points', IKPointsService)(request)
         pose_targets:list = resp.pose_targets

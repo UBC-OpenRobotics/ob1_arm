@@ -26,7 +26,7 @@ from ikpoints_service import ikpoints_service_client
 from relaxed_ik.msg import EEPoseGoals, JointAngles
 from relaxed_ik.srv import RelaxedIKService, RelaxedIKServiceRequest
 
-def relaxedik_service_client(request):
+def relaxedik_service_client(request, timeout=10):
     """
     @brief Client function for relaxed ik service
 
@@ -63,28 +63,30 @@ def relaxedik_service_client(request):
             float32 data
     """
     try:
-        rospy.wait_for_service('relaxed_ik_service', timeout=60)
+        rospy.wait_for_service('relaxed_ik_service', timeout=timeout)
     except Exception as err_msg:
         rospy.logwarn(err_msg)
-        return JointAngles()
+        return []
 
     try:
         resp = rospy.ServiceProxy('relaxed_ik_service', RelaxedIKService)(request)
         return [a.data for a in resp.joint_angles.angles]
     except rospy.ServiceException as e:
         rospy.logwarn("Service call failed: %s"%e)
-        return JointAngles()
+        return []
 
 class ArmCommander:
     _current_plan = None # current joint trajectory plan
     _current_pose_goal : PoseStamped = None #current pose goal 
-    _sample_time_out   = 5             # time out in seconds for Inverse Kinematic search
-    _sample_attempts   = 5             # num of planning attempts 
-    _goal_tolerance    = 0.001
     _arm_joint_limits = []
     _gripper_joint_limits = []
     _num_joints = 0
-    _gripper_offset = [0,-0.155,0.08285]
+
+    #move group parameters
+    _sample_timeout = 1
+    _sample_attempts = 5
+    _goal_tolerance = 0.01
+    _joint_tolerance = 0.001
 
     #group and link anmes
     ARM_GROUP_NAME = "arm"
@@ -95,13 +97,18 @@ class ArmCommander:
     GRIPPER_RCLAW_LINK_NAME = "ob1_arm_rclaw_link"
     WORLD_REF_FRAME = "world"
  
-    def __init__(self, sample_time_out=5, sample_attempts=5, goal_tolerance=0.05):
+    def __init__(self, sample_time_out=1, sample_attempts=5, goal_tolerance=0.01, joint_tolerance=0.001):
         '''
         @brief init arm command object, moveit commander, scene and movegroups for arm and arm gripper
         '''
         moveit_commander.roscpp_initialize(sys.argv)
         rospy.init_node("arm_commander", anonymous=True)
         rospy.loginfo("Initialized arm_commander node")
+
+        self._sample_timeout = sample_time_out
+        self._sample_attempts = sample_attempts
+        self._goal_tolerance = goal_tolerance
+        self._joint_tolerance = joint_tolerance
 
         self.robot:RobotCommander = moveit_commander.RobotCommander()
         self.scene:PlanningSceneInterface = moveit_commander.PlanningSceneInterface()
@@ -110,25 +117,25 @@ class ArmCommander:
 
         #init arm move group 
         self.arm_mvgroup:MoveGroupCommander = moveit_commander.MoveGroupCommander(self.ARM_GROUP_NAME)
-        self.arm_mvgroup.set_planning_time(sample_time_out)
-        self.arm_mvgroup.set_num_planning_attempts(sample_attempts)
-        self.arm_mvgroup.set_goal_tolerance(goal_tolerance)
-        self.arm_mvgroup.set_max_velocity_scaling_factor(1)
-        self.arm_mvgroup.set_max_acceleration_scaling_factor(0.3)
+        
+        #init gripper move group
+        self.gripper_mvgroup:MoveGroupCommander = moveit_commander.MoveGroupCommander(self.GRIPPER_GROUP_NAME)
 
         self._num_joints = len(self.arm_mvgroup.get_random_joint_values())
-        self._goal_tolerance = goal_tolerance
-        self._sample_attempts = sample_attempts
-        self._sample_time_out = sample_time_out
 
-        rospy.loginfo("==== Initialized arm move group")
-        rospy.loginfo("==== Sample time out: %s s" % self._sample_time_out)
-        rospy.loginfo("==== Sample attempts: %d " % self._sample_attempts)
-        rospy.loginfo("==== Goal Tolerance: %f m" % self._goal_tolerance)
-
-        self.gripper_mvgroup:MoveGroupCommander = moveit_commander.MoveGroupCommander(self.GRIPPER_GROUP_NAME)
+        def set_mvgrp_params(mv_grp:MoveGroupCommander):
+            mv_grp.set_planning_time(self._sample_timeout)
+            mv_grp.set_num_planning_attempts(self._sample_attempts)
+            mv_grp.set_goal_tolerance(self._goal_tolerance)
+            mv_grp.set_goal_joint_tolerance(self._joint_tolerance)
+            rospy.loginfo("==== Initialized move group instance: %s" % mv_grp.get_name())
+            rospy.loginfo("==== Sample time out: %s s" % self._sample_timeout)
+            rospy.loginfo("==== Sample attempts: %d " % self._sample_attempts)
+            rospy.loginfo("==== Goal Tolerance: %f m" % self._goal_tolerance)
+            rospy.loginfo("==== Joint Tolerance: %f m" % self._joint_tolerance)
+        set_mvgrp_params(self.arm_mvgroup)
+        set_mvgrp_params(self.gripper_mvgroup)
         
-        #debug print
         rospy.loginfo("==== Planning Reference Frame: %s" % self.arm_mvgroup.get_planning_frame())
 
         rospy.loginfo("==== Pose Reference Frame: %s" % self.arm_mvgroup.get_pose_reference_frame())
@@ -140,9 +147,6 @@ class ArmCommander:
         rospy.loginfo("==== Robot Links ====\n\n%s\n\n" % self.robot.get_link_names())
 
         rospy.loginfo("==== Robot Joints ====\n\n%s\n\n" % self.robot.get_active_joint_names())
-
-        # print("============ Printing robot state")
-        # print(self.robot.get_current_state())
 
         rospy.loginfo("==== MoveIt Interface Description ====\n\n%s\n" % self.arm_mvgroup.get_interface_description())
 
@@ -250,7 +254,7 @@ class ArmCommander:
         self.arm_mvgroup.set_position_target(position_goal, self.GRIPPER_BASE_LINK_NAME)
         plan = self.arm_mvgroup.plan()
         self._current_plan = plan
-
+        res = False
         if plan[0]:
             res = self.arm_mvgroup.go()
             self.arm_mvgroup.stop()
@@ -342,8 +346,6 @@ class ArmCommander:
 
     def pick_object(self, object:CollisionObject, attempts=100):
         def close_gripper_around_object():
-            self.gripper_mvgroup.set_planning_time(0.1)
-            self.gripper_mvgroup.set_num_planning_attempts(1)
             joints_open = list(self.gripper_mvgroup.get_named_target_values("open").values())
             joints_close = list(self.gripper_mvgroup.get_named_target_values("close").values())
             js_0 = np.linspace(joints_close[0], joints_open[0], 10)
@@ -489,7 +491,10 @@ class ArmCommander:
         req.pose_goals.header = pose_goal.header
         req.pose_goals.ee_poses = [pose_goal.pose]
         joints = relaxedik_service_client(req)
-        res, _ = self.go_joint(joints)
+        if len(joints) != self._num_joints:
+            res = False
+        else:
+            res, _ = self.go_joint(joints)
         return res, pose_goal, joints
 
 def convert_to_list(obj):
