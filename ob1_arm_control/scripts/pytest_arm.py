@@ -1,9 +1,9 @@
-#!/usr/bin/env python3.8
+#! /usr/bin/env python
 from __future__ import print_function
 from operator import itemgetter
 import pickle
 import time
-from arm_commander import ArmCommander, convert_to_list
+from arm_commander import ArmCommander
 import sys
 import rospy
 import moveit_commander
@@ -21,7 +21,7 @@ from copy import deepcopy
 import rospkg
 import pytest
 import logging
-from tf_helpers import broadcast_pose, broadcast_point
+from tf_helpers import broadcast_pose, broadcast_point, convert_to_list
 import kinpy as kp
 from test_helpers import *
 print(sys.version)
@@ -32,7 +32,7 @@ DIST_TOLERANCE = 0.01 #distance in m
 SUCCESS_RATE_TOLERANCE = 0.85 #percentage of tests that pass
 
 log = logging.getLogger(__name__)
-arm_commander = ArmCommander()
+arm_commander = ArmCommander(sample_timeout=0.1)
 
 def clear_scene():
     arm_commander.scene.clear()
@@ -74,6 +74,14 @@ def test_go_rand_pose_tolerance(setup_teardown):
     time.sleep(2)
     assert res , "motion planning failed"
     assert all_close(target, arm_commander.get_end_effector_pose(), GOAL_TOLERANCE)
+
+def test_go_rand_pose_ikpoints(setup_teardown):
+    res, target, joints = arm_commander.go_pose_ikpoints()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    time.sleep(2)
+    assert res , "motion planning failed"
+    assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
+    assert_dist(arm_commander.get_end_effector_pose(),target,DIST_TOLERANCE)
 
 def test_go_rand_pose_relaxedik(setup_teardown):
     res, target, joints = arm_commander.go_pose_relaxedik()

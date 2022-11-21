@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
 <launch>
+  <arg name="ikpoints_data_file_name" value="ik_data.h5" />
   <node name="ik_points" pkg="ob1_arm_control" type="ikpoints_service.py"  respawn="false" output="screen"/>
 </launch>

@@ -73,50 +73,6 @@ Visualization Manager:
           Expand Link Details: false
           Expand Tree: false
           Link Tree Style: Links in Alphabetic Order
-          ob1_arm_arm_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_base_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_elbow_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_forearm_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_gripper_base_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_lclaw_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_rclaw_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_shoulder_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          world:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
         Loop Animation: false
         Robot Alpha: 0.5
         Robot Color: 150; 50; 150
@@ -163,50 +119,6 @@ Visualization Manager:
           Expand Link Details: false
           Expand Tree: false
           Link Tree Style: Links in Alphabetic Order
-          ob1_arm_arm_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_base_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_elbow_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_forearm_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_gripper_base_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_lclaw_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_rclaw_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_shoulder_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          world:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
         Robot Alpha: 0.5
         Show Robot Collision: false
         Show Robot Visual: true
@@ -233,50 +145,6 @@ Visualization Manager:
           Expand Link Details: false
           Expand Tree: false
           Link Tree Style: Links in Alphabetic Order
-          ob1_arm_arm_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_base_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_elbow_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_forearm_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_gripper_base_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_lclaw_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_rclaw_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          ob1_arm_shoulder_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          world:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
         Robot Alpha: 1
         Show Robot Collision: false
         Show Robot Visual: true
@@ -290,6 +158,8 @@ Visualization Manager:
           Value: false
         ob1_arm_base_link:
           Value: false
+        ob1_arm_eef_link:
+          Value: true
         ob1_arm_elbow_link:
           Value: false
         ob1_arm_forearm_link:
@@ -302,12 +172,6 @@ Visualization Manager:
           Value: false
         ob1_arm_shoulder_link:
           Value: false
-        og_pose_tclaw:
-          Value: true
-        pose_tclaw:
-          Value: true
-        sphere:
-          Value: true
         world:
           Value: true
       Marker Alpha: 1
@@ -318,22 +182,7 @@ Visualization Manager:
       Show Names: true
       Tree:
         world:
-          ob1_arm_base_link:
-            ob1_arm_shoulder_link:
-              ob1_arm_arm_link:
-                ob1_arm_elbow_link:
-                  ob1_arm_forearm_link:
-                    ob1_arm_gripper_base_link:
-                      ob1_arm_lclaw_link:
-                        {}
-                      ob1_arm_rclaw_link:
-                        {}
-          og_pose_tclaw:
-            {}
-          pose_tclaw:
-            {}
-          sphere:
-            {}
+          {}
       Update Interval: 0
       Value: true
   Enabled: true
@@ -389,4 +238,4 @@ Window Geometry:
     collapsed: false
   Width: 1291
   X: 204
-  Y: 111
+  Y: 74

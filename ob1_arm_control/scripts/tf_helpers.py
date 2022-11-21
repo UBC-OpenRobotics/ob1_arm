@@ -4,6 +4,32 @@ import rospy
 from geometry_msgs.msg import *
 import numpy as np
 
+def convert_to_list(obj):
+    """
+    @brief helper function to convert geometry messages to list [x,y,z]
+
+    returns none if invalid input object
+    """
+    if type(obj) is gm.Point:
+        return [obj.x,obj.y,obj.z]
+    if type(obj) is gm.Quaternion:
+        return [obj.x,obj.y,obj.z,obj.w]
+    elif type(obj) is gm.Pose:
+        return [ obj.position.x,
+                 obj.position.y,
+                 obj.position.z ]
+    elif type(obj) is gm.PoseStamped:
+        return [ obj.pose.position.x,
+                 obj.pose.position.y,
+                 obj.pose.position.z ]
+    elif type(obj) is np.ndarray:
+        return obj.tolist()
+    elif type(obj) is list:
+        return obj
+    else:
+        print(obj)
+        raise ValueError("Invalid input to convert_to_list funtion")
+
 def broadcast_pose(tf_broadcaster:tf.TransformBroadcaster, pose:Pose,child:str,parent:str):
     """
     @brief helper function to broadcase pose to transform tree

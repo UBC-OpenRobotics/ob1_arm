@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#! /usr/bin/env python
 """
 Author: Yousif El-Wishahy
 Email: yel.wishahy@gmail.com 
@@ -23,57 +23,8 @@ import tf
 from tf_helpers import *
 from ob1_arm_control.srv import IKPointsServiceRequest
 from ikpoints_service import ikpoints_service_client
-from relaxed_ik.msg import EEPoseGoals, JointAngles
 from relaxed_ik.srv import RelaxedIKService, RelaxedIKServiceRequest
-
-def relaxedik_service_client(request, timeout=10):
-    """
-    @brief Client function for relaxed ik service
-
-    @param request: RelaxedIKServiceRequest (read below)
-
-    @return joint target list [angle1,angle2,...]
-
-    Relaxed IK Service Request
-
-    relaxed_ik/EEPoseGoals pose_goals
-        std_msgs/Header header
-            uint32 seq
-            time stamp
-            string frame_id
-        geometry_msgs/Pose[] ee_poses
-            geometry_msgs/Point position
-            float64 x
-            float64 y
-            float64 z
-            geometry_msgs/Quaternion orientation
-            float64 x
-            float64 y
-            float64 z
-            float64 w
-
-    Relaxed IK Service Response
-
-    relaxed_ik/JointAngles joint_angles
-        std_msgs/Header header
-            uint32 seq
-            time stamp
-            string frame_id
-        std_msgs/Float32[] angles
-            float32 data
-    """
-    try:
-        rospy.wait_for_service('relaxed_ik_service', timeout=timeout)
-    except Exception as err_msg:
-        rospy.logwarn(err_msg)
-        return []
-
-    try:
-        resp = rospy.ServiceProxy('relaxed_ik_service', RelaxedIKService)(request)
-        return [a.data for a in resp.joint_angles.angles]
-    except rospy.ServiceException as e:
-        rospy.logwarn("Service call failed: %s"%e)
-        return []
+from relaxed_ik_helpers import relaxedik_service_client
 
 class ArmCommander:
     _current_plan = None # current joint trajectory plan
@@ -97,7 +48,7 @@ class ArmCommander:
     GRIPPER_RCLAW_LINK_NAME = "ob1_arm_rclaw_link"
     WORLD_REF_FRAME = "world"
  
-    def __init__(self, sample_time_out=1, sample_attempts=5, goal_tolerance=0.01, joint_tolerance=0.001):
+    def __init__(self, sample_timeout=1, sample_attempts=5, goal_tolerance=0.01, joint_tolerance=0.001):
         '''
         @brief init arm command object, moveit commander, scene and movegroups for arm and arm gripper
         '''
@@ -105,7 +56,7 @@ class ArmCommander:
         rospy.init_node("arm_commander", anonymous=True)
         rospy.loginfo("Initialized arm_commander node")
 
-        self._sample_timeout = sample_time_out
+        self._sample_timeout = sample_timeout
         self._sample_attempts = sample_attempts
         self._goal_tolerance = goal_tolerance
         self._joint_tolerance = joint_tolerance
@@ -283,11 +234,31 @@ class ArmCommander:
 
         req = IKPointsServiceRequest()
         req.request = 'get nearest joint targets'
-        req.point = Point(position_goal[0],position_goal[1],position_goal[2])
+        req.pose = Pose(Point(position_goal[0],position_goal[1],position_goal[2]),Quaternion())
         joint_target = ikpoints_service_client(req)[1]
         res, _ = self.go_joint(joint_target)
     
         return res, position_goal, joint_target
+    
+    def go_pose_ikpoints(self, pose_goal:PoseStamped):
+        if pose_goal == None:
+            pose_goal = self.arm_mvgroup.get_random_pose()
+        if type(pose_goal) is not PoseStamped:
+            raise ValueError("Input goal is not a PoseStamped")
+        if self.robot.get_planning_frame() != pose_goal.header.frame_id:
+            print("Incorrect planning frame for pose goal, got %s instead of %s \n" \
+                    %(self._current_pose_goal.header.frame_id,self.robot.get_planning_frame()))
+            self._current_pose_goal = None
+            return False, None, None
+        self._current_pose_goal = pose_goal
+
+        req = IKPointsServiceRequest()
+        req.request = 'get nearest joint targets pose'
+        req.pose = pose_goal.pose
+        joint_target = ikpoints_service_client(req)[1]
+        res, _ = self.go_joint(joint_target)
+    
+        return res, pose_goal, joint_target
         
     def go_pose(self, pose_goal:PoseStamped=None):
         '''
@@ -364,14 +335,14 @@ class ArmCommander:
 
         req = IKPointsServiceRequest()
         req.request = "in range"
-        req.point = object.pose.position
+        req.point = object.pose
         req.tolerance = 0.01
         if not ikpoints_service_client(req)[2]:
             return False
 
         req = IKPointsServiceRequest()
         req.request = 'get nearest joint targets'
-        req.point = object.pose.position
+        req.point = object.pose
         req.num_pts = attempts
         joint_targets = ikpoints_service_client(req)[1]
         for joints in joint_targets:
@@ -406,7 +377,7 @@ class ArmCommander:
         #TO DO : better check for in range (since we do more complex searches)
         req = IKPointsServiceRequest()
         req.request = "in range"
-        req.point = object.pose.position
+        req.point = object.pose
         req.tolerance = 0.01
         if not ikpoints_service_client(req)[2]:
             return False, object.pose, None
@@ -429,7 +400,7 @@ class ArmCommander:
         start = time.time()
         req = IKPointsServiceRequest()
         req.request = 'get dist targets'
-        req.point = object.pose.position
+        req.point = object.pose
         req.distance = claw_offset
         req.tolerance = 0.05
         pose_targets, joint_targets, _ = ikpoints_service_client(req)
@@ -496,29 +467,3 @@ class ArmCommander:
         else:
             res, _ = self.go_joint(joints)
         return res, pose_goal, joints
-
-def convert_to_list(obj):
-    """
-    @brief helper function to convert geometry messages to list [x,y,z]
-
-    returns none if invalid input object
-    """
-    if type(obj) is gm.Point:
-        return [obj.x,obj.y,obj.z]
-    if type(obj) is gm.Quaternion:
-        return [obj.x,obj.y,obj.z,obj.w]
-    elif type(obj) is gm.Pose:
-        return [ obj.position.x,
-                 obj.position.y,
-                 obj.position.z ]
-    elif type(obj) is gm.PoseStamped:
-        return [ obj.pose.position.x,
-                 obj.pose.position.y,
-                 obj.pose.position.z ]
-    elif type(obj) is np.ndarray:
-        return obj.tolist()
-    elif type(obj) is list:
-        return obj
-    else:
-        print(obj)
-        raise ValueError("Invalid input to convert_to_list funtion")

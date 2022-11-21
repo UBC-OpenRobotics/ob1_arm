@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#! /usr/bin/env python
 import rospy
 import rospkg
 from ikpoints import IKPoints
@@ -32,17 +32,24 @@ def ikpoints_service_client(request, timeout=10):
     *lists can be empty , and condition can be False if service call fails
 
     custom service definition:
-    ****IKPointRequest****
+    ob1_arm_control/IKPointsService 
+    ---------REQUEST--------------
         string request
-        geometry_msgs/Point point
+        geometry_msgs/Pose pose
+        geometry_msgs/Point position
             float64 x
             float64 y
             float64 z
+        geometry_msgs/Quaternion orientation
+            float64 x
+            float64 y
+            float64 z
+            float64 w
         uint32 num_pts
         float32 tolerance
         float32 distance
 
-    ****IKPointRequestResponse****
+    ---------RESPONSE--------------
         geometry_msgs/Pose[] pose_targets
         geometry_msgs/Point position
             float64 x
@@ -54,8 +61,9 @@ def ikpoints_service_client(request, timeout=10):
             float64 z
             float64 w
         ob1_arm_control/JointTarget[] joint_targets
-            float64[] joint_target
+        float64[] joint_target
         bool condition
+
     """
     rospy.wait_for_service('ik_points', timeout=timeout)
     try:
@@ -71,12 +79,14 @@ def ikpoints_service_client(request, timeout=10):
 class IKPointsServiceServer:
     ikpoints:IKPoints = None
 
-    def __init__(self):
+    def __init__(self,data_file=None):
         rospy.init_node('ikpoints')
         #init and load ikpoints
         rospy.loginfo("==== Loading IK Points ====")
         start = time.time()
-        IKPointsServiceServer.ikpoints = IKPoints(rospkg.RosPack().get_path('ob1_arm_control') + "/data/2m_ikpoints_data2.json")
+        if data_file is None:
+            data_file = rospy.get_param('ikpoints_data_file_name', default='ik_data.h5')
+        IKPointsServiceServer.ikpoints = IKPoints(rospkg.RosPack().get_path('ob1_arm_control') + "/data/"+data_file) #"/data/2m_ikpoints_data2.json")
         load_time = time.time() - start
         rospy.loginfo("=== Loaded IK points in %d seconds" % load_time)
         rospy.loginfo("==== Done Loading IK Points ====")
@@ -93,7 +103,8 @@ class IKPointsServiceServer:
         ikpoints = IKPointsServiceServer.ikpoints
         if type(ikpoints) is IKPoints:
             cmd = req.request
-            pt = np.array([req.point.x, req.point.y, req.point.z])
+            pose = req.pose
+            pt = np.array([pose.position.x, pose.position.y, pose.position.z])
             num_pts = req.num_pts
             if num_pts < 1:
                 num_pts = 1
@@ -108,8 +119,10 @@ class IKPointsServiceServer:
             joint_targets = []
             pose_targets = []
             condition = False
-            if cmd == 'get nearest joint targets':
+            if cmd == 'get nearest joint targets' or cmd == 'get nearest joint targets position':
                 joint_targets = ikpoints.get_nearest_joint_targets(pt,num_pts)
+            elif cmd == 'get nearest joint targets pose':
+                joint_targets = ikpoints.get_nearest_joint_targets(pose,num_pts)
             elif cmd == 'in range':
                 condition = ikpoints.in_range(pt, tolerance)
             elif cmd == 'get dist targets':
@@ -124,5 +137,5 @@ class IKPointsServiceServer:
 
 if __name__ == "__main__":
     #start ikpoints service server
-    IKPointsServiceServer()
+    IKPointsServiceServer(data_file='ik_data.h5')
     

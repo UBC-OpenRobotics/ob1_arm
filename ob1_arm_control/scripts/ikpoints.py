@@ -10,6 +10,8 @@ import _compat_pickle
 from rospy_msg_converter import convert_dictionary_to_ros_message
 import multiprocessing as mp
 from threading import Thread
+from geometry_msgs.msg import Pose, Point, Quaternion
+import h5py
 
 
 #Author: Yousif El-Wishahy
@@ -18,11 +20,7 @@ from threading import Thread
 
 class IKPoints():
     """
-    @brief
-    format of ikpoint:
-    ikpoint = {"pose_stamped":eef_pose_stamped,"joint_target":joints}
-    pose_stamped is a geometry_msgs PoseStamped object
-    joint_target is a list of floats
+    @brief psuedo inverse kinematics magics
     """
     #list of pose targets 
     pose_targets:list = list()
@@ -36,26 +34,42 @@ class IKPoints():
     _size:int 
     
     #kdtree for nearest point lookups
-    kdtree:KDTree
+    position_kdtree:KDTree
+
+    pose_kdtree:KDTree
 
     def __init__(self, file_path):
+        file_type = file_path.split('.')[1]
         with open(file_path, "rb") as input_file:
-            if file_path.split('.')[1] == 'pickle':
+            if file_type == 'pickle':
                 ikpoints = pickle.load(input_file)
-            if file_path.split('.')[1] == 'json':
+            if file_type == 'json':
                 ikpoints = orjson.loads(input_file.read())
-        print("============ Loaded ik points data file")
-        print("============ Processing %d data objects on %d CPU Cores..." % (len(ikpoints),mp.cpu_count()))
+            if file_type == 'h5':
+                ikpoints = h5py.File(name=file_path, mode='r')
 
-        #populate np arrays
-        self.pose_targets, self.joint_targets, self.points = IKPoints.parallel_process(ikpoints)
-
-        if len(self.points) == len(self.joint_targets):
-            self._size = len(self.points)
-            print('generating kd-tree...')
-            self.kdtree = KDTree(self.points)
+        print("============ Loaded ik points data file (%s)"%file_type)
+        if file_type == 'h5':
+            self._size = len(ikpoints["pose_data"])
+            pq_list = ikpoints["pose_data"]
+            self.joint_targets = ikpoints["joint_data"]
+            self.points = ikpoints["point_data"]
+            self.pose_targets = [Pose(Point(p[0], p[1], p[2]), Quaternion(p[3], p[4], p[5], p[6])) for p in ikpoints["pose_data"]]
         else:
-            print("POINTS AND JOINT TARGET ARRAYS NOT THE SAME LENGTH.")
+            print("============ Processing %d data objects on %d CPU Cores..." % (len(ikpoints),mp.cpu_count()))
+            self._size = len(ikpoints)
+            #populate np arrays
+            self.pose_targets, self.joint_targets, self.points, pq_list = IKPoints.parallel_process(ikpoints)
+
+        assert len(self.points) == self._size, 'points list does not match ikpoints size'
+        assert len(self.pose_targets) == self._size, 'pose targets list does not match ikpoints size'
+        assert len(self.joint_targets) == self._size, 'joint targets list does not match ikpoints size'
+        assert len(pq_list) == self._size, 'position_quaternion list does not match ikpoints size'
+
+        print('============ generating kd-trees...')
+        self.position_kdtree = KDTree(self.points)
+        self.pose_kdtree = KDTree(pq_list)
+
         print("============ Loaded %s ik points" % (self._size))
 
     @staticmethod
@@ -65,7 +79,7 @@ class IKPoints():
 
         @param ikpoints list as a loaded pickle or yaml
         
-        @return tuple of lists (pose_targets, joint_targets, points)
+        @return tuple of lists (pose_targets, joint_targets, points, pq_list)
         """
 
         def split_ikpoints(ikpoints_all, n_split:int):
@@ -83,7 +97,7 @@ class IKPoints():
             print("CPU Cores: %d, Batch Size: %d"  %(len(split_ikpoints), len(split_ikpoints[0])))
             return split_ikpoints
         
-        def process(ikpoints_batch, q, shared_counter):
+        def process(ikpoints_batch, queue, shared_counter):
             """
             Function to process ikpoints_batch
             Ideally run on multiple cpu cores in parallel
@@ -91,22 +105,20 @@ class IKPoints():
             joint_targets = []
             pose_targets = []
             points = []
+            pq_list = []
             for ikpoint in ikpoints_batch:
-                joint_targets.append(list(ikpoint["joint_target"]))
                 if type(ikpoint["pose_stamped"]) is dict:
-                    pose_targets.append(convert_dictionary_to_ros_message('geometry_msgs/Pose', ikpoint["pose_stamped"]["pose"]))
+                    pose = convert_dictionary_to_ros_message('geometry_msgs/Pose', ikpoint["pose_stamped"]["pose"])
                 else:
-                    pose_targets.append(ikpoint["pose_stamped"].pose)
-                p  = ikpoint["pose_stamped"]
-                if type(p) is dict:
-                    p = p["pose"]["position"]
-                    point = np.array([p['x'],p['y'],p['z']])
-                else:
-                    p = p.pose.position
-                    point = np.array([p.x,p.y,p.z])
-                points.append(point)
-            q.put((pose_targets, joint_targets, points))
-            q.close()
+                    pose = ikpoint["pose_stamped"].pose
+                p  = pose.position
+                q = pose.orientation
+                pq_list.append(np.array([p.x, p.y, p.z, q.x, q.y, q.z, q.w]))
+                points.append(np.array([p.x, p.y, p.z]))
+                pose_targets.append(pose)
+                joint_targets.append(list(ikpoint["joint_target"]))
+            queue.put((pose_targets, joint_targets, points, pq_list))
+            queue.close()
             shared_counter.value+=1
             return
 
@@ -136,21 +148,32 @@ class IKPoints():
         joint_targets = []
         pose_targets = []
         points = []
+        pq_list = []
         for _ in range(mp.cpu_count()):
             batch = queue.get()
             pose_targets+=batch[0]
             joint_targets+=batch[1]
             points+=batch[2]
-        return pose_targets, joint_targets, points
+            pq_list+=batch[3]
+        return pose_targets, joint_targets, points, pq_list
 
-    def get_nearest_points(self,pt1,num_pts=1):
+    def get_nearest_points(self,pt1,n=1):
         """Queries kdtree and returns index of nearest point or sorted list (ascending) of indices of nearest points"""
         if type(pt1) is not np.ndarray and  pt1.size != 3:
             raise ValueError("parameter is not a valid point; needs np.array([floatx,floaty,floatz])")
-        return self.kdtree.query(pt1, k=num_pts)
+        return self.position_kdtree.query(pt1, k=n)
+    
+    def get_nearest_poses(self,pose:Pose,n=1):
+        """Queries kdtree and returns index of nearest pose or sorted list (ascending) of indices of nearest points"""
+        if type(pose) is not Pose:
+            raise ValueError("parameter is not a valid point; needs to be geometry_msgs/Pose)")
+        p = pose.position
+        q = pose.orientation
+        pq = np.array([p.x, p.y, p.z, q.x, q.y, q.z, q.w])
+        return self.pose_kdtree.query(pq, k=n)
 
     def get_points_dist(self,pt1,dist,tolerance):
-        """
+        """ 
         @brief Return a list of indices of points a certain distance away from pt1 with a specified tolerance
 
         @param pt1 : float vector3 of type numpy.ndarray 
@@ -161,7 +184,7 @@ class IKPoints():
         """
         if type(pt1) is not np.ndarray and  pt1.size != 3:
             raise ValueError("parameter is not a valid point; needs np.array([floatx,floaty,floatz])")
-        indices = self.kdtree.query_ball_point(pt1,dist+tolerance)
+        indices = self.position_kdtree.query_ball_point(pt1,dist+tolerance)
         out_indices = list()
         for i in indices:
             pt = self.points[i]
@@ -170,18 +193,23 @@ class IKPoints():
                 out_indices.append(i)
         return out_indices
 
-    def get_nearest_joint_targets(self,pt1,num_pts=1):
+    def get_nearest_joint_targets(self,p,num_pts=1):
         """
         @brief
-        Given a point, returns a joint target to reach an area closest to that point
+        Given a point or pose, returns a joint target to reach an area closest to that point or pose
         
-        @param pt1: numpy array for 3d point, eg. np.array([x,y,z])
+        @param p: point np.array([x,y,z]) OR geometry_msgs/Pose
         @param(optional, default=1) num_pts: number of nearest points to find joint targets for
 
         @return joint_target [j1,j2,j3,...] or list of joint targets 
         """
         start = time.time()
-        dist, index = self.get_nearest_points(pt1,num_pts)
+        if type(p) is np.ndarray:
+            dist, index = self.get_nearest_points(p,num_pts)
+        elif type(p) is Pose:
+            dist, index = self.get_nearest_poses(p,num_pts)
+        else:
+            raise ValueError("Input is not a pose or a position array, input type: %s" % type(p))
         search_dur = time.time() - start
         if type(dist) is np.ndarray:
             print("[IK Points] Found %d closest points with avg distance %.5f cm in %.5f seconds" %(index.size, np.average(dist)*100, search_dur))
@@ -193,28 +221,6 @@ class IKPoints():
             print("[IK Points] Found point with promimity %.5f m in %.5f s" % (dist, search_dur))
             joints:list = self.joint_targets[index]
             return joints
-    
-    def get_nearest_pose_targets(self,pt1,num_pts=1):
-        """
-        @brief
-        Given a point, returns a pose target to reach an area closest to that point
-        
-        @param pt1: numpy array for 3d point, eg. np.array([x,y,z])
-
-        @param(optional, default=1) num_pts: number of nearest points to find joint targets for
-
-        @return joint_target [j1,j2,j3,...] or list of joint targets 
-        """
-        dist, index = self.get_nearest_points(pt1,num_pts)
-        if type(dist) is np.ndarray:
-            print("found %d closest points with avg distance %f cm" %(index.size, np.average(dist)*100))
-            poses = []
-            for i in index:
-                poses.append(self.pose_targets[i])
-            return poses
-        else:
-            print("found point with promimity %s" % dist)
-            return self.pose_targets[i]
 
     def get_dist_pose_targets(self, pt1, dist, tolerance = 0.01):
         """
@@ -285,7 +291,7 @@ class IKPoints():
 
         @return bool
         """
-        dist,_= self.kdtree.query(pt)
+        dist,_= self.position_kdtree.query(pt)
 
         return dist <= tolerance
 

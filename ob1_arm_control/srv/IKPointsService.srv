@@ -1,5 +1,5 @@
 string request
-geometry_msgs/Point point
+geometry_msgs/Pose pose
 uint32 num_pts
 float32 tolerance
 float32 distance
