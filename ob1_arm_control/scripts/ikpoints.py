@@ -12,6 +12,8 @@ import multiprocessing as mp
 from threading import Thread
 from geometry_msgs.msg import Pose, Point, Quaternion
 import h5py
+import tables
+import multitables
 
 
 #Author: Yousif El-Wishahy
@@ -23,7 +25,7 @@ class IKPoints():
     @brief psuedo inverse kinematics magics
     """
     #list of pose targets 
-    pose_targets:list = list()
+    pq_list:list = list()
 
     #list of vector3 (numpy array) points
     points:list = list()
@@ -40,37 +42,41 @@ class IKPoints():
 
     def __init__(self, file_path):
         file_type = file_path.split('.')[1]
-        with open(file_path, "rb") as input_file:
-            if file_type == 'pickle':
-                ikpoints = pickle.load(input_file)
-            if file_type == 'json':
-                ikpoints = orjson.loads(input_file.read())
-            if file_type == 'h5':
-                ikpoints = h5py.File(name=file_path, mode='r')
+        if file_type == 'h5':
+            # ikpoints = tables.open_file(file_path, mode='r')
+            # a = ikpoints.root.joint_data[:]
+            # reader = multitables.Reader(filename=file_path, n_procs=6)
+            # pq_dataset = reader.get_dataset(path='/pose_data')
+            # stage = pq_dataset.create_stage(shape=pq_dataset.shape)
+            # a = list(pq_dataset[:1000])
+            ikpoints = h5py.File(file_path,mode='r')
+        else:
+            with open(file_path, "rb") as input_file:
+                if file_type == 'pickle':
+                    ikpoints = pickle.load(input_file)
+                if file_type == 'json':
+                    ikpoints = orjson.loads(input_file.read())
 
         print("============ Loaded ik points data file (%s)"%file_type)
         if file_type == 'h5':
             self._size = len(ikpoints["pose_data"])
-            pq_list = ikpoints["pose_data"]
-            self.joint_targets = ikpoints["joint_data"]
-            self.points = ikpoints["point_data"]
-            self.pose_targets = [Pose(Point(p[0], p[1], p[2]), Quaternion(p[3], p[4], p[5], p[6])) for p in ikpoints["pose_data"]]
+            self.pq_list = ikpoints.get("pose_data")[:]
+            self.points = ikpoints.get("point_data")[:]
+            self.joint_targets = ikpoints.get("joiny_data")[:]
         else:
             print("============ Processing %d data objects on %d CPU Cores..." % (len(ikpoints),mp.cpu_count()))
             self._size = len(ikpoints)
             #populate np arrays
-            self.pose_targets, self.joint_targets, self.points, pq_list = IKPoints.parallel_process(ikpoints)
+            _, self.joint_targets, self.points, self.pq_list = IKPoints.parallel_process(ikpoints)
 
         assert len(self.points) == self._size, 'points list does not match ikpoints size'
-        assert len(self.pose_targets) == self._size, 'pose targets list does not match ikpoints size'
         assert len(self.joint_targets) == self._size, 'joint targets list does not match ikpoints size'
-        assert len(pq_list) == self._size, 'position_quaternion list does not match ikpoints size'
-
-        print('============ generating kd-trees...')
-        self.position_kdtree = KDTree(self.points)
-        self.pose_kdtree = KDTree(pq_list)
+        assert len(self.pq_list) == self._size, 'position_quaternion list does not match ikpoints size'
 
         print("============ Loaded %s ik points" % (self._size))
+        print('============ generating kd-trees...')
+        self.position_kdtree = KDTree(self.points)
+        self.pose_kdtree = KDTree(self.pq_list)
 
     @staticmethod
     def parallel_process(ikpoints:list, timeout=20):
@@ -213,13 +219,10 @@ class IKPoints():
         search_dur = time.time() - start
         if type(dist) is np.ndarray:
             print("[IK Points] Found %d closest points with avg distance %.5f cm in %.5f seconds" %(index.size, np.average(dist)*100, search_dur))
-            joints = []
-            for i in index:
-                joints.append(self.joint_targets[i])
-            return joints
+            return [self.joint_targets[i].tolist() for i in index]
         else:
             print("[IK Points] Found point with promimity %.5f m in %.5f s" % (dist, search_dur))
-            joints:list = self.joint_targets[index]
+            joints:list = self.joint_targets[index].tolist()
             return joints
 
     def get_dist_pose_targets(self, pt1, dist, tolerance = 0.01):
@@ -232,15 +235,11 @@ class IKPoints():
         
         @return list of poses matchting the distance +/- tolerance
         """
-        poses = []
         indices = self.get_points_dist(pt1,dist, tolerance)
-        if len(indices) > 0:
-            for i in indices:
-                poses.append(self.pose_targets[i])
-        return poses
+        return [Pose(Point(p[0], p[1], p[2]), Quaternion(p[3], p[4], p[5], p[6])) for p in [self.pq_list[i] for i in indices]]
 
     def get_dist_joint_targets(self, pt1, dist, tolerance = 0.01):
-        """
+        """     
         @brief Uses get_points_dist to find all joint targets float dist away (+/- tolerance) from numpy array vector pt1
         Joint targets reach the points that match the search query.
 
@@ -250,12 +249,7 @@ class IKPoints():
         
         @return list of joint targets
         """
-        joints = []
-        indices = self.get_points_dist(pt1, dist, tolerance)
-        if len(indices) > 0:
-            for i in indices:
-                joints.append(self.joint_targets[i])
-        return joints
+        return [self.joint_targets[i].tolist() for i in self.get_points_dist(pt1, dist, tolerance)]
     
     def get_dist_targets(self, pt1, dist, tolerance = 0.01):
         """
@@ -270,13 +264,10 @@ class IKPoints():
 
         @return tuple (list of pose targets, list of joint targets)
         """
-        joints = []
-        poses = []
         indices = self.get_points_dist(pt1, dist, tolerance)
-        if len(indices) > 0:
-            for i in indices:
-                joints.append(self.joint_targets[i])
-                poses.append(self.pose_targets[i])
+        joints = [self.joint_targets[i].tolist() for i in indices]
+        poses = [Pose(Point(p[0], p[1], p[2]), Quaternion(p[3], p[4], p[5], p[6])) for p in [self.pq_list[i] for i in indices]]
+        assert len(poses) == len(joints), "pose and joints lists are not the same length"
         return poses, joints
 
     def get_rand_point(self):
@@ -292,7 +283,6 @@ class IKPoints():
         @return bool
         """
         dist,_= self.position_kdtree.query(pt)
-
         return dist <= tolerance
 
         

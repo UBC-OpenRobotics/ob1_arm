@@ -26,7 +26,7 @@ AUTO_SAVE_INTERVAL = 0.1
 
 #reachability test joint space resolution, in radians
 #note: there are 5 joints, so small resolutions will produce a LARGE amount of test values...
-JS_RESOLUTION = 0.2
+JS_RESOLUTION = 0.23
 
 ARM_JOINT_LIMITS = [(-1.5787, 1.5787), (-1.5787, 1.5787), (-3.14, 3.14), (-1.5787, 1.5787), (-3.14, 3.14)]
 
