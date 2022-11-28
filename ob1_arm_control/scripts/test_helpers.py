@@ -39,6 +39,15 @@ def all_close(goal, actual, tolerance):
 
     return True
 
+def avg_all_close(goal, actual):
+    if type(goal) != list:
+        goal = convert_to_list(goal)
+        actual = convert_to_list(actual)
+    total = 0
+    for index in range(len(goal)):
+        total += abs(actual[index] - goal[index])
+    return total/len(goal)
+
 def dist(p1,p2):
     p1 = np.array(convert_to_list(p1))
     p2 = np.array(convert_to_list(p2))

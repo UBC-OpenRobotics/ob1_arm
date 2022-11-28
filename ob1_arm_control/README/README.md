@@ -50,6 +50,17 @@ This command will run all test cases with object in their name:
 pytest -o log_cli=true -q src/ob1_arm_control/scripts/pytest_arm.py -k 'object' 
 ```
 
+Run test cases with print logs:
+```
+pytest -o log_cli=true -q src/ob1_arm_control/scripts/pytest_arm.py -k 'object' -s
+```
+
+Run test cases multiple times (e.g. 10):
+```
+pip install pytest-repeat
+pytest -o log_cli=true -q src/ob1_arm_control/scripts/pytest_arm.py -k 'object' --count=10
+```
+
 ## For older test cases
 Run:
 ```

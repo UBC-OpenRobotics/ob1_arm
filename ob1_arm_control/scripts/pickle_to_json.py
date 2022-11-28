@@ -20,7 +20,7 @@ for pickle_file_name in pickle_file_names:
     json_file_name = PACKAGE_PATH + '/data/' + file_name + '.json'
     with open(pickle_file_name,"rb") as pf:
         data = pickle.load(pf)
-    if data != None:
+    if data is not None:
         if 'ikpoints' in file_name:
             for i in range(len(data)):
                 data[i]["pose_stamped"] = convert_ros_message_to_dictionary(data[i]["pose_stamped"])

@@ -25,6 +25,8 @@ from ob1_arm_control.srv import IKPointsServiceRequest
 from ikpoints_service import ikpoints_service_client
 from relaxed_ik.srv import RelaxedIKService, RelaxedIKServiceRequest
 from relaxed_ik_helpers import relaxedik_service_client
+import pyquaternion as pyq
+from functools import cmp_to_key
 
 class ArmCommander:
     _current_plan = None # current joint trajectory plan
@@ -159,7 +161,7 @@ class ArmCommander:
 
         @param group (MoveGroupCommander) : Move group object , either arm or gripper
 
-        @param joints: list[float] of joint target angles
+        @param joints: list[float] of joint target angles or list of joint target lists
 
         @returns (command result, joint_target [j0,j1,j2,...])
         """
@@ -168,11 +170,10 @@ class ArmCommander:
                 joints = joints.tolist()
             elif type(joints) is tuple:
                 joints = list(joints)
-        if type(joints) is not list or len(joints) != self._num_joints: 
+        elif len(joints) != self._num_joints:
             print('getting random joint values due to joints type = %s' % type(joints))
             joints:list = self.arm_mvgroup.get_random_joint_values()
 
-        self.arm_mvgroup.clear_pose_targets()
         self.arm_mvgroup.set_joint_value_target(joints)
         plan = self.arm_mvgroup.plan()
         result:bool = plan[0]
@@ -239,27 +240,7 @@ class ArmCommander:
         res, _ = self.go_joint(joint_target)
     
         return res, position_goal, joint_target
-    
-    def go_pose_ikpoints(self, pose_goal:PoseStamped):
-        if pose_goal == None:
-            pose_goal = self.arm_mvgroup.get_random_pose()
-        if type(pose_goal) is not PoseStamped:
-            raise ValueError("Input goal is not a PoseStamped")
-        if self.robot.get_planning_frame() != pose_goal.header.frame_id:
-            print("Incorrect planning frame for pose goal, got %s instead of %s \n" \
-                    %(self._current_pose_goal.header.frame_id,self.robot.get_planning_frame()))
-            self._current_pose_goal = None
-            return False, None, None
-        self._current_pose_goal = pose_goal
-
-        req = IKPointsServiceRequest()
-        req.request = 'get nearest joint targets pose'
-        req.pose = pose_goal.pose
-        joint_target = ikpoints_service_client(req)[1]
-        res, _ = self.go_joint(joint_target)
-    
-        return res, pose_goal, joint_target
-        
+ 
     def go_pose(self, pose_goal:PoseStamped=None):
         '''
         @brief Makes the end effector of the arm go to a pose, 
@@ -274,7 +255,7 @@ class ArmCommander:
         @returns (execution result, PoseStamped target)
         '''
 
-        if pose_goal == None:
+        if pose_goal is None:
             pose_goal = self.arm_mvgroup.get_random_pose()
         if type(pose_goal) is not PoseStamped:
             raise ValueError("Input goal is not a PoseStamped")
@@ -295,28 +276,170 @@ class ArmCommander:
             self.arm_mvgroup.clear_pose_targets()
 
         return res, pose_goal
+    
+    @staticmethod
+    def get_indices_optimal_poses(pose_goal:Pose, pose_list:list, n:int, comparator_id=2):
+        """
+        @brief Return indices of up to n optimal poses from the pose list passes.
+        Optimal pose is defined as the closest pose to the pose_goal by angular magnitude.
+
+        @param pose_goal: geometry_msgs/Pose object
+        @param pose_list: list of poses to filter
+        @param n: amount of filtered poses to return (e.g. if 1 only return the closest, if 2 return the 1st and 2nd closest)
+
+        @return a list of ordered integer indices
+        """
+        if type(pose_goal) is not Pose:
+            raise ValueError("parameter is not a valid point; needs to be geometry_msgs/Pose)")
+        if n > len(pose_list):
+            n = len(pose_list)
+        q = pose_goal.orientation
+
+        QuaternionComparators.set_ref_quaternion(q)
+        cmp = QuaternionComparators.get_comparator(comparator_id)
+
+        sortable = [(i, pose_list[i].orientation) for i in range(len(pose_list))]
+        sortable = sorted(sortable, key=cmp_to_key(lambda item1, item2: cmp(item1[1], item2[1])))
+
+        return [s[0] for s in sortable][0:n]
+    
+    def rotate_gripper_axis(self, w:float, timeout=5):
+        """
+        @brief brute force method to rotate gripper around current axis to match a certain orientation w value
+        **the logic is kinda bad**
+
+        @param w : float for the w value of a quaternion (this represents amount of rotation about current orientation axis)
+        @param timeout: float timeout value for read loop
+        """
+        joints = self.arm_mvgroup.get_current_joint_values()
+        min, max = self._arm_joint_limits[-1]
+        joints[-1]  = min
+        self.go_joint(joints)
+        joints[-1] = max
+        self.arm_mvgroup.go(joints, wait=False)
+        loop_start_time = rospy.get_time()
+        d_curr = 1000
+        val = 0
+        while rospy.get_time() < loop_start_time + timeout:
+            w_curr = self.get_end_effector_pose().pose.orientation.w
+            if np.abs(w_curr-w) < d_curr:
+                d_curr = np.abs(w_curr-w)
+                val = self.arm_mvgroup.get_current_joint_values()[-1]
+        joints[-1] = val
+        rospy.loginfo("going to %s with min error %.5f" % (joints, d_curr))
+        self.go_joint(joints)
+
+    def go_pose_ikpoints(self, pose_goal:PoseStamped=None):
+        '''
+        @brief Approximately goes to the desired pose_goal. This is a blocking method
+
+        procedure: queries ikpoints database, finds closest reachable poses up to tolerance distance, 
+        and sorts these poses based on orientation angular magnitude comparisons
+
+        @param pose_goal : geometry_msgs\Pose contains desired position and orientation for the end effector link.
+
+        if pose_goal param is not passed, random pose goal will be generated.
+
+        @returns (execution result, original PoseStamped target, actual joint_target [j0,j1,j2,...])
+        '''
+        if pose_goal is None:
+            pose_goal = self.arm_mvgroup.get_random_pose()
+        if type(pose_goal) is not PoseStamped:
+            raise ValueError("Input goal is not a PoseStamped")
+        if self.robot.get_planning_frame() != pose_goal.header.frame_id:
+            print("Incorrect planning frame for pose goal, got %s instead of %s \n" \
+                    %(self._current_pose_goal.header.frame_id,self.robot.get_planning_frame()))
+            self._current_pose_goal = None
+            return False, None, None
+        self._current_pose_goal = pose_goal
+
+        req = IKPointsServiceRequest()
+        req.request = 'get up to dist targets'
+        req.pose = pose_goal.pose
+        req.distance = self._goal_tolerance
+        pose_targets , joint_targets, _ = ikpoints_service_client(req)
+        indices = self.get_indices_optimal_poses(pose_goal.pose, pose_targets, 1)
+
+        for i in indices:
+            joints = joint_targets[i]
+            res, _ = self.go_joint(joints)
+            if res:
+                self.rotate_gripper_axis(pose_goal.pose.orientation.w)
+                return res, pose_goal, joints
+        return False, pose_goal, None
+
+    def get_object(self, object_id:str):
+        """
+        @brief Get collision object from the planning scene based on id string
+
+        @return CollisionObject if found | None if not found
+        """
+        objs = self.scene.get_objects()
+        for o in list(objs.items()):
+            obj:CollisionObject = o[1]
+            if obj.id == object_id:
+                return obj
+        print('could not find obj in %s' %objs)
+        return None
 
     def close_gripper(self):
+        """
+        @brief close gripper to previously defined 'close' joint values
+        """
         joints_close = list(self.gripper_mvgroup.get_named_target_values("close").values())
         return self.gripper_mvgroup.go(joints_close)
 
     def open_gripper(self):
+        """
+        @brief open gripper to previously defined 'open' joint values
+        """
         joints_close = list(self.gripper_mvgroup.get_named_target_values("open").values())
         return self.gripper_mvgroup.go(joints_close)
 
+    def is_object_attached(self, object_id:str):
+        """
+        @brief check if object with id object_id is attached to the arm/gripper in the planning scene
+        """
+        res:bool = False 
+        if self.scene.get_attached_objects([object_id]):
+            #empty dictionaries eval to false in python
+            res = True
+        return res
+
     def attach_object(self, object:CollisionObject):
+        """
+        @brief attach CollisionObject object to the gripper in the planning scene
+        """
         touch_links = self.robot.get_link_names(group=self.GRIPPER_GROUP_NAME)
         self.scene.attach_box(self.EEF_LINK_NAME, object.id, touch_links=touch_links)
         time.sleep(2) #delay for scene update
-        return self.scene.get_attached_objects([object.id]) #empty dictionaries eval as false in python
+        return self.is_object_attached(object.id)
     
     def detach_object(self, object:CollisionObject):
+        """
+        @brief detach CollisionObject object from the gripper in the planning scene
+        """
         self.scene.remove_attached_object(self.EEF_LINK_NAME, name=object.id)
         time.sleep(2) #delay for scene update
-        return not self.scene.get_attached_objects([object.id])
+        return not self.is_object_attached(object.id)
 
-    def pick_object(self, object:CollisionObject, attempts=100):
+    def pick_object(self, object:CollisionObject, attempts=100, pick_tolerance=0.01):
+        """
+        @brief pick/grip CollisionObject object the planning scene
+
+        @param object: CollisionObject, this should NOT be attached to anything in the planning scene
+        @param attempts: int number of grasps to test at each distance
+        @param pick_tolerance: distance tolerance for pick , also  a distance increment 
+
+        @return bool: success of pick operation
+        """
+        if self.is_object_attached(object.id):
+            rospy.logwarn("Object is already attached in the planning scene!")
+            return False
         def close_gripper_around_object():
+            """
+            @brief close gripper around object by test collision state of joint values
+            """
             joints_open = list(self.gripper_mvgroup.get_named_target_values("open").values())
             joints_close = list(self.gripper_mvgroup.get_named_target_values("close").values())
             js_0 = np.linspace(joints_close[0], joints_open[0], 10)
@@ -335,25 +458,111 @@ class ArmCommander:
 
         req = IKPointsServiceRequest()
         req.request = "in range"
-        req.point = object.pose
-        req.tolerance = 0.01
+        req.pose = object.pose
+        req.tolerance = self._goal_tolerance
         if not ikpoints_service_client(req)[2]:
+            rospy.logwarn("Object outside of reachable space.")
             return False
 
-        req = IKPointsServiceRequest()
-        req.request = 'get nearest joint targets'
-        req.point = object.pose
-        req.num_pts = attempts
-        joint_targets = ikpoints_service_client(req)[1]
-        for joints in joint_targets:
-            res = self.go_joint(joints)[0]
+        # req = IKPointsServiceRequest()
+        # req.request = 'get nearest joint targets'
+        # req.pose = object.pose
+        # req.tolerance = pick_tolerance
+        # req.num_pts = 100
+        # joint_targets = ikpoints_service_client(req)[1]
+
+        current_dist = 0.0
+        max_dist = 0.1
+        tolerance = 0.005
+        increment = pick_tolerance
+        res = False
+
+        while current_dist < max_dist:
+            req = IKPointsServiceRequest()
+            req.request = 'get dist joint targets'
+            req.pose = object.pose
+            req.tolerance = tolerance
+            req.distance = current_dist
+            joint_targets = ikpoints_service_client(req)[1][0:attempts]
+
+            for joints in joint_targets:
+                res, _ = self.go_joint(joints)
+                if res:
+                    break
             if res:
                 break
-        # res = self.go_position_ikpoints(object.pose.position)[0]
+            current_dist+=increment
+
         if res:
             res = close_gripper_around_object()
+        if res:
+            res = self.attach_object(object)
+        return res
+    
+    def place_object(self, object:CollisionObject, place_pose:PoseStamped, attempts=1000, place_tolerance=0.05):
+        """
+        @brief place function to place an object in the planning scene with a desired pose
+
+        @param object: CollisionObject in planning scene (make sure it is updated)
+        This should already be attached to arm or this fucntion will return false
+
+        @param place_pose: desired pose to place the object in
+        Can be in any ref frame (this function handles transformations as long as they exist in /tf)
+
+        @return bool: indicates successful execution of place operation
+        """
+        if type(object) != CollisionObject:
+            raise ValueError("object type is not CollisionObject. It is %s" % type(object))
+        if not self.is_object_attached(object.id):
+            rospy.logwarn("Cannot place object. Object with id %s is NOT attached to arm in planning scene." % object.id)
+            return False
+        rospy.loginfo("picking object")
+        req = IKPointsServiceRequest()
+        req.request = "in range"
+        req.pose = object.pose
+        req.tolerance = self._goal_tolerance
+        if not ikpoints_service_client(req)[2]:
+            rospy.logwarn("Object outside of reachable space.")
+            return False
+
+        if place_pose.header.frame_id != self.WORLD_REF_FRAME:
+            rospy.loginfo("Converting target place pose to world frame.")
+            place_pose = self.tf_listener.transformPose("/world",place_pose)
+
+        #first we should get the tf from object --> eef : t_obj_eef (numpy matrix 4x4)
+        t_obj_w = np.linalg.inv(pose_to_mat(object.pose))
+        t_w_eef = pose_to_mat(self.get_end_effector_pose().pose)
+        #this should be constant until the detach operation
+        t_obj_eef = np.dot(t_obj_w, t_w_eef)
+
+        #use t_obj_eef to get target end effector pose
+        t_w_tobj = pose_to_mat(place_pose.pose) # world -> place object pose 
+        t_w_teef = np.dot(t_w_tobj,t_obj_eef) # world -> place object end effector pose
+        pose_goal = mat_to_pose(t_w_teef) #target pose goal in world frame
+        self._current_pose_goal = pose_goal
+
+        req = IKPointsServiceRequest()
+        req.request = 'get up to dist targets'
+        req.pose = pose_goal
+        req.distance = place_tolerance
+        pose_targets , joint_targets, _ = ikpoints_service_client(req)
+
+        indices = self.get_indices_optimal_poses(pose_goal, pose_targets, attempts)
+        rospy.loginfo("got %d inidces" % len(indices))
+
+        res = False
+        self.arm_mvgroup.clear_pose_targets()
+        for i in indices:
+            joints = joint_targets[i]
+            res, _ = self.go_joint(joints)
             if res:
-                res = self.attach_object(object)
+                self.rotate_gripper_axis(pose_goal.orientation.w)
+                break
+
+        if res:
+            res = self.detach_object(object)
+        if res:
+            self.open_gripper()
         return res
 
     def go_scene_object(self, object:CollisionObject, claw_search_tolerance=0.05, orientation_search_tolerance = 0.5):
@@ -377,7 +586,7 @@ class ArmCommander:
         #TO DO : better check for in range (since we do more complex searches)
         req = IKPointsServiceRequest()
         req.request = "in range"
-        req.point = object.pose
+        req.pose = object.pose
         req.tolerance = 0.01
         if not ikpoints_service_client(req)[2]:
             return False, object.pose, None
@@ -400,7 +609,7 @@ class ArmCommander:
         start = time.time()
         req = IKPointsServiceRequest()
         req.request = 'get dist targets'
-        req.point = object.pose
+        req.pose = object.pose
         req.distance = claw_offset
         req.tolerance = 0.05
         pose_targets, joint_targets, _ = ikpoints_service_client(req)
@@ -447,7 +656,7 @@ class ArmCommander:
         return False, object.pose, None
 
     def go_pose_relaxedik(self, pose_goal:PoseStamped = None):
-        if pose_goal == None:
+        if pose_goal is None:
             pose_goal = self.arm_mvgroup.get_random_pose()
         if type(pose_goal) is not PoseStamped:
             raise ValueError("Input goal is not a PoseStamped")

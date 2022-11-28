@@ -32,7 +32,7 @@ def publish_markers():
     with open(DATA_FILE_PATH, "rb") as input_file:
         marker = pickle.load(input_file)
 
-    if marker != None:
+    if marker is not None:
         points = Marker()
         points.header.frame_id = marker.header.frame_id
         points.header.stamp = marker.header.stamp
@@ -58,7 +58,7 @@ def plot_markers_matplotlib():
     with open(DATA_FILE_PATH, "rb") as input_file:
         marker = pickle.load(input_file)
 
-    if marker != None:
+    if marker is not None:
         x=[]
         y=[]
         z=[]

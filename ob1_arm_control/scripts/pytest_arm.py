@@ -21,9 +21,17 @@ from copy import deepcopy
 import rospkg
 import pytest
 import logging
-from tf_helpers import broadcast_pose, broadcast_point, convert_to_list
+from tf_helpers import broadcast_pose, broadcast_point, convert_to_list, QuaternionComparators
 import kinpy as kp
 from test_helpers import *
+import test_helpers
+import pyquaternion as pyq
+import random
+from ob1_arm_control.srv import IKPointsServiceRequest
+from ikpoints_service import ikpoints_service_client
+from relaxed_ik.srv import RelaxedIKService, RelaxedIKServiceRequest
+from relaxed_ik_helpers import relaxedik_service_client
+from functools import cmp_to_key
 print(sys.version)
 
 GOAL_TOLERANCE = 0.01 #elementwise distance and angles for orientation
@@ -39,9 +47,9 @@ def clear_scene():
 
 @pytest.fixture
 def setup_teardown():
+    clear_scene()
     arm_commander.open_gripper()
     arm_commander.go_joint([0,0,0,0,0])
-    clear_scene()
     yield
     clear_scene()
     arm_commander.open_gripper()
@@ -61,42 +69,107 @@ def spawn_random_sphere(r):
 
 ##############################################################################################
 
-def test_go_rand_pose_dist(setup_teardown):
-    res, target = arm_commander.go_pose()
+def test_pyquaternion():
+    rosQ = Quaternion(random.uniform(0,1),random.uniform(0,1),random.uniform(0,1),random.uniform(0,1))
+    pyQ = pyq.Quaternion(rosQ.w,rosQ.x,rosQ.y,rosQ.z)
+    assert rosQ.x == pyQ.x
+    assert rosQ.y == pyQ.y
+    assert rosQ.z == pyQ.z
+    assert rosQ.w == pyQ.w
+
+@pytest.mark.parametrize("iterations", [5,10])
+def test_quaternion_comparators(setup_teardown, iterations):
+    avg_accuracies = []
+    req = IKPointsServiceRequest()
+    req.request = 'get up to dist targets'
+    req.distance = DIST_TOLERANCE
+
+    for comparator_id in range(len(QuaternionComparators.comparators())):
+        total = 0
+        for _ in range(iterations):
+            target = arm_commander.arm_mvgroup.get_random_pose()
+            broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+
+            req.pose = target.pose
+            pose_targets , joint_targets, _ = ikpoints_service_client(req)
+
+            indices = arm_commander.get_indices_optimal_poses(target.pose, pose_targets, 1, comparator_id=comparator_id)
+            
+            res = False
+            for i in indices:
+                joints = joint_targets[i]
+                res, _ = arm_commander.go_joint(joints)
+                if res:
+                    break
+            total += avg_all_close(pose_to_list(target.pose), pose_to_list(arm_commander.get_end_effector_pose().pose))
+        avg_accuracies.append(total/iterations)
+    
+    log.info(avg_accuracies)
+    for comparator_id in range(len(QuaternionComparators.comparators())):
+        assert avg_accuracies[comparator_id] <= GOAL_TOLERANCE, "comparator %d failed tolerance check"%comparator_id
+    
+def test_quaternion_doublesort(setup_teardown):
+    avg_accuracies = []
+    req = IKPointsServiceRequest()
+    req.request = 'get up to dist targets'
+    req.distance = DIST_TOLERANCE
+
+    target = arm_commander.arm_mvgroup.get_random_pose()
     broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
-    time.sleep(2)
+
+    req.pose = target.pose
+    pose_targets , joint_targets, _ = ikpoints_service_client(req)
+
+    indices = arm_commander.get_indices_optimal_poses(target.pose, pose_targets, 1000, comparator_id=2)
+    indices = arm_commander.get_indices_optimal_poses(target.pose, [pose_targets[i] for i in indices][:10], 1, comparator_id=3)
+    
+    res = False
+    for i in indices:
+        joints = joint_targets[i]
+        res, _ = arm_commander.go_joint(joints)
+        if res:
+            break
+    assert res, "motion planning failed"
+    assert avg_all_close(pose_to_list(target.pose), pose_to_list(arm_commander.get_end_effector_pose().pose)) <= GOAL_TOLERANCE, \
+        "average tolerance is not within specified goal tolerance"
+
+def test_go_rand_pose_dist(setup_teardown):
+    target = arm_commander.arm_mvgroup.get_random_pose()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    res, _ = arm_commander.go_pose(target)
     assert res , "motion planning failed"
     assert_dist(arm_commander.get_end_effector_pose(),target,DIST_TOLERANCE)
 
 def test_go_rand_pose_tolerance(setup_teardown):
-    res, target = arm_commander.go_pose()
+    target = arm_commander.arm_mvgroup.get_random_pose()
     broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
-    time.sleep(2)
+    res, _ = arm_commander.go_pose(target)
     assert res , "motion planning failed"
     assert all_close(target, arm_commander.get_end_effector_pose(), GOAL_TOLERANCE)
 
-def test_go_rand_pose_ikpoints(setup_teardown):
-    res, target, joints = arm_commander.go_pose_ikpoints()
+def test_go_rand_pose_ikpoint(setup_teardown):
+    target = arm_commander.arm_mvgroup.get_random_pose()
     broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
-    time.sleep(2)
+    res, _, joints = arm_commander.go_pose_ikpoints(target)
     assert res , "motion planning failed"
     assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
     assert_dist(arm_commander.get_end_effector_pose(),target,DIST_TOLERANCE)
+    assert all_close(target.pose, arm_commander.get_end_effector_pose().pose, GOAL_TOLERANCE)
 
 def test_go_rand_pose_relaxedik(setup_teardown):
-    res, target, joints = arm_commander.go_pose_relaxedik()
+    target = arm_commander.arm_mvgroup.get_random_pose()
     broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
-    time.sleep(2)
+    res, _, joints = arm_commander.go_pose_relaxedik(target)
     assert res , "motion planning failed"
     assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
     assert_dist(arm_commander.get_end_effector_pose(),target, DIST_TOLERANCE)
 
 def test_go_rand_position(setup_teardown):
-    res, target = arm_commander.go_position()
-    broadcast_point(arm_commander.tf_broadcaster, target, 'target', 'world')
-    time.sleep(2)
+    target = arm_commander.arm_mvgroup.get_random_pose()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    res, _ = arm_commander.go_position(target)
     assert res , "motion planning failed"
-    assert_dist(convert_to_list(arm_commander.get_end_effector_pose().pose), target, DIST_TOLERANCE)
+    assert_dist(convert_to_list(arm_commander.get_end_effector_pose().pose.position), convert_to_list(target.pose.position), DIST_TOLERANCE)
 
 def test_go_rand_joint_target(setup_teardown):
     res, target = arm_commander.go_joint()
@@ -104,12 +177,12 @@ def test_go_rand_joint_target(setup_teardown):
     assert all_close(target,arm_commander.arm_mvgroup.get_current_joint_values(),JOINT_TOLERANCE)
 
 def test_go_rand_ikpoint(setup_teardown):
-    res, target, joint_target = arm_commander.go_position_ikpoints()
-    broadcast_point(arm_commander.tf_broadcaster, target, 'target', 'world')
-    time.sleep(2)
+    target = arm_commander.arm_mvgroup.get_random_pose()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    res, _, joint_target = arm_commander.go_position_ikpoints(target)
     assert res , "motion planning failed"
     assert all_close(joint_target, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
-    assert_dist(convert_to_list(arm_commander.get_end_effector_pose().pose),target, DIST_TOLERANCE)
+    assert_dist(convert_to_list(arm_commander.get_end_effector_pose().pose.position),convert_to_list(target.pose.position), DIST_TOLERANCE)
 
 def test_go_pose_kinpy(setup_teardown):
 
@@ -122,8 +195,9 @@ def test_go_pose_kinpy(setup_teardown):
     )
     pose_goal = arm_commander.arm_mvgroup.get_random_pose().pose
     broadcast_pose(arm_commander.tf_broadcaster, pose_goal, 'target', 'world')
-    rot = np.array(convert_to_list(pose_goal.orientation))
-    pos = np.array(convert_to_list(pose_goal.position))
+    p = convert_to_list(pose_goal)
+    rot = np.array(p[3:7])
+    pos = np.array(p[:3])
     pose_tf =  kp.Transform(rot,pos)
     ik_sol_joints = convert_to_list(kinpy_arm.inverse_kinematics(pose_tf))
     assert arm_commander._check_joint_limits(ik_sol_joints), "joints exceed physical limits"
@@ -209,7 +283,8 @@ def test_pick_and_move_sphere(setup_teardown, sphere_radius):
 
     assert arm_commander.open_gripper(), 'failed to open gripper after detaching object'
 
-def test_pick_cylinder_and_move(setup_teardown):
+@pytest.mark.parametrize("pick_tolerance", [0.01, 0.02, 0.03, 0.04, 0.05])
+def test_pick_cylinder_and_move(setup_teardown, pick_tolerance):
     p = PoseStamped()
     p.header.frame_id = arm_commander.robot.get_planning_frame()
     p.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
@@ -218,18 +293,42 @@ def test_pick_cylinder_and_move(setup_teardown):
 
     time.sleep(2)
 
-    objs = arm_commander.scene.get_objects()
-    assert len(objs) >= 0, 'could not find any scene objects'
-    obj:CollisionObject = list(objs.items())[0][1]
+    obj = arm_commander.get_object('cylinder')
+    assert obj!=None, 'could not find any scene objects'
     broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'target','world')
 
-    assert arm_commander.pick_object(obj), 'failed to pick object'
+    assert arm_commander.pick_object(obj, attempts=1000, pick_tolerance=pick_tolerance), 'failed to pick object'
     
     assert arm_commander.go_position_ikpoints()[0], 'failed to move arm after attaching object'
 
     assert arm_commander.detach_object(obj), 'failed to detach object'
 
     assert arm_commander.open_gripper(), 'failed to open gripper after detaching object'
+
+@pytest.mark.parametrize("pick_tolerance", [0.01])
+@pytest.mark.parametrize("place_tolerance", [0.05])
+@pytest.mark.parametrize("attempts", [10])
+def test_pick_and_place_cylinder(setup_teardown,attempts, pick_tolerance, place_tolerance):
+    p = PoseStamped()
+    p.header.frame_id = arm_commander.robot.get_planning_frame()
+    p.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
+    p.pose.orientation.w = 1
+    arm_commander.scene.add_cylinder('cylinder', p, height=0.15, radius=0.03)
+
+    time.sleep(2)
+
+    obj = arm_commander.get_object('cylinder')
+    assert obj!=None, 'could not find any scene objects'
+    broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'target','world')
+
+    assert arm_commander.pick_object(obj, attempts=attempts, pick_tolerance=pick_tolerance), 'failed to pick object'
+
+    #pick random place location
+    place_posestamped = arm_commander.arm_mvgroup.get_random_pose()
+    place_posestamped.pose.orientation = Quaternion(0,0,0,1) #default to upright
+    broadcast_pose(arm_commander.tf_broadcaster,place_posestamped.pose,'target','world')
+
+    assert arm_commander.place_object(obj, place_posestamped, attempts=attempts, place_tolerance=place_tolerance), 'failed to place object'
 
 # @pytest.mark.parametrize("sphere_radius", [0.03])
 # @pytest.mark.parametrize("scale_trans", [

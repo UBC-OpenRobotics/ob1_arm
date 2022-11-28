@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="ikpoints_data_file_name" value="ik_data.h5" />
+  <!-- <arg name="ikpoints_data_file_name" value="ik_data.h5" /> -->
+  <param name="ikpoints_data_file_name" value="7m_pose_data.pickle,7m_joint_data.pickle,7m_point_data.pickle" />
   <node name="ik_points" pkg="ob1_arm_control" type="ikpoints_service.py"  respawn="false" output="screen"/>
 </launch>

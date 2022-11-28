@@ -3,6 +3,84 @@ from tf import transformations
 import rospy
 from geometry_msgs.msg import *
 import numpy as np
+import geometry_msgs.msg as gm
+import pyquaternion as pyq
+from types import FunctionType
+
+class QuaternionComparators:
+    """@brief a class of comparators for comparing quaternions to a ref quaternion"""
+    _ref_quaternion:Quaternion = None
+    _comparators:list = []
+
+    @staticmethod
+    def set_ref_quaternion(q:Quaternion):
+        QuaternionComparators._ref_quaternion = q
+
+    @staticmethod
+    def comparators():
+        """returns a list of the quaternion comparator functions contained in this class"""
+        if len(QuaternionComparators._comparators) < 1:
+            qc = QuaternionComparators
+            QuaternionComparators._comparators = [qc.q_comp_pyq_0, qc.q_comp_ang_1, qc.q_comp_xyz_2, qc.q_comp_w_3]
+        return QuaternionComparators._comparators
+    
+    @staticmethod
+    def get_comparator(id:int):
+        for cmp in QuaternionComparators.comparators():
+            if str(id) in cmp.__name__:
+                return cmp
+        raise ValueError("Could not find comparator with id: %d. The list of comparators is %s." % (id, QuaternionComparators.comparators()))
+ 
+    @staticmethod
+    def q_comp_pyq_0(q1:Quaternion, q2:Quaternion):
+        """
+        comparator using absolute distance between quaternions
+        def: http://kieranwynn.github.io/pyquaternion/#distance-computation
+        """
+        q = QuaternionComparators._ref_quaternion
+        assert type(q) is Quaternion
+        Q = pyq.Quaternion(q.w, q.x, q.y, q.z)
+        q1 = quat_to_list(q1)
+        q2 = quat_to_list(q2)
+        Q1 = pyq.Quaternion(q1[3], q1[0], q1[1], q1[2])
+        Q2 = pyq.Quaternion(q2[3], q2[0], q2[1], q2[2])
+        d1 = pyq.Quaternion.absolute_distance(Q,Q1)
+        d2 = pyq.Quaternion.absolute_distance(Q,Q2)
+        return d1-d2
+
+    @staticmethod
+    def q_comp_ang_1(q1:Quaternion, q2:Quaternion):
+        """comparator using quaternion's cos_phi_half / inner product value"""
+        q = QuaternionComparators._ref_quaternion
+        assert type(q) is Quaternion
+        q = quat_to_list(q)
+        def cos_phi_half(q1,q2):
+            f = q1[0]*q2[0] + q1[1]*q2[1] + q1[2]*q2[2] + q1[3]*q2[3]
+            return np.fabs(f)
+        q1 = quat_to_list(q1)
+        q2 = quat_to_list(q2)
+        return cos_phi_half(q,q1) - cos_phi_half(q,q2)
+
+    @staticmethod
+    def q_comp_xyz_2(q1:Quaternion, q2:Quaternion):
+        """comparator using roational axis of quaternions"""
+        q = QuaternionComparators._ref_quaternion
+        assert type(q) is Quaternion
+        q_axis = np.array(quat_to_list(q)[:3])
+        q1_axis = np.array(quat_to_list(q1)[:3])
+        q2_axis = np.array(quat_to_list(q2)[:3])
+        d1 = np.linalg.norm(q_axis-q1_axis)
+        d2 = np.linalg.norm(q_axis-q2_axis)
+        return d1-d2
+
+    @staticmethod
+    def q_comp_w_3(q1:Quaternion, q2:Quaternion):
+        """comparator using roational axis of quaternions"""
+        q = QuaternionComparators._ref_quaternion
+        assert type(q) is Quaternion
+        d1 = np.abs(q.w - q1.w)
+        d2 = np.abs(q.w - q2.w)
+        return d1-d2
 
 def convert_to_list(obj):
     """
@@ -11,24 +89,37 @@ def convert_to_list(obj):
     returns none if invalid input object
     """
     if type(obj) is gm.Point:
-        return [obj.x,obj.y,obj.z]
+        return point_to_list(obj)
     if type(obj) is gm.Quaternion:
-        return [obj.x,obj.y,obj.z,obj.w]
+        return quat_to_list(obj)
     elif type(obj) is gm.Pose:
-        return [ obj.position.x,
-                 obj.position.y,
-                 obj.position.z ]
+        return pose_to_list(obj)
     elif type(obj) is gm.PoseStamped:
-        return [ obj.pose.position.x,
-                 obj.pose.position.y,
-                 obj.pose.position.z ]
+        return pose_to_list(obj.pose)
     elif type(obj) is np.ndarray:
         return obj.tolist()
     elif type(obj) is list:
         return obj
     else:
-        print(obj)
-        raise ValueError("Invalid input to convert_to_list funtion")
+        raise ValueError("Invalid input to convert_to_list funtion (%s)" % type(obj))
+
+def quat_to_list(q:Quaternion):
+    """
+    @return geometry_msgs/Quaterion q as [x,y,z,w]
+    """
+    return [q.x,q.y,q.z,q.w]
+
+def point_to_list(p:Point):
+    """
+    @return geometry_msgs/Point p as [x,y,z]
+    """
+    return [p.x,p.y,p.z]
+
+def pose_to_list(pose:Pose):
+    """
+    @return geometry_msgs/Pose p as [px,py,pz,qx,qy,qz,qw]
+    """
+    return point_to_list(pose.position) + quat_to_list(pose.orientation)
 
 def broadcast_pose(tf_broadcaster:tf.TransformBroadcaster, pose:Pose,child:str,parent:str):
     """

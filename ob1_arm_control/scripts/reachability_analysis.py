@@ -26,7 +26,7 @@ AUTO_SAVE_INTERVAL = 0.1
 
 #reachability test joint space resolution, in radians
 #note: there are 5 joints, so small resolutions will produce a LARGE amount of test values...
-JS_RESOLUTION = 0.23
+JS_RESOLUTION = 0.18
 
 ARM_JOINT_LIMITS = [(-1.5787, 1.5787), (-1.5787, 1.5787), (-3.14, 3.14), (-1.5787, 1.5787), (-3.14, 3.14)]
 
@@ -45,22 +45,26 @@ pose_data = None
 joint_data = None
 point_data = None
 
-def save_data_h5(h5f:h5py.File):
+def save_data_h5(f:h5py.File, key):
     def append_data(key, data):
-        h5f[key].resize((h5f[key].shape[0] + data.shape[0]), axis = 0)
-        h5f[key][-data.shape[0]:] = data
+        f[key].resize((f[key].shape[0] + data.shape[0]), axis = 0)
+        f[key][-data.shape[0]:] = data
     if not data_flag:
         return
-    for key in DATA_KEYS:
-        data = np.array([globals()[key],]) #need to make an array of the data
-        if key in h5f:
-            append_data(key, data)
-        else:
-            n_data = data.shape[1]
-            h5f.create_dataset(key, data=data, chunks=True, maxshape=(None,n_data))
-        globals()[key] = None
+    data = np.array([globals()[key],]) #need to make an array of the data
+    if key in f:
+        append_data(key, data)
+    else:
+        n_data = data.shape[1]
+        f.create_dataset(key, data=data, chunks=True, maxshape=(None,n_data))
 
-def calculate_js_reachability(fk_planner="MOVEIT"):
+def save_data_pickle(f, key):
+    if not data_flag:
+        return
+    data = globals()[key]
+    pickle.dump(data, f)
+
+def calculate_js_reachability(fk_planner="KINPY", filetype='h5'):
     """
     Function for calcualting reachability in joint space.
     Iterates over joint goals with a certain resolution and saves Pose results as green or red markers
@@ -106,7 +110,15 @@ def calculate_js_reachability(fk_planner="MOVEIT"):
     search_duration = time.time() - search_start
     print("============ Generated %s joint targets in %s seconds" %(len(untested_joint_targets), search_duration))
 
-    with h5py.File(PACKAGE_PATH+"/data/ik_data.h5", "w") as h5f:
+    def test_joints_loop(save_function, data_files=[]):
+        """
+        save files list should contain a single file OR len(save_files)=len(data_keys) and ordered to match DATA_KEYS
+        save function signature is save_function(file, key)
+        """
+        global point_data
+        global joint_data
+        global pose_data
+        global data_flag
         counter = 0
         success_counter = 0
         total = len(untested_joint_targets)
@@ -131,10 +143,6 @@ def calculate_js_reachability(fk_planner="MOVEIT"):
             fk_sol = None
             p = None
             pq = None
-            global point_data
-            global joint_data
-            global pose_data
-            global data_flag
 
             if fk_planner == 'MOVEIT':
                 if arm.go_joint(current_joints)[0]:
@@ -158,7 +166,13 @@ def calculate_js_reachability(fk_planner="MOVEIT"):
                 pose_data = pq
                 point_data = p
                 joint_data = np.array(current_joints)
-                save_data_h5(h5f)
+                for i in range(len(DATA_KEYS)):
+                    key = DATA_KEYS[i]
+                    if len(data_files)==1:
+                        f = data_files[0]
+                    else:
+                        f = data_files[i]
+                    save_function(f, key)
             data_flag = False
    
             planning_t = time.time() - start_t
@@ -168,7 +182,15 @@ def calculate_js_reachability(fk_planner="MOVEIT"):
 
             print(" %s/%s Planning Success Rate " %(success_counter,counter))
             print("Time remaining: Est. %s hours" %(time_remaining))
-            
+    
+    if filetype == 'h5':
+        file_name = PACKAGE_PATH+'/data/ik_data.h5'
+        with h5py.File(file_name,mode='r') as f:
+            test_joints_loop(save_data_h5, [f])
+    elif filetype == 'pickle':
+        file_path = PACKAGE_PATH+'/data/'
+        with open(file_path+'pose_data.pickle',mode='wb') as f1, open(file_path+'joint_data.pickle',mode='wb') as f2, open(file_path+'point_data.pickle',mode='wb') as f3:
+            test_joints_loop(save_data_pickle, [f1, f2, f3])
 
 if __name__ == '__main__':
-    calculate_js_reachability(fk_planner='KINPY')
+    calculate_js_reachability(fk_planner='KINPY', filetype='pickle')
