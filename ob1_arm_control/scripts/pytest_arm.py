@@ -21,8 +21,7 @@ from copy import deepcopy
 import rospkg
 import pytest
 import logging
-from tf_helpers import broadcast_pose, broadcast_point, convert_to_list, QuaternionComparators
-import kinpy as kp
+from tf_helpers import broadcast_pose, broadcast_point, convert_to_list, QuaternionComparators, point_to_list, pose_to_mat
 from test_helpers import *
 import test_helpers
 import pyquaternion as pyq
@@ -43,6 +42,10 @@ log = logging.getLogger(__name__)
 arm_commander = ArmCommander(sample_timeout=0.1)
 
 def clear_scene():
+    objs = arm_commander.scene.get_objects()
+    for o in list(objs.items()):
+        obj:CollisionObject = o[1]
+        arm_commander.detach_object(obj)
     arm_commander.scene.clear()
 
 @pytest.fixture
@@ -109,7 +112,6 @@ def test_quaternion_comparators(setup_teardown, iterations):
         assert avg_accuracies[comparator_id] <= GOAL_TOLERANCE, "comparator %d failed tolerance check"%comparator_id
     
 def test_quaternion_doublesort(setup_teardown):
-    avg_accuracies = []
     req = IKPointsServiceRequest()
     req.request = 'get up to dist targets'
     req.distance = DIST_TOLERANCE
@@ -329,6 +331,61 @@ def test_pick_and_place_cylinder(setup_teardown,attempts, pick_tolerance, place_
     broadcast_pose(arm_commander.tf_broadcaster,place_posestamped.pose,'target','world')
 
     assert arm_commander.place_object(obj, place_posestamped, attempts=attempts, place_tolerance=place_tolerance), 'failed to place object'
+
+def test_pick_and_place_cylinder_in_region(setup_teardown):
+    pick_target = PoseStamped()
+    pick_target.header.frame_id = arm_commander.robot.get_planning_frame()
+    pick_target.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
+    pick_target.pose.orientation.w = 1
+    arm_commander.scene.add_cylinder('cylinder', pick_target, height=0.15, radius=0.03)
+
+    time.sleep(2)
+
+    obj = arm_commander.get_object('cylinder')
+    assert obj!=None, 'could not find any scene objects'
+    broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'target','world')
+
+    assert arm_commander.pick_object(obj, attempts=10, pick_tolerance=0.01), 'failed to pick object'
+
+    dx,dy,dz = 0.2, 0.2, 0.01
+    req = IKPointsServiceRequest()
+    req.request = 'get up to dist targets'
+    req.distance = 0.2
+    req.pose = pick_target.pose
+    pose_targets , joint_targets, _ = ikpoints_service_client(req)
+    log.info("%d ik targets queried" % len(pose_targets))
+
+
+    xc,yc,zc = tuple(point_to_list(pick_target.pose.position))
+    xmin, xmax, ymin, ymax, zmin, zmax = xc-dx/2, xc+dx/2, yc-dy/2, yc+dy/2, zc-dz/2, zc+dz/2
+    def in_cube(point):
+        x,y,z = tuple(point)
+        return x >= xmin and x <= xmax and y >= ymin and y <= ymax and z >= zmin and z <= zmax
+
+    pose_targets = [pose for pose in pose_targets if in_cube(point_to_list(pose.position))]
+    log.info("%d ik targets left in cube" % len(pose_targets))
+    QuaternionComparators.set_ref_quaternion(Quaternion(0,0,0,1))
+
+    #first we should get the tf from object --> eef : t_obj_eef (numpy matrix 4x4)
+    t_obj_w = np.linalg.inv(pose_to_mat(pick_target.pose))
+    t_w_eef = pose_to_mat(arm_commander.get_end_effector_pose().pose)
+    #this should be constant until the detach operation
+    t_obj_eef = np.dot(t_obj_w, t_w_eef)
+
+    QuaternionComparators.set_ref_transform(t_obj_eef)
+    indices = QuaternionComparators.sort_indices(pose_targets,4)
+
+    res = False
+    for i in indices:
+        pt = pose_targets[i]
+        broadcast_pose(arm_commander.tf_broadcaster,pt,'target','world')
+        joints = joint_targets[i]
+        res = arm_commander.go_joint(joints)[0]
+        if res:
+            break
+    
+    assert res
+    assert arm_commander.detach_object(obj)
 
 # @pytest.mark.parametrize("sphere_radius", [0.03])
 # @pytest.mark.parametrize("scale_trans", [

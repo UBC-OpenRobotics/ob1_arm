@@ -6,10 +6,12 @@ import numpy as np
 import geometry_msgs.msg as gm
 import pyquaternion as pyq
 from types import FunctionType
+from functools import cmp_to_key
 
 class QuaternionComparators:
     """@brief a class of comparators for comparing quaternions to a ref quaternion"""
     _ref_quaternion:Quaternion = None
+    _ref_transform:np.ndarray = None
     _comparators:list = []
 
     @staticmethod
@@ -17,11 +19,15 @@ class QuaternionComparators:
         QuaternionComparators._ref_quaternion = q
 
     @staticmethod
+    def set_ref_transform(tf):
+        QuaternionComparators._ref_transform = tf
+
+    @staticmethod
     def comparators():
         """returns a list of the quaternion comparator functions contained in this class"""
         if len(QuaternionComparators._comparators) < 1:
             qc = QuaternionComparators
-            QuaternionComparators._comparators = [qc.q_comp_pyq_0, qc.q_comp_ang_1, qc.q_comp_xyz_2, qc.q_comp_w_3]
+            QuaternionComparators._comparators = [qc.q_comp_pyq_0, qc.q_comp_ang_1, qc.q_comp_xyz_2, qc.q_comp_w_3, qc.q_comp_transform_pyq_4]
         return QuaternionComparators._comparators
     
     @staticmethod
@@ -30,6 +36,33 @@ class QuaternionComparators:
             if str(id) in cmp.__name__:
                 return cmp
         raise ValueError("Could not find comparator with id: %d. The list of comparators is %s." % (id, QuaternionComparators.comparators()))
+    
+    @staticmethod
+    def sort_indices(tosort, comparator):
+        assert type(tosort) is list
+        if type(comparator) is int:
+            cmp = QuaternionComparators.get_comparator(comparator)
+        elif type(comparator) is FunctionType:
+            cmp = comparator
+        else:
+            raise ValueError("comparator is not the right type: %s" % type(comparator))
+        
+        assert type(tosort) is list
+        assert len(tosort) > 0
+        if type(tosort[0]) is Quaternion:
+            tosort = [(i, tosort[i]) for i in range(len(tosort))]
+        elif type(tosort[0]) is Pose:
+            tosort = [(i, tosort[i].orientation) for i in range(len(tosort))]
+        elif type(tosort[0]) is not tuple:
+            raise ValueError("list is not the right type: %s" % type(tosort[0]))
+
+        tosort = sorted(tosort, key=cmp_to_key(lambda item1, item2: cmp(item1[1], item2[1])))
+        return [item[0] for item in tosort]
+
+    @staticmethod
+    def sort(tosort, comparator):
+        indices = QuaternionComparators.sort_indices(list(tosort), comparator)
+        return [tosort[i] for i in indices]
  
     @staticmethod
     def q_comp_pyq_0(q1:Quaternion, q2:Quaternion):
@@ -81,6 +114,18 @@ class QuaternionComparators:
         d1 = np.abs(q.w - q1.w)
         d2 = np.abs(q.w - q2.w)
         return d1-d2
+    
+    @staticmethod
+    def q_comp_transform_pyq_4(q1, q2):
+        tf = QuaternionComparators._ref_transform
+        assert tf is not None
+        assert type(q1) is Quaternion
+        assert type(q2) is Quaternion
+
+        q1 = mat_to_pose(np.dot(quat_to_mat(q1), tf)).orientation
+        q2 = mat_to_pose(np.dot(quat_to_mat(q2), tf)).orientation
+
+        return QuaternionComparators.q_comp_pyq_0(q1, q2)
 
 def convert_to_list(obj):
     """
@@ -107,18 +152,21 @@ def quat_to_list(q:Quaternion):
     """
     @return geometry_msgs/Quaterion q as [x,y,z,w]
     """
+    assert type(q) is Quaternion
     return [q.x,q.y,q.z,q.w]
 
 def point_to_list(p:Point):
     """
     @return geometry_msgs/Point p as [x,y,z]
     """
+    assert type(p) is Point
     return [p.x,p.y,p.z]
 
 def pose_to_list(pose:Pose):
     """
     @return geometry_msgs/Pose p as [px,py,pz,qx,qy,qz,qw]
     """
+    assert type(pose) is Pose
     return point_to_list(pose.position) + quat_to_list(pose.orientation)
 
 def broadcast_pose(tf_broadcaster:tf.TransformBroadcaster, pose:Pose,child:str,parent:str):

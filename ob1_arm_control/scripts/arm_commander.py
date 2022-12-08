@@ -17,7 +17,8 @@ from geometry_msgs.msg import PoseStamped, Pose, Point, PointStamped, Quaternion
 import geometry_msgs.msg as gm
 from moveit_commander import MoveGroupCommander,RobotCommander, PlanningSceneInterface
 from shape_msgs.msg import SolidPrimitive
-from moveit_commander.planning_scene_interface import CollisionObject
+from moveit_msgs.msg import CollisionObject
+from shape_msgs.msg import SolidPrimitive
 import time
 import tf
 from tf_helpers import *
@@ -278,7 +279,7 @@ class ArmCommander:
         return res, pose_goal
     
     @staticmethod
-    def get_indices_optimal_poses(pose_goal:Pose, pose_list:list, n:int, comparator_id=2):
+    def get_indices_optimal_poses(goal, pose_list:list, n:int, comparator_id=2):
         """
         @brief Return indices of up to n optimal poses from the pose list passes.
         Optimal pose is defined as the closest pose to the pose_goal by angular magnitude.
@@ -289,11 +290,16 @@ class ArmCommander:
 
         @return a list of ordered integer indices
         """
-        if type(pose_goal) is not Pose:
+        if type(goal) is PoseStamped:
+            q = goal.pose.orientation
+        elif type(goal) is Pose:
+            q = goal.orientation
+        elif type(goal) is Quaternion:
+            q = goal
+        else:
             raise ValueError("parameter is not a valid point; needs to be geometry_msgs/Pose)")
         if n > len(pose_list):
             n = len(pose_list)
-        q = pose_goal.orientation
 
         QuaternionComparators.set_ref_quaternion(q)
         cmp = QuaternionComparators.get_comparator(comparator_id)
@@ -372,11 +378,12 @@ class ArmCommander:
         """
         @brief Get collision object from the planning scene based on id string
 
-        @return CollisionObject if found | None if not found
+        @return Moveit_msgs/CollisionObject if found | None if not found
         """
         objs = self.scene.get_objects()
         for o in list(objs.items()):
             obj:CollisionObject = o[1]
+            # shape:SolidPrimitive = obj.primitives[0]
             if obj.id == object_id:
                 return obj
         print('could not find obj in %s' %objs)

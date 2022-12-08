@@ -233,7 +233,7 @@ class IKPoints():
         return self.position_kdtree.query(pt1, k=n)
 
     def get_dist_points(self,pt1,dist,tolerance):
-        """ 
+        """
         @brief Return a list of indices of points a certain distance away from pt1 with a specified tolerance
 
         @param pt1 : float vector3 of type numpy.ndarray 
