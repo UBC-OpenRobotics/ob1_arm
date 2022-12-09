@@ -29,7 +29,7 @@ import random
 from ob1_arm_control.srv import IKPointsServiceRequest
 from ikpoints_service import ikpoints_service_client
 from relaxed_ik.srv import RelaxedIKService, RelaxedIKServiceRequest
-from relaxed_ik_helpers import relaxedik_service_client
+from service_clients import relaxedik_service_client
 from functools import cmp_to_key
 print(sys.version)
 
@@ -165,6 +165,23 @@ def test_go_rand_pose_relaxedik(setup_teardown):
     assert res , "motion planning failed"
     assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
     assert_dist(arm_commander.get_end_effector_pose(),target, DIST_TOLERANCE)
+
+@pytest.mark.parametrize("weights", [[0.25,0.25,0.25,1,1,1],[0.1,0.1,0.1,1,1,1],[0.05,0.05,0.05,1,1,1]])
+def test_go_rand_pose_matlab(setup_teardown, weights):
+    target = arm_commander.arm_mvgroup.get_random_pose()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    res, _, joints = arm_commander.go_pose_matlabik(target, weights)
+    assert res , "motion planning failed"
+    assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
+    assert_dist(arm_commander.get_end_effector_pose(),target, DIST_TOLERANCE)
+
+def test_go_rand_position_matlab(setup_teardown):
+    target = arm_commander.arm_mvgroup.get_random_pose()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    res, _, joints = arm_commander.go_position_matlabik(target.pose.position)
+    assert res , "motion planning failed"
+    assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
+    assert_dist(arm_commander.get_end_effector_pose().pose.position,target.pose.position, DIST_TOLERANCE)
 
 def test_go_rand_position(setup_teardown):
     target = arm_commander.arm_mvgroup.get_random_pose()

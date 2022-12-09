@@ -1,0 +1,9 @@
+string request
+geometry_msgs/Pose pose
+uint32 num_pts
+float32 tolerance
+float32 distance
+---
+geometry_msgs/Pose[] pose_targets
+JointTarget[] joint_targets
+bool condition

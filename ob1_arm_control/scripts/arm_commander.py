@@ -25,7 +25,7 @@ from tf_helpers import *
 from ob1_arm_control.srv import IKPointsServiceRequest
 from ikpoints_service import ikpoints_service_client
 from relaxed_ik.srv import RelaxedIKService, RelaxedIKServiceRequest
-from relaxed_ik_helpers import relaxedik_service_client
+from service_clients import relaxedik_service_client, matlabik_service_client
 import pyquaternion as pyq
 from functools import cmp_to_key
 
@@ -277,6 +277,62 @@ class ArmCommander:
             self.arm_mvgroup.clear_pose_targets()
 
         return res, pose_goal
+
+    def go_position_matlabik(self, position_goal:Point):
+        if type(position_goal) is not Point:
+            raise ValueError("Input goal is not a Point")
+        pose = Pose()
+        pose.position = position_goal
+
+        result_str, error, joints = matlabik_service_client(pose, [0,0,0,1,1,1])
+        rospy.loginfo("Matlab IK response: %s, error: %.6f" %(result_str,error))
+        if 'success' or 'best available' in result_str:
+            rospy.loginfo(joints)
+            if self._check_joint_limits(joints):
+                res,_ = self.go_joint(joints)
+                return res, position_goal, joints
+        return False, position_goal, None
+
+    def go_pose_matlabik(self, pose_goal:PoseStamped = None, weights=[0.25,0.25,0.25,1,1,1]):
+        if type(pose_goal) is not PoseStamped:
+            raise ValueError("Input goal is not a PoseStamped")
+        if self.robot.get_planning_frame() != pose_goal.header.frame_id:
+            print("Incorrect planning frame for pose goal, got %s instead of %s \n" \
+                    %(self._current_pose_goal.header.frame_id,self.robot.get_planning_frame()))
+            self._current_pose_goal = None
+            return False, None
+        self._current_pose_goal = pose_goal
+
+        result_str, error, joints = matlabik_service_client(pose_goal.pose, weights)
+        rospy.loginfo("Matlab IK response: %s, error: %.6f" %(result_str,error))
+        if 'success' or 'best available' in result_str:
+            rospy.loginfo(joints)
+            if self._check_joint_limits(joints):
+                res,_ = self.go_joint(joints)
+                return res, pose_goal, joints
+        return False, pose_goal, None
+
+    def go_pose_relaxedik(self, pose_goal:PoseStamped = None):
+        if pose_goal is None:
+            pose_goal = self.arm_mvgroup.get_random_pose()
+        if type(pose_goal) is not PoseStamped:
+            raise ValueError("Input goal is not a PoseStamped")
+        if self.robot.get_planning_frame() != pose_goal.header.frame_id:
+            print("Incorrect planning frame for pose goal, got %s instead of %s \n" \
+                    %(self._current_pose_goal.header.frame_id,self.robot.get_planning_frame()))
+            self._current_pose_goal = None
+            return False, None
+        self._current_pose_goal = pose_goal
+
+        req = RelaxedIKServiceRequest()
+        req.pose_goals.header = pose_goal.header
+        req.pose_goals.ee_poses = [pose_goal.pose]
+        joints = relaxedik_service_client(req)
+        if len(joints) != self._num_joints:
+            res = False
+        else:
+            res, _ = self.go_joint(joints)
+        return res, pose_goal, joints
     
     @staticmethod
     def get_indices_optimal_poses(goal, pose_list:list, n:int, comparator_id=2):
@@ -661,25 +717,3 @@ class ArmCommander:
             if res:
                 return res, object.pose, joints
         return False, object.pose, None
-
-    def go_pose_relaxedik(self, pose_goal:PoseStamped = None):
-        if pose_goal is None:
-            pose_goal = self.arm_mvgroup.get_random_pose()
-        if type(pose_goal) is not PoseStamped:
-            raise ValueError("Input goal is not a PoseStamped")
-        if self.robot.get_planning_frame() != pose_goal.header.frame_id:
-            print("Incorrect planning frame for pose goal, got %s instead of %s \n" \
-                    %(self._current_pose_goal.header.frame_id,self.robot.get_planning_frame()))
-            self._current_pose_goal = None
-            return False, None
-        self._current_pose_goal = pose_goal
-
-        req = RelaxedIKServiceRequest()
-        req.pose_goals.header = pose_goal.header
-        req.pose_goals.ee_poses = [pose_goal.pose]
-        joints = relaxedik_service_client(req)
-        if len(joints) != self._num_joints:
-            res = False
-        else:
-            res, _ = self.go_joint(joints)
-        return res, pose_goal, joints

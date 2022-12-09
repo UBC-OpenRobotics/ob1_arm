@@ -1,6 +1,6 @@
 from __future__ import print_function
 import time
-from arm_commander import ArmCommander, convert_to_list
+from arm_commander import ArmCommander
 from moveit_commander.conversions import pose_to_list
 import numpy as np
 from math import pi, tau, dist, fabs, cos
@@ -8,6 +8,7 @@ import geometry_msgs
 from geometry_msgs.msg import PoseStamped
 import pytest
 import logging
+from tf_helpers import *
 
 def all_close(goal, actual, tolerance):
     """
@@ -48,16 +49,17 @@ def avg_all_close(goal, actual):
         total += abs(actual[index] - goal[index])
     return total/len(goal)
 
-def dist(p1,p2):
-    p1 = np.array(convert_to_list(p1))
-    p2 = np.array(convert_to_list(p2))
+def euc_distance(p1,p2):
+    assert type(p1) is not Quaternion
+    p1 = np.array(convert_to_list(p1)[:3])
+    p2 = np.array(convert_to_list(p2)[:3])
     return np.linalg.norm(p1-p2)
 
 def assert_dist(current_state,target,tolerance:float):
     assert type(current_state) == type(target), "current state and target state types do not match!"
     if type(target) is PoseStamped and type(current_state) is PoseStamped:
         assert target.header.frame_id == current_state.header.frame_id , "transform frame mismatch"
-    d = dist(current_state,target)
+    d = euc_distance(current_state,target)
     assert d <= tolerance, "Distance from target is too far, %f cm" % (d*100)
 
 def check_dist(current_state,target,tolerance:float):
@@ -66,7 +68,7 @@ def check_dist(current_state,target,tolerance:float):
     if type(target) is PoseStamped and type(current_state) is PoseStamped:
         if target.header.frame_id != current_state.header.frame_id:
             return False, "transform frame mismatch. Object pose is in %s frame" % target.header.frame_id
-    d = dist(current_state,target)
+    d = euc_distance(current_state,target)
     if d <= tolerance: 
         return True, d, "Motion planning tolerance success. %f cm" % (d*100)
     else:
