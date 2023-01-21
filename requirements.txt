@@ -2,7 +2,7 @@
 numpy
 kinpy
 matplotlib
-orsjon
+orjson
 scipy
 pytest
 pytest-repeat
