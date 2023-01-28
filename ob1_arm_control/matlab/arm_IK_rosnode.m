@@ -1,4 +1,3 @@
-
 rosinit('http://localhost:11311');
 
 srv = rossvcserver("/matlab_ik","ob1_arm_control/MatlabIKService",@serviceCallback);

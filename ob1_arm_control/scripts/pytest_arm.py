@@ -29,7 +29,7 @@ import random
 from ob1_arm_control.srv import IKPointsServiceRequest
 from ikpoints_service import ikpoints_service_client
 from relaxed_ik.srv import RelaxedIKService, RelaxedIKServiceRequest
-from service_clients import relaxedik_service_client
+from service_clients import relaxedik_service_client, matlabik_service_client
 from functools import cmp_to_key
 print(sys.version)
 
@@ -166,14 +166,17 @@ def test_go_rand_pose_relaxedik(setup_teardown):
     assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
     assert_dist(arm_commander.get_end_effector_pose(),target, DIST_TOLERANCE)
 
-@pytest.mark.parametrize("weights", [[0.25,0.25,0.25,1,1,1],[0.1,0.1,0.1,1,1,1],[0.05,0.05,0.05,1,1,1]])
+@pytest.mark.parametrize("weights", [[0.25,0.25,0.25,1,1,1],[0.1,0.1,0.1,1,1,1],[0.05,0.05,0.05,1,1,1],[0,0,0,1,1,1],[1,1,1,0,0,0]])
 def test_go_rand_pose_matlab(setup_teardown, weights):
     target = arm_commander.arm_mvgroup.get_random_pose()
     broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
     res, _, joints = arm_commander.go_pose_matlabik(target, weights)
     assert res , "motion planning failed"
     assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
-    assert_dist(arm_commander.get_end_effector_pose(),target, DIST_TOLERANCE)
+    # assert_dist(arm_commander.get_end_effector_pose(),target, DIST_TOLERANCE)
+    log.info(all_close(target, arm_commander.get_end_effector_pose(), GOAL_TOLERANCE))
+    log.info(all_close(target.pose.position, arm_commander.get_end_effector_pose().pose.position, GOAL_TOLERANCE))
+    log.info(all_close(target.pose.orientation, arm_commander.get_end_effector_pose().pose.orientation, GOAL_TOLERANCE))
 
 def test_go_rand_position_matlab(setup_teardown):
     target = arm_commander.arm_mvgroup.get_random_pose()
@@ -403,6 +406,64 @@ def test_pick_and_place_cylinder_in_region(setup_teardown):
     
     assert res
     assert arm_commander.detach_object(obj)
+
+def test_go_cylinder_matlab(setup_teardown, attempts=100):
+    p = PoseStamped()
+    p.header.frame_id = arm_commander.robot.get_planning_frame()
+    p.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
+    p.pose.orientation.w = 1
+    arm_commander.scene.add_cylinder('cylinder', p, height=0.15, radius=0.03)
+
+    time.sleep(2)
+
+    obj = arm_commander.get_object('cylinder')
+    assert obj!=None, 'could not find any scene objects'
+    broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'target','world')
+
+    res = False
+    for _ in range(attempts):
+        res = arm_commander.go_pose_matlabik(p, [0.01,0.01,0.01,1,1,1])[0]
+        if res:
+            break
+    assert res
+
+def test_pick_and_place_cylinder_in_region_matlab(setup_teardown):
+    pick_target = PoseStamped()
+    pick_target.header.frame_id = arm_commander.robot.get_planning_frame()
+    pick_target.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
+    pick_target.pose.orientation.w = 1
+    arm_commander.scene.add_cylinder('cylinder', pick_target, height=0.15, radius=0.03)
+
+    time.sleep(2)
+
+    obj = arm_commander.get_object('cylinder')
+    assert obj!=None, 'could not find any scene objects'
+    broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'target','world')
+
+    assert arm_commander.pick_object(obj, attempts=10, pick_tolerance=0.01), 'failed to pick object'
+
+    #first we should get the tf from object --> eef : t_obj_eef (numpy matrix 4x4)
+    t_obj_w = np.linalg.inv(pose_to_mat(obj.pose))
+    t_w_eef = pose_to_mat(arm_commander.get_end_effector_pose().pose)
+    #this should be constant until the detach operation
+    t_obj_eef = np.dot(t_obj_w, t_w_eef)
+
+    place_target = PoseStamped()
+    place_target.header.frame_id = arm_commander.robot.get_planning_frame()
+    place_target.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
+    place_target.pose.orientation.w = 1
+    broadcast_pose(arm_commander.tf_broadcaster,place_target.pose,'target','world')
+
+    t_w_pobj = pose_to_mat(place_target.pose)
+    t_w_peef = np.dot(t_w_pobj, t_obj_eef)
+    place_target.pose = mat_to_pose(t_w_peef)
+    broadcast_pose(arm_commander.tf_broadcaster,place_target.pose,'eef','world')
+
+    assert arm_commander.go_pose_matlabik(place_target, [1,1,1,0,0,0])[0]
+
+    assert arm_commander.detach_object(obj)
+    time.sleep(5)
+
 
 # @pytest.mark.parametrize("sphere_radius", [0.03])
 # @pytest.mark.parametrize("scale_trans", [

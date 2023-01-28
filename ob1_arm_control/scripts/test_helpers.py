@@ -26,6 +26,18 @@ def all_close(goal, actual, tolerance):
             if abs(actual[index] - goal[index]) > tolerance:
                 return False
 
+    elif type(goal) is geometry_msgs.msg.Quaternion:
+        qx0, qy0, qz0, qw0 = quat_to_list(actual)
+        qx1, qy1, qz1, qw1 = quat_to_list(goal)
+        cos_phi_half = fabs(qx0 * qx1 + qy0 * qy1 + qz0 * qz1 + qw0 * qw1)
+        return cos_phi_half >= cos(tolerance / 2.0)
+    
+    elif type(goal) is geometry_msgs.msg.Point:
+        x0, y0, z0 = point_to_list(actual)
+        x1, y1, z1 = point_to_list(goal)
+        d = dist((x1, y1, z1), (x0, y0, z0))
+        return d <= tolerance
+
     elif type(goal) is geometry_msgs.msg.PoseStamped:
         return all_close(goal.pose, actual.pose, tolerance)
 

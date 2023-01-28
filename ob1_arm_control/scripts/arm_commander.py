@@ -306,7 +306,6 @@ class ArmCommander:
         result_str, error, joints = matlabik_service_client(pose_goal.pose, weights)
         rospy.loginfo("Matlab IK response: %s, error: %.6f" %(result_str,error))
         if 'success' or 'best available' in result_str:
-            rospy.loginfo(joints)
             if self._check_joint_limits(joints):
                 res,_ = self.go_joint(joints)
                 return res, pose_goal, joints

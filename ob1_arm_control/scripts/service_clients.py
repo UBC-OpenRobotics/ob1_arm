@@ -6,7 +6,7 @@ from tf import transformations
 from tf_helpers import point_to_list, quat_to_list
 import rospy
 
-def matlabik_service_client(pose, weights, timeout=10):
+def matlabik_service_client(pose, weights, num_joints=5, timeout=10):
     """
     @brief service client function for matlab ik service
 
@@ -41,9 +41,8 @@ def matlabik_service_client(pose, weights, timeout=10):
         xyz = point_to_list(pose.position)
         request.pose_target = xyz + rpy
         request.tolerance = weights
-        rospy.loginfo(request)
         resp = rospy.ServiceProxy('matlab_ik', MatlabIKService)(request)
-        return resp.result, resp.error, resp.joints[:5]
+        return resp.result, resp.error, resp.joints[:num_joints]
     except rospy.ServiceException as e:
         rospy.logwarn("Service call failed: %s"%e)
         return 'service call failed', -1, []
