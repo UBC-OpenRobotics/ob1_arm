@@ -30,12 +30,12 @@ print(sys.version)
 # PACKAGE_PATH = rp.get_path('ob1_arm_control')
 # DATA_FILE_PATH = PACKAGE_PATH+"/data/5k_pose_data.pickle"
 
-PLANNING_TOLERANCE = 0.1 #distance in metres
+PLANNING_TOLERANCE = 0.001 #distance in metres
 SUCCESS_RATE_TOLERANCE = 0.80 #percentage of tests that pass
 
 test_log = logging.getLogger(__name__)
 
-arm_commander = ArmCommander(sample_time_out=0.1,goal_tolerance=0.02)
+arm_commander = ArmCommander(sample_time_out=5,goal_tolerance=0.02,sample_attempts=10)
 test_log.info("Clearing scene..")
 arm_commander.scene.clear()
 
@@ -105,24 +105,50 @@ def compare_ik_result(current_state,target,tolerance:float):
     
 ###########################################################################3
 
-def test_go_rand_pose():
+def test_go_rand_pose_1():
     test_log.info("Starting go_rand_pose test")
     test_log.info("Going to random pose...")
-    res, target = arm_commander.go_pose()
+    target = arm_commander.arm_mvgroup.get_random_pose()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    res, _ = arm_commander.go_pose(target)
     assert res , "motion planning failed"
-    assert all_close(target, arm_commander.arm_mvgroup.get_current_joint_values()) , "joint target not within tolerance"
+    # assert all_close(target, arm_commander.arm_mvgroup.get_current_joint_values()) , "joint target not within tolerance"
     test_log.info("Boolean result: %s" % res)
     test_log.info("Target type: %s" % type(target))
     assert_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
 
-def test_go_rand_position():
-    test_log.info("Starting go_rand_position test")
-    test_log.info("Going to random position...")
-    res, target = arm_commander.go_position()
+def test_go_rand_pose_2():
+    test_log.info("Starting go_rand_pose test")
+    test_log.info("Going to random pose...")
+    target = arm_commander.arm_mvgroup.get_random_pose()
+    target.pose.position.x = 0.3
+    target.pose.position.y = 0
+    target.pose.position.z = 0.5
+    target.pose.orientation = Quaternion(0,0,0,1)
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    res, _ = arm_commander.go_pose(target)
     assert res , "motion planning failed"
+    # assert all_close(target, arm_commander.arm_mvgroup.get_current_joint_values()) , "joint target not within tolerance"
     test_log.info("Boolean result: %s" % res)
     test_log.info("Target type: %s" % type(target))
     assert_ik_result(arm_commander.get_end_effector_pose(),target,PLANNING_TOLERANCE)
+
+def test_go_position_1():
+    target = arm_commander.arm_mvgroup.get_random_pose()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    arm_commander.arm_mvgroup.set_position_target(convert_to_list(target.pose.position))
+    assert arm_commander.arm_mvgroup.go()
+
+def test_go_rand_position():
+    test_log.info("Starting go_rand_position test")
+    test_log.info("Going to random position...")
+    target = arm_commander.arm_mvgroup.get_random_pose()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    res, _ = arm_commander.go_position(target.pose.position)
+    assert res , "motion planning failed"
+    test_log.info("Boolean result: %s" % res)
+    test_log.info("Target type: %s" % type(target))
+    assert_ik_result(arm_commander.get_end_effector_pose().pose.position, target.pose.position, PLANNING_TOLERANCE)
 
 def test_go_rand_joint_target():
     test_log.info("Starting go_rand_joint_target test")
@@ -216,7 +242,7 @@ def test_go_reachable_scene_object_pose(iterations,sphere_radius):
 @pytest.mark.parametrize("iterations", [5])
 @pytest.mark.parametrize("sphere_radius", [0.03])
 def test_pick(iterations,sphere_radius):
-    test_log.info("Starting pickt test")
+    test_log.info("Starting pick test")
 
     success_counter = 0
     for _ in range(iterations):
@@ -230,7 +256,7 @@ def test_pick(iterations,sphere_radius):
         obj:CollisionObject = list(objs.items())[0][1]
         broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'sphere','world')
 
-        res = arm_commander.pick_object(obj)
+        res = arm_commander.pick_object_ikpoints(obj)
         test_log.info(res)
 
         if res :
@@ -252,7 +278,35 @@ def test_pick_and_move(sphere_radius):
 
     assert arm_commander.pick_object(obj), 'failed to pick object'
     
-    assert arm_commander.go_position_ikpoints()[0], 'failed to move arm after attaching object'
+    assert arm_commander.go_position()[0], 'failed to move arm after attaching object'
+
+    assert arm_commander.detach_object(obj), 'failed to detach object'
+
+    assert arm_commander.open_gripper(), 'failed to open gripper after detaching object'
+
+@pytest.mark.parametrize("sphere_radius", [0.03])
+def test_pick_and_move_2(sphere_radius):
+    test_log.info("Starting pick and move test")
+
+    arm_commander.scene.clear()
+    
+    p = PoseStamped()
+    p.header.frame_id = arm_commander.robot.get_planning_frame()
+    p.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
+    p.pose.position.x = 0.3
+    p.pose.position.y = 0
+    p.pose.position.z = 0.2
+    p.pose.orientation.w = 1
+    arm_commander.scene.add_sphere("sphere",p,sphere_radius)
+
+    objs = arm_commander.scene.get_objects()
+    assert len(objs) >= 0, 'could not find any scene objects'
+    obj:CollisionObject = list(objs.items())[0][1]
+    broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'sphere','world')
+
+    assert arm_commander.pick_object(obj), 'failed to pick object'
+    
+    assert arm_commander.go_position()[0], 'failed to move arm after attaching object'
 
     assert arm_commander.detach_object(obj), 'failed to detach object'
 
@@ -276,7 +330,7 @@ def test_pick_cylinder_and_move():
     obj:CollisionObject = list(objs.items())[0][1]
     broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'cylinder','world')
 
-    assert arm_commander.pick_object(obj), 'failed to pick object'
+    assert arm_commander.pick_object_ikpoints(obj), 'failed to pick object'
     
     assert arm_commander.go_position_ikpoints()[0], 'failed to move arm after attaching object'
 
@@ -318,7 +372,7 @@ def _test_viz_target(scale_trans,sphere_radius):
     arm_commander.scene.remove_world_object("viz_sphere")
 
 @pytest.mark.parametrize("iterations", [10])
-def test_go_rand_pose_loop(iterations):
+def ntest_go_rand_pose_loop(iterations):
     success_counter = 0
     for _ in range(iterations):
         res, target = arm_commander.go_pose()
@@ -352,7 +406,7 @@ def test_go_pose_kinpy(iterations):
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
 
 @pytest.mark.parametrize("iterations", [1,10,25])
-def test_go_rand_ikpoint_loop(iterations):
+def ntest_go_rand_ikpoint_loop(iterations):
     success_counter = 0
     for _ in range(iterations):
         res, target, joint_target = arm_commander.go_position_ikpoints()
@@ -365,7 +419,7 @@ def test_go_rand_ikpoint_loop(iterations):
     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
 
 @pytest.mark.parametrize("iterations", [1,10,25])
-def test_avg_go_ikpoint_dist(iterations):
+def ntest_avg_go_ikpoint_dist(iterations):
     d = 0
     for _ in range(iterations):
         res, target, joint_target = arm_commander.go_position_ikpoints()

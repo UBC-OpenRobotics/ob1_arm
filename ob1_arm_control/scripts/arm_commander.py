@@ -179,15 +179,9 @@ class ArmCommander:
             print('getting random joint values due to joints type = %s' % type(joints))
             joints:list = self.arm_mvgroup.get_random_joint_values()
 
-        self.arm_mvgroup.clear_pose_targets()
         self.arm_mvgroup.set_joint_value_target(joints)
-        plan = self.arm_mvgroup.plan()
-        result:bool = plan[0]
-
-        if plan[0]:
-            result = self.arm_mvgroup.go()
-            self.arm_mvgroup.stop()
-        self._current_plan = plan
+        result = self.arm_mvgroup.go()
+        self.arm_mvgroup.stop()
         return result, joints
     
     def go_position(self, position_goal=None):
@@ -208,15 +202,9 @@ class ArmCommander:
             position_goal = convert_to_list(position_goal)
 
         #plan to original position goal
-        self.arm_mvgroup.clear_pose_targets()
         self.arm_mvgroup.set_position_target(position_goal, self.GRIPPER_BASE_LINK_NAME)
-        plan = self.arm_mvgroup.plan()
-        self._current_plan = plan
-
-        if plan[0]:
-            res = self.arm_mvgroup.go()
-            self.arm_mvgroup.stop()
-            self.arm_mvgroup.clear_pose_targets()
+        res = self.arm_mvgroup.go()
+        self.arm_mvgroup.stop()
     
         return res, position_goal
 
@@ -272,14 +260,10 @@ class ArmCommander:
             return False, None
         self._current_pose_goal = pose_goal
 
-        plan = self.arm_mvgroup.plan(self._current_pose_goal.pose)
-        self._current_plan = plan
-        res:bool = plan[0]
-
-        if plan[0]:
-            res = self.arm_mvgroup.go()
-            self.arm_mvgroup.stop()
-            self.arm_mvgroup.clear_pose_targets()
+        self.arm_mvgroup.set_pose_target(pose_goal)
+        res = self.arm_mvgroup.go()
+        self.arm_mvgroup.stop()
+        self.arm_mvgroup.clear_pose_targets()
 
         return res, pose_goal
 
@@ -302,7 +286,7 @@ class ArmCommander:
         time.sleep(2) #delay for scene update
         return not self.scene.get_attached_objects([object.id])
 
-    def pick_object(self, object:CollisionObject, attempts=100):
+    def pick_object_ikpoints(self, object:CollisionObject, attempts=100):
         def close_gripper_around_object():
             self.gripper_mvgroup.set_planning_time(0.1)
             self.gripper_mvgroup.set_num_planning_attempts(1)
@@ -339,6 +323,33 @@ class ArmCommander:
             if res:
                 break
         # res = self.go_position_ikpoints(object.pose.position)[0]
+        if res:
+            res = close_gripper_around_object()
+            if res:
+                res = self.attach_object(object)
+        return res
+
+    def pick_object(self, object:CollisionObject):
+        def close_gripper_around_object():
+            self.gripper_mvgroup.set_planning_time(0.1)
+            self.gripper_mvgroup.set_num_planning_attempts(1)
+            joints_open = list(self.gripper_mvgroup.get_named_target_values("open").values())
+            joints_close = list(self.gripper_mvgroup.get_named_target_values("close").values())
+            js_0 = np.linspace(joints_close[0], joints_open[0], 10)
+            js_1 = np.linspace(joints_close[1], joints_open[1], 10)
+            for a0 in js_0:
+                for a1 in js_1:
+                    self.gripper_mvgroup.set_joint_value_target([a0,a1])
+                    plan = self.gripper_mvgroup.plan()
+                    if plan[0]:
+                        if self.gripper_mvgroup.go():
+                            return True
+            return False
+        
+        print("Picking object: %s" % object.id)
+        self.open_gripper()
+
+        res, _ = self.go_position(object.pose.position)
         if res:
             res = close_gripper_around_object()
             if res:
