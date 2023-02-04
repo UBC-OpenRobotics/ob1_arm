@@ -25,7 +25,8 @@ The ob1_arm uses rviz, gazebo, moveit, moveit planners, ros control, and several
 sudo apt-get install ros-noetic-rviz ros-noetic-gazebo-ros-pkgs \ 
 ros-noetic-moveit ros-noetic-gazebo-ros-control ros-noetic-ros-controllers \
 ros-noetic-rqt-joint-trajectory-controller ros-noetic-moveit-planners \
-ros-noetic-moveit-fake-controller-manager libgflags-dev ros-noetic-rosparam-shortcuts
+ros-noetic-moveit-fake-controller-manager libgflags-dev ros-noetic-rosparam-shortcuts \
+ros-noetic-moveit-commander
 ```
 
 ## 4. Clone ob1_arm repo
