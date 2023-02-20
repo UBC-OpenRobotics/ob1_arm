@@ -29,7 +29,7 @@
     <link name="world"/>
     <joint name="base" type="fixed">
         <parent link="world" />
-        <child link="${prefix}_fixed_base_link" />
+        <child link="${prefix}_base_link" />
     </joint>
 
 </robot>

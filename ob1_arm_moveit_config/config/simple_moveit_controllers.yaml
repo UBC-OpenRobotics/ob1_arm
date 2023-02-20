@@ -1,4 +1,14 @@
 controller_list:
+  - name: arm_controller
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: True
+    joints:
+      - ob1_arm_base_shoulder_joint
+      - ob1_arm_shoulder_arm_joint
+      - ob1_arm_arm_elbow_joint
+      - ob1_arm_elbow_forearm_joint
+      - ob1_arm_forearm_gripper_joint
   - name: gripper_controller
     action_ns: follow_joint_trajectory
     type: FollowJointTrajectory
@@ -6,14 +16,3 @@ controller_list:
     joints:
       - ob1_arm_gripper_lclaw_joint
       - ob1_arm_gripper_rclaw_joint
-  - name: arm_controller
-    action_ns: follow_joint_trajectory
-    type: FollowJointTrajectory
-    default: True
-    joints:
-      - ob1_arm_fixed_base_joint
-      - ob1_arm_base_shoulder_joint
-      - ob1_arm_shoulder_arm_joint
-      - ob1_arm_arm_elbow_joint
-      - ob1_arm_elbow_forearm_joint
-      - ob1_arm_forearm_gripper_joint

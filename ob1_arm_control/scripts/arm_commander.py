@@ -158,28 +158,39 @@ class ArmCommander:
         """
         return self.robot.get_link(self.arm_mvgroup.get_end_effector_link()).pose()
 
-    def go_joint(self, joints:list):
+    def go_joint(self, joints:list=None):
         """
         @brief Makes the group's joints go to joint angles specified by goal,
         blocks until goal is reached within tolerance or exit if goal joint
         angles is impossible.
 
+        @param group (MoveGroupCommander) : Move group object , either arm or gripper
+
         @param joints: list[float] of joint target angles
 
-        @returns (execution result, joint_target [j0,j1,j2,...] | None)
+        @returns (command result, joint_target [j0,j1,j2,...])
         """
         if type(joints) is not list:
-            joints = convert_to_list(joints)
+            if type(joints) is np.ndarray:
+                joints = joints.tolist()
+            elif type(joints) is tuple:
+                joints = list(joints)
+        if type(joints) is not list or len(joints) != self._num_joints: 
+            print('getting random joint values due to joints type = %s' % type(joints))
+            joints:list = self.arm_mvgroup.get_random_joint_values()
 
-        if len(joints) != self._num_joints:
-            raise ValueError("joints list has incorrect length (!=%d)"%self._num_joints)
-
+        self.arm_mvgroup.clear_pose_targets()
         self.arm_mvgroup.set_joint_value_target(joints)
-        result = self.arm_mvgroup.go()
-        self.arm_mvgroup.stop()
+        plan = self.arm_mvgroup.plan()
+        result:bool = plan[0]
+
+        if plan[0]:
+            result = self.arm_mvgroup.go()
+            self.arm_mvgroup.stop()
+        self._current_plan = plan
         return result, joints
     
-    def go_position(self, position_goal):
+    def go_position(self, position_goal=None):
         """
         @brief makes the end effector of the arm go to a cartesian position (x,y,z)
         The position should be in the reference frame of the base link
@@ -190,18 +201,26 @@ class ArmCommander:
         @returns (execution result, position target [x,y,z] )
         """
 
-        if type(position_goal) is not list:
+        #handle different kind of inputs
+        if position_goal is None:
+            position_goal = convert_to_list(self.arm_mvgroup.get_random_pose().pose.position)
+        elif type(position_goal) is not list:
             position_goal = convert_to_list(position_goal)
-            if len(position_goal) != 3:
-                raise ValueError("Position goal list has invalid length (!=3)")
 
+        #plan to original position goal
+        self.arm_mvgroup.clear_pose_targets()
         self.arm_mvgroup.set_position_target(position_goal, self.GRIPPER_BASE_LINK_NAME)
-        res = self.arm_mvgroup.go()
-        self.arm_mvgroup.stop()
+        plan = self.arm_mvgroup.plan()
+        self._current_plan = plan
+
+        if plan[0]:
+            res = self.arm_mvgroup.go()
+            self.arm_mvgroup.stop()
+            self.arm_mvgroup.clear_pose_targets()
     
         return res, position_goal
 
-    def go_position_ikpoints(self, position_goal):
+    def go_position_ikpoints(self, position_goal=None):
         """
         @brief makes the end effector of the arm go to a cartesian position (x,y,z)
         Finds optimal joint target based on ik points data base
@@ -209,15 +228,16 @@ class ArmCommander:
 
         @param position_goal: can be list of [x,y,z] a Point, Pose, or PoseStamped objects
         The position will be extracted from any of these data types.
+        **IF position_goal is None, a random position_goal will be selected and the nearest ikpoint will be matched to it
 
         @returns (execution result, position target [x,y,z], joint_target [j0,j1,j2,...])
         """
 
         #handle different kind of inputs
-        if type(position_goal) is not list:
+        if position_goal is None:
+            position_goal = convert_to_list(self.arm_mvgroup.get_random_pose().pose.position)
+        elif type(position_goal) is not list:
             position_goal = convert_to_list(position_goal)
-            if len(position_goal) != 3:
-                raise ValueError("Position goal list has invalid length (!=3)")
 
         req = IKPointsServiceRequest()
         req.request = 'get nearest joint targets'
@@ -227,7 +247,7 @@ class ArmCommander:
     
         return res, position_goal, joint_target
         
-    def go_pose(self, pose_goal:PoseStamped):
+    def go_pose(self, pose_goal:PoseStamped=None):
         '''
         @brief Makes the end effector of the arm go to a pose, 
         blocks until either inverse kinematics fails 
@@ -241,18 +261,25 @@ class ArmCommander:
         @returns (execution result, PoseStamped target)
         '''
 
+        if pose_goal == None:
+            pose_goal = self.arm_mvgroup.get_random_pose()
         if type(pose_goal) is not PoseStamped:
             raise ValueError("Input goal is not a PoseStamped")
         if self.robot.get_planning_frame() != pose_goal.header.frame_id:
-            raise ValueError("Incorrect planning frame for pose goal, got %s instead of %s \n" \
+            print("Incorrect planning frame for pose goal, got %s instead of %s \n" \
                     %(self._current_pose_goal.header.frame_id,self.robot.get_planning_frame()))
-
+            self._current_pose_goal = None
+            return False, None
         self._current_pose_goal = pose_goal
 
-        self.arm_mvgroup.set_pose_target(pose_goal)
-        res = self.arm_mvgroup.go()
-        self.arm_mvgroup.stop()
-        self.arm_mvgroup.clear_pose_targets()
+        plan = self.arm_mvgroup.plan(self._current_pose_goal.pose)
+        self._current_plan = plan
+        res:bool = plan[0]
+
+        if plan[0]:
+            res = self.arm_mvgroup.go()
+            self.arm_mvgroup.stop()
+            self.arm_mvgroup.clear_pose_targets()
 
         return res, pose_goal
 
@@ -275,7 +302,7 @@ class ArmCommander:
         time.sleep(2) #delay for scene update
         return not self.scene.get_attached_objects([object.id])
 
-    def pick_object_ikpoints(self, object:CollisionObject, attempts=100):
+    def pick_object(self, object:CollisionObject, attempts=100):
         def close_gripper_around_object():
             self.gripper_mvgroup.set_planning_time(0.1)
             self.gripper_mvgroup.set_num_planning_attempts(1)
@@ -312,33 +339,6 @@ class ArmCommander:
             if res:
                 break
         # res = self.go_position_ikpoints(object.pose.position)[0]
-        if res:
-            res = close_gripper_around_object()
-            if res:
-                res = self.attach_object(object)
-        return res
-
-    def pick_object(self, object:CollisionObject):
-        def close_gripper_around_object():
-            self.gripper_mvgroup.set_planning_time(0.1)
-            self.gripper_mvgroup.set_num_planning_attempts(1)
-            joints_open = list(self.gripper_mvgroup.get_named_target_values("open").values())
-            joints_close = list(self.gripper_mvgroup.get_named_target_values("close").values())
-            js_0 = np.linspace(joints_close[0], joints_open[0], 10)
-            js_1 = np.linspace(joints_close[1], joints_open[1], 10)
-            for a0 in js_0:
-                for a1 in js_1:
-                    self.gripper_mvgroup.set_joint_value_target([a0,a1])
-                    plan = self.gripper_mvgroup.plan()
-                    if plan[0]:
-                        if self.gripper_mvgroup.go():
-                            return True
-            return False
-        
-        print("Picking object: %s" % object.id)
-        self.open_gripper()
-
-        res, _ = self.go_position(object.pose.position)
         if res:
             res = close_gripper_around_object()
             if res:

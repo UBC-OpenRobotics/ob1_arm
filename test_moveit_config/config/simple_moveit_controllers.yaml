@@ -4,7 +4,6 @@ controller_list:
     type: FollowJointTrajectory
     default: True
     joints:
-      - ob1_arm_fixed_base_joint
       - ob1_arm_base_shoulder_joint
       - ob1_arm_shoulder_arm_joint
       - ob1_arm_arm_elbow_joint
