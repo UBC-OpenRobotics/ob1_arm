@@ -169,13 +169,10 @@ class ArmCommander:
         @returns (execution result, joint_target [j0,j1,j2,...] | None)
         """
         if type(joints) is not list:
-            if type(joints) is np.ndarray:
-                joints = joints.tolist()
-            elif type(joints) is tuple:
-                joints = list(joints)
+            joints = convert_to_list(joints)
 
-        if type(joints) is not list or len(joints) != self._num_joints:
-            thr
+        if len(joints) != self._num_joints:
+            raise ValueError("joints list has incorrect length (!=%d)"%self._num_joints)
 
         self.arm_mvgroup.set_joint_value_target(joints)
         result = self.arm_mvgroup.go()
