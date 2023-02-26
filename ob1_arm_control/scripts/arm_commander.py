@@ -191,7 +191,7 @@ class ArmCommander:
             if len(position_goal) != 3:
                 raise ValueError("Position goal list has invalid length (!=3)")
 
-        self.arm_mvgroup.set_position_target(position_goal, self.GRIPPER_BASE_LINK_NAME)
+        self.arm_mvgroup.set_position_target(position_goal)
         res = self.arm_mvgroup.go()
         self.arm_mvgroup.stop()
     
@@ -246,6 +246,7 @@ class ArmCommander:
         self._current_pose_goal = pose_goal
 
         self.arm_mvgroup.set_pose_target(pose_goal)
+        # self.arm_mvgroup.set_joint_value_target(pose_goal) #read the function docs, this should work
         res = self.arm_mvgroup.go()
         self.arm_mvgroup.stop()
         self.arm_mvgroup.clear_pose_targets()

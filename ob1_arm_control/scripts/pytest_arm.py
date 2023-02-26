@@ -58,11 +58,11 @@ def clear_scene():
 def setup_teardown():
     clear_scene()
     arm_commander.open_gripper()
-    arm_commander.go_joint([0,0,0,0,0])
+    arm_commander.go_joint(np.zeros(arm_commander._num_joints))
     yield
     clear_scene()
     arm_commander.open_gripper()
-    arm_commander.go_joint([0,0,0,0,0])
+    arm_commander.go_joint(np.zeros(arm_commander._num_joints))
 
 def spawn_random_sphere(r):
     """
@@ -169,6 +169,7 @@ def test_allclose_quaternion():
 
 def test_go_joints_allclose(setup_teardown):
     target = arm_commander.arm_mvgroup.get_random_joint_values()
+    log.info(target)
     res,_ = arm_commander.go_joint(target)
     assert res , "motion planning failed"
     assert all_close(target, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE)
@@ -195,7 +196,7 @@ def test_go_position_ikpoints_dist(setup_teardown):
     assert res , "motion planning failed"
     assert_dist(arm_commander.get_end_effector_pose().pose.position, target, DIST_TOLERANCE)
 
-def test_go_position_allclose(setup_teardown):
+def test_go_position_ikpoints_allclose(setup_teardown):
     target = arm_commander.arm_mvgroup.get_random_pose().pose.position
     broadcast_point(arm_commander.tf_broadcaster,target,'target','world')
     res, _ = arm_commander.go_position_ikpoints(target)

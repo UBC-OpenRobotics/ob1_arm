@@ -15,6 +15,6 @@ controller_list:
       - ob1_arm_forearm_gripper_joint
 initial:  # Define initial robot poses per group
   - group: gripper
-    pose: gripper_open
+    pose: open
   - group: arm
     pose: pose0
