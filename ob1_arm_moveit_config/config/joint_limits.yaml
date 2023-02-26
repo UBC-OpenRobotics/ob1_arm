@@ -23,6 +23,11 @@ joint_limits:
     max_velocity: 20
     has_acceleration_limits: false
     max_acceleration: 0
+  ob1_arm_fixed_base_joint:
+    has_velocity_limits: true
+    max_velocity: 20
+    has_acceleration_limits: false
+    max_acceleration: 0
   ob1_arm_forearm_gripper_joint:
     has_velocity_limits: true
     max_velocity: 20

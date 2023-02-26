@@ -3,7 +3,7 @@
   <arg name="paused" default="false"/>
   <arg name="gazebo_gui" default="true"/>
   <arg name="initial_joint_positions" doc="Initial joint configuration of the robot"
-       default=" -J ob1_arm_arm_elbow_joint 0 -J ob1_arm_base_shoulder_joint 0 -J ob1_arm_elbow_forearm_joint 0 -J ob1_arm_forearm_gripper_joint 0 -J ob1_arm_gripper_lclaw_joint -1.54 -J ob1_arm_gripper_rclaw_joint 1.54 -J ob1_arm_shoulder_arm_joint 0"/>
+       default=" -J ob1_arm_arm_elbow_joint 0 -J ob1_arm_base_shoulder_joint -0.2529 -J ob1_arm_elbow_forearm_joint 0 -J ob1_arm_fixed_base_joint 0.1908 -J ob1_arm_forearm_gripper_joint 0 -J ob1_arm_gripper_lclaw_joint -1.54 -J ob1_arm_gripper_rclaw_joint 1.54 -J ob1_arm_shoulder_arm_joint -0.5844"/>
 
   <!-- startup simulated world -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -13,7 +13,7 @@
   </include>
 
   <!-- send robot urdf to param server -->
-  <param name="robot_description" command="xacro  '$(find ob1_arm_description)/urdf/main.xacro'" />
+  <param name="robot_description" textfile="$(find test_moveit_config)/config/gazebo_robot.urdf" />
 
   <!-- unpause only after loading robot model -->
   <arg name="unpause" value="$(eval '' if arg('paused') else '-unpause')" />

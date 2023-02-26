@@ -21,6 +21,9 @@ def all_close(goal, actual, tolerance):
     @param: tolerance  A float
     @returns: bool
     """
+    if type(goal) is np.ndarray:
+        return all_close(goal.tolist(), actual.tolist(), tolerance)
+
     if type(goal) is list:
         for index in range(len(goal)):
             if abs(actual[index] - goal[index]) > tolerance:

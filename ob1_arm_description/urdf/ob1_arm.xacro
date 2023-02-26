@@ -1,6 +1,14 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robot">
     <xacro:macro name="arm" params="prefix">
+        <link name="${prefix}_fixed_base_link">
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <mass value="0" />
+                <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+            </inertial>
+        </link>
+
         <link name="${prefix}_base_link">
         <visual>
         <origin xyz="3.31402e-16 -0.0195 0.06" rpy="-1.5708 1.21431e-16 3.90606e-18" />
@@ -473,6 +481,16 @@
         <child link="${prefix}_shoulder_link" />
         <axis xyz="0 0 1"/>
         <limit effort="1" velocity="20" lower="-1.5787" upper="1.5787"/>
+        <joint_properties friction="0.0"/>
+        <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/>
+        </joint>
+
+        <joint name="${prefix}_fixed_base_joint" type="revolute">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <parent link="${prefix}_fixed_base_link" />
+        <child link="${prefix}_base_link" />
+        <axis xyz="0 0 1"/>
+        <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
         <joint_properties friction="0.0"/>
         <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/>
         </joint>

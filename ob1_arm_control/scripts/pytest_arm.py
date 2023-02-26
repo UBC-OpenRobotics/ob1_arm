@@ -1,43 +1,49 @@
 #! /usr/bin/env python
-from __future__ import print_function
-from operator import itemgetter
-import pickle
+
+###################################################
+#                    ABOUT      
+###################################################
+"""
+Author: Yousif El-Wishahy (yel-wishahy, yel.wishahy@gmail.com)
+Last updated: Feb 25th, 2023
+
+Test cases for the robotic arm control software of UBC Open Robotic's ob1 (op bots one) arm
+Uses pytest.
+"""
+
+###################################################
+#                    IMPORTS        
+###################################################
 import time
 from arm_commander import ArmCommander
-import sys
-import rospy
-import moveit_commander
 from moveit_commander.conversions import pose_to_list
 import numpy as np
-from math import pi, tau, dist, fabs, cos
-import geometry_msgs
-from geometry_msgs.msg import PoseStamped, Pose, Vector3Stamped, Quaternion, Point
-from moveit_commander import MoveGroupCommander,RobotCommander, PlanningSceneInterface
+from geometry_msgs.msg import PoseStamped, Quaternion
 from moveit_commander.planning_scene_interface import CollisionObject
-from moveit_msgs.msg import Grasp, GripperTranslation, MoveItErrorCodes,DisplayTrajectory
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from tf.transformations import quaternion_from_euler
-from copy import deepcopy
 import rospkg
 import pytest
 import logging
 from tf_helpers import broadcast_pose, broadcast_point, convert_to_list, QuaternionComparators, point_to_list, pose_to_mat
 from test_helpers import *
-import test_helpers
 import pyquaternion as pyq
 import random
+import kinpy as kp
 from ob1_arm_control.srv import IKPointsServiceRequest
 from ikpoints_service import ikpoints_service_client
-from relaxed_ik.srv import RelaxedIKService, RelaxedIKServiceRequest
-from service_clients import relaxedik_service_client, matlabik_service_client
-from functools import cmp_to_key
-print(sys.version)
+from copy import deepcopy
 
+
+###################################################
+#                    TEST PARAMETERS
+###################################################
 GOAL_TOLERANCE = 0.01 #elementwise distance and angles for orientation
 JOINT_TOLERANCE = 0.001 #element wise angles
 DIST_TOLERANCE = 0.01 #distance in m
 SUCCESS_RATE_TOLERANCE = 0.85 #percentage of tests that pass
 
+###################################################
+#                    TEST FIXTURES          
+###################################################
 log = logging.getLogger(__name__)
 arm_commander = ArmCommander(sample_timeout=0.1)
 
@@ -70,7 +76,11 @@ def spawn_random_sphere(r):
     arm_commander.scene.add_sphere("sphere",p,r)
     time.sleep(2)
 
-##############################################################################################
+###################################################
+#                    TEST CASES               
+###################################################
+
+################### UNIT TESTS ######################
 
 def test_pyquaternion():
     rosQ = Quaternion(random.uniform(0,1),random.uniform(0,1),random.uniform(0,1),random.uniform(0,1))
@@ -135,50 +145,64 @@ def test_quaternion_doublesort(setup_teardown):
     assert avg_all_close(pose_to_list(target.pose), pose_to_list(arm_commander.get_end_effector_pose().pose)) <= GOAL_TOLERANCE, \
         "average tolerance is not within specified goal tolerance"
 
-def test_go_rand_pose_dist(setup_teardown):
-    target = arm_commander.arm_mvgroup.get_random_pose()
-    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
-    res, _ = arm_commander.go_pose(target)
-    assert res , "motion planning failed"
-    assert_dist(arm_commander.get_end_effector_pose(),target,DIST_TOLERANCE)
+def test_allclose_array():
+    arr1, _ = np.random.rand(6)
+    arr2 = deepcopy(arr1)
+    assert all_close(arr1,arr2,0)
 
-def test_go_rand_pose_tolerance(setup_teardown):
-    target = arm_commander.arm_mvgroup.get_random_pose()
-    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
-    res, _ = arm_commander.go_pose(target)
-    assert res , "motion planning failed"
-    assert all_close(target, arm_commander.get_end_effector_pose(), GOAL_TOLERANCE)
+def test_allclose_pose():
+    p1 = arm_commander.arm_mvgroup.get_random_pose()
+    p2 = deepcopy(p1)
+    assert all_close(p1,p2,0)
 
-def test_go_rand_pose_ikpoint(setup_teardown):
-    target = arm_commander.arm_mvgroup.get_random_pose()
-    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
-    res, _, joints = arm_commander.go_pose_ikpoints(target)
-    assert res , "motion planning failed"
-    assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
-    assert_dist(arm_commander.get_end_effector_pose(),target,DIST_TOLERANCE)
-    assert all_close(target.pose, arm_commander.get_end_effector_pose().pose, GOAL_TOLERANCE)
+def test_allclose_point():
+    p1 = arm_commander.arm_mvgroup.get_random_pose().pose.position
+    p2 = deepcopy(p1)
+    assert all_close(p1,p2,0)
 
-def test_go_rand_pose_relaxedik(setup_teardown):
-    target = arm_commander.arm_mvgroup.get_random_pose()
-    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
-    res, _, joints = arm_commander.go_pose_relaxedik(target)
-    assert res , "motion planning failed"
-    assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
-    assert_dist(arm_commander.get_end_effector_pose(),target, DIST_TOLERANCE)
+def test_allclose_quaternion():
+    q1 = arm_commander.arm_mvgroup.get_random_pose().pose.orientation
+    q2 = deepcopy(q1)
+    assert all_close(q1,q2,0)
 
-@pytest.mark.parametrize("weights", [[0.25,0.25,0.25,1,1,1],[0.1,0.1,0.1,1,1,1],[0.05,0.05,0.05,1,1,1],[0,0,0,1,1,1],[1,1,1,0,0,0]])
-def test_go_rand_pose_matlab(setup_teardown, weights):
-    target = arm_commander.arm_mvgroup.get_random_pose()
-    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
-    res, _, joints = arm_commander.go_pose_matlabik(target, weights)
-    assert res , "motion planning failed"
-    assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
-    # assert_dist(arm_commander.get_end_effector_pose(),target, DIST_TOLERANCE)
-    log.info(all_close(target, arm_commander.get_end_effector_pose(), GOAL_TOLERANCE))
-    log.info(all_close(target.pose.position, arm_commander.get_end_effector_pose().pose.position, GOAL_TOLERANCE))
-    log.info(all_close(target.pose.orientation, arm_commander.get_end_effector_pose().pose.orientation, GOAL_TOLERANCE))
+################### MOVE GROUP JOINT TESTS ######################
 
-def test_go_rand_position_matlab(setup_teardown):
+def test_go_joints_allclose(setup_teardown):
+    target = arm_commander.arm_mvgroup.get_random_joint_values()
+    res,_ = arm_commander.go_joint(target)
+    assert res , "motion planning failed"
+    assert all_close(target, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE)
+
+################### MOVE GROUP POSITION TESTS ######################
+def test_go_position_dist(setup_teardown):
+    target = arm_commander.arm_mvgroup.get_random_pose().pose.position
+    broadcast_point(arm_commander.tf_broadcaster,target,'target','world')
+    res, _ = arm_commander.go_position(target)
+    assert res , "motion planning failed"
+    assert_dist(arm_commander.get_end_effector_pose().pose.position, target, DIST_TOLERANCE)
+
+def test_go_position_allclose(setup_teardown):
+    target = arm_commander.arm_mvgroup.get_random_pose().pose.position
+    broadcast_point(arm_commander.tf_broadcaster,target,'target','world')
+    res, _ = arm_commander.go_position(target)
+    assert res , "motion planning failed"
+    assert all_close(target, arm_commander.get_end_effector_pose().pose.position, GOAL_TOLERANCE)
+
+def test_go_position_ikpoints_dist(setup_teardown):
+    target = arm_commander.arm_mvgroup.get_random_pose().pose.position
+    broadcast_point(arm_commander.tf_broadcaster,target,'target','world')
+    res, _ = arm_commander.go_position_ikpoints(target)
+    assert res , "motion planning failed"
+    assert_dist(arm_commander.get_end_effector_pose().pose.position, target, DIST_TOLERANCE)
+
+def test_go_position_allclose(setup_teardown):
+    target = arm_commander.arm_mvgroup.get_random_pose().pose.position
+    broadcast_point(arm_commander.tf_broadcaster,target,'target','world')
+    res, _ = arm_commander.go_position_ikpoints(target)
+    assert res , "motion planning failed"
+    assert all_close(target, arm_commander.get_end_effector_pose().pose.position, GOAL_TOLERANCE)
+
+def test_go_position_matlabik_dist(setup_teardown):
     target = arm_commander.arm_mvgroup.get_random_pose()
     broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
     res, _, joints = arm_commander.go_position_matlabik(target.pose.position)
@@ -186,28 +210,72 @@ def test_go_rand_position_matlab(setup_teardown):
     assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
     assert_dist(arm_commander.get_end_effector_pose().pose.position,target.pose.position, DIST_TOLERANCE)
 
-def test_go_rand_position(setup_teardown):
+################### MOVE GROUP POSE TESTS ######################
+def test_go_pose_dist(setup_teardown):
     target = arm_commander.arm_mvgroup.get_random_pose()
     broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
-    res, _ = arm_commander.go_position(target)
+    res, _ = arm_commander.go_pose(target)
     assert res , "motion planning failed"
-    assert_dist(convert_to_list(arm_commander.get_end_effector_pose().pose.position), convert_to_list(target.pose.position), DIST_TOLERANCE)
+    assert_dist(arm_commander.get_end_effector_pose(), target, DIST_TOLERANCE)
 
-def test_go_rand_joint_target(setup_teardown):
-    res, target = arm_commander.go_joint()
-    assert res , "motion planning failed"
-    assert all_close(target,arm_commander.arm_mvgroup.get_current_joint_values(),JOINT_TOLERANCE)
-
-def test_go_rand_ikpoint(setup_teardown):
+def test_go_pose_allclose(setup_teardown):
     target = arm_commander.arm_mvgroup.get_random_pose()
     broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
-    res, _, joint_target = arm_commander.go_position_ikpoints(target)
+    res, _ = arm_commander.go_pose(target)
     assert res , "motion planning failed"
-    assert all_close(joint_target, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
-    assert_dist(convert_to_list(arm_commander.get_end_effector_pose().pose.position),convert_to_list(target.pose.position), DIST_TOLERANCE)
+    assert all_close(target, arm_commander.get_end_effector_pose(), GOAL_TOLERANCE)
 
-def test_go_pose_kinpy(setup_teardown):
+def test_go_pose_ikpoints_dist(setup_teardown):
+    target = arm_commander.arm_mvgroup.get_random_pose()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    res, _ = arm_commander.go_pose_ikpoints(target)
+    assert res , "motion planning failed"
+    assert_dist(arm_commander.get_end_effector_pose(), target, DIST_TOLERANCE)
 
+def test_go_pose_ikpoints_allclose(setup_teardown):
+    target = arm_commander.arm_mvgroup.get_random_pose()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    res, _ = arm_commander.go_pose_ikpoints(target)
+    assert res , "motion planning failed"
+    assert all_close(target, arm_commander.get_end_effector_pose(), GOAL_TOLERANCE)
+
+def test_go_pose_relaxedik_dist(setup_teardown):
+    target = arm_commander.arm_mvgroup.get_random_pose()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    res, _, joints = arm_commander.go_pose_relaxedik(target)
+    assert res , "motion planning failed"
+    assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
+    assert_dist(arm_commander.get_end_effector_pose(),target, DIST_TOLERANCE)
+
+def test_go_pose_relaxedik_allclose(setup_teardown):
+    target = arm_commander.arm_mvgroup.get_random_pose()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    res, _, joints = arm_commander.go_pose_relaxedik(target)
+    assert res , "motion planning failed"
+    assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
+    assert all_close(target, arm_commander.get_end_effector_pose(), GOAL_TOLERANCE)
+
+@pytest.mark.parametrize("weights", [[0.25,0.25,0.25,1,1,1],[0.1,0.1,0.1,1,1,1],[0.05,0.05,0.05,1,1,1],[0,0,0,1,1,1],[1,1,1,0,0,0]])
+def test_go_pose_matlabik_allclose(setup_teardown, weights):
+    target = arm_commander.arm_mvgroup.get_random_pose()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    res, _, joints = arm_commander.go_pose_matlabik(target, weights)
+    assert res , "motion planning failed"
+    assert all_close(joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
+    assert all_close(target, arm_commander.get_end_effector_pose(), GOAL_TOLERANCE)
+    # log.info(all_close(target, arm_commander.get_end_effector_pose(), GOAL_TOLERANCE))
+    # log.info(all_close(target.pose.position, arm_commander.get_end_effector_pose().pose.position, GOAL_TOLERANCE))
+    # log.info(all_close(target.pose.orientation, arm_commander.get_end_effector_pose().pose.orientation, GOAL_TOLERANCE))
+
+@pytest.mark.parametrize("weights", [[0.25,0.25,0.25,1,1,1],[0.1,0.1,0.1,1,1,1],[0.05,0.05,0.05,1,1,1],[0,0,0,1,1,1],[1,1,1,0,0,0]])
+def test_go_pose_matlabik_dist(setup_teardown, weights):
+    target = arm_commander.arm_mvgroup.get_random_pose()
+    broadcast_pose(arm_commander.tf_broadcaster,target.pose,'target','world')
+    res, _, joints = arm_commander.go_pose_matlabik(target, weights)
+    assert res , "motion planning failed"
+    assert_dist(arm_commander.get_end_effector_pose(),target, DIST_TOLERANCE)
+
+def test_go_pose_kinpy_dist(setup_teardown):
     rp = rospkg.RosPack()
     urdf_path = rp.get_path('ob1_arm_description') + "/urdf/main.urdf"
     kinpy_arm = kp.build_serial_chain_from_urdf(
@@ -228,46 +296,7 @@ def test_go_pose_kinpy(setup_teardown):
     assert all_close(ik_sol_joints, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE) , "joint target not within tolerance"
     assert_dist(pose_goal, arm_commander.get_end_effector_pose(), DIST_TOLERANCE)
 
-# @pytest.mark.parametrize("claw_search_tolerance", [0.05,0.1])
-# @pytest.mark.parametrize("orientation_search_tolerance", [0.1,0.25,0.5,1])
-# @pytest.mark.parametrize("iterations", [5])
-# @pytest.mark.parametrize("sphere_radius", [0.03])
-# def test_go_reachable_scene_object_smart(claw_search_tolerance,orientation_search_tolerance,iterations,sphere_radius):
-#     log.info("Starting go_reachable_scene_object_smart test")
-
-#     success_counter = 0
-#     dist_total = 0
-#     for _ in range(iterations):
-
-#         arm_commander.scene.clear()
-
-#         p = PoseStamped()
-#         p.header.frame_id = arm_commander.robot.get_planning_frame()
-#         p.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
-#         p.pose.orientation.w = 1
-#         arm_commander.scene.add_sphere("sphere",p,sphere_radius)
-
-#         time.sleep(2)
-
-#         objs = arm_commander.scene.get_objects()
-#         if len(objs) < 1:
-#             log.warning("Could not find any scene objects")
-#             continue
-#         obj:CollisionObject = list(objs.items())[0][1]
-
-#         res, obj_pose, joint_target = arm_commander.go_scene_object(obj, claw_search_tolerance,orientation_search_tolerance )
-
-#         compare_res,d, msg = check_dist(arm_commander.get_end_effector_pose(), obj_pose, GOAL_TOLERANCE)
-#         log.info(msg)
-
-#         if res and compare_res:
-#             success_counter+=1
-#         dist_total+=dist(arm_commander.get_end_effector_pose(),obj_pose)
-        
-#     log.info("Motion planning success rate: %f%%" %(success_counter/iterations*100))
-#     log.info("Motion planning avg tolerance: %f cm " %(dist_total/iterations*100))
-#     assert success_counter/iterations >= SUCCESS_RATE_TOLERANCE, "Motion planning success rate is too low. %f" %(success_counter/iterations)
-
+################### OBJECT MANIPULATION TESTS ######################
 @pytest.mark.parametrize("sphere_radius", [0.03])
 def test_go_scene_object(setup_teardown, sphere_radius):
     spawn_random_sphere(sphere_radius)
@@ -509,7 +538,3 @@ def test_pick_and_place_cylinder_in_region_matlab(setup_teardown):
 
 #     log.info("Avg ik point distance: %s cm" %(d_avg*100))
 #     assert d_avg <= GOAL_TOLERANCE, "Avg ik point distance too far: %s cm" %(d_avg*100)
-        
-
-
-    
