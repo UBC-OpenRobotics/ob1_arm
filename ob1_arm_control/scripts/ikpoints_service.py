@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#! /usr/bin/env python
 import rospy
 import rospkg
 from ikpoints import IKPoints
@@ -22,7 +22,7 @@ def convert_Joint_Targets_to_joint_targets(Joint_Targets):
         return Joint_Targets[0].joint_target
     return [joints.joint_target for joints in Joint_Targets]
 
-def ikpoints_service_client(request):
+def ikpoints_service_client(request, timeout=10):
     """
     @brief Client function for ikpoints service
 
@@ -32,17 +32,24 @@ def ikpoints_service_client(request):
     *lists can be empty , and condition can be False if service call fails
 
     custom service definition:
-    ****IKPointRequest****
+    ob1_arm_control/IKPointsService 
+    ---------REQUEST--------------
         string request
-        geometry_msgs/Point point
+        geometry_msgs/Pose pose
+        geometry_msgs/Point position
             float64 x
             float64 y
             float64 z
+        geometry_msgs/Quaternion orientation
+            float64 x
+            float64 y
+            float64 z
+            float64 w
         uint32 num_pts
         float32 tolerance
         float32 distance
 
-    ****IKPointRequestResponse****
+    ---------RESPONSE--------------
         geometry_msgs/Pose[] pose_targets
         geometry_msgs/Point position
             float64 x
@@ -54,10 +61,11 @@ def ikpoints_service_client(request):
             float64 z
             float64 w
         ob1_arm_control/JointTarget[] joint_targets
-            float64[] joint_target
+        float64[] joint_target
         bool condition
+
     """
-    rospy.wait_for_service('ik_points')
+    rospy.wait_for_service('ik_points', timeout=timeout)
     try:
         resp = rospy.ServiceProxy('ik_points', IKPointsService)(request)
         pose_targets:list = resp.pose_targets
@@ -71,12 +79,23 @@ def ikpoints_service_client(request):
 class IKPointsServiceServer:
     ikpoints:IKPoints = None
 
-    def __init__(self):
+    def __init__(self,data_file=None):
         rospy.init_node('ikpoints')
         #init and load ikpoints
         rospy.loginfo("==== Loading IK Points ====")
         start = time.time()
-        IKPointsServiceServer.ikpoints = IKPoints(rospkg.RosPack().get_path('ob1_arm_control') + "/data/2m_ikpoints_data2.json")
+        if data_file is None:
+            data_file = rospy.get_param('ikpoints_data_file_name')
+            if ',' in data_file:
+                file_names = data_file.split(',')
+            else:
+                file_names = [data_file]
+        else:
+            file_names = [data_file]
+        pkg_path = rospkg.RosPack().get_path('ob1_arm_control') 
+        file_paths = [pkg_path + '/data/' + file_name for file_name in file_names]
+        print(file_paths)
+        IKPointsServiceServer.ikpoints = IKPoints(file_paths)
         load_time = time.time() - start
         rospy.loginfo("=== Loaded IK points in %d seconds" % load_time)
         rospy.loginfo("==== Done Loading IK Points ====")
@@ -93,7 +112,8 @@ class IKPointsServiceServer:
         ikpoints = IKPointsServiceServer.ikpoints
         if type(ikpoints) is IKPoints:
             cmd = req.request
-            pt = np.array([req.point.x, req.point.y, req.point.z])
+            pose = req.pose
+            pt = np.array([pose.position.x, pose.position.y, pose.position.z])
             num_pts = req.num_pts
             if num_pts < 1:
                 num_pts = 1
@@ -108,12 +128,18 @@ class IKPointsServiceServer:
             joint_targets = []
             pose_targets = []
             condition = False
-            if cmd == 'get nearest joint targets':
+            if cmd == 'get nearest joint targets' or cmd == 'get nearest joint targets position':
                 joint_targets = ikpoints.get_nearest_joint_targets(pt,num_pts)
+            elif cmd == 'get nearest joint targets pose':
+                joint_targets = ikpoints.get_nearest_joint_targets_from_pose(pose, n=num_pts, max_dist=tolerance)
             elif cmd == 'in range':
                 condition = ikpoints.in_range(pt, tolerance)
             elif cmd == 'get dist targets':
                 pose_targets, joint_targets = ikpoints.get_dist_targets(pt, dist, tolerance)
+            elif cmd == 'get up to dist targets':
+                pose_targets, joint_targets = ikpoints.get_upto_dist_targets(pt, dist)
+            elif cmd == 'get dist joint targets':
+                joint_targets = ikpoints.get_dist_joint_targets(pt, dist, tolerance)
             joint_targets = convert_joint_targets_to_Joint_Targets(joint_targets)
             out = IKPointsServiceResponse(pose_targets, joint_targets, condition)
             rospy.loginfo("===ik_points: processed service call")

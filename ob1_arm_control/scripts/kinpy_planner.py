@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#! /usr/bin/env python
 import kinpy as kp
 import rospkg
 import numpy as np
@@ -10,7 +10,7 @@ urdf_path = rp.get_path('ob1_arm_description') + "/urdf/main.urdf"
 arm = kp.build_serial_chain_from_urdf(
     open(urdf_path).read(),
     root_link_name="ob1_arm_base_link",
-    end_link_name="ob1_arm_gripper_base_link"
+    end_link_name="ob1_arm_eef_link"
 )
 fk_solution = arm.forward_kinematics([0,0,0,0,0])
 sol = {'ob1_arm_gripper_base_link':fk_solution}

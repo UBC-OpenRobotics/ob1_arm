@@ -4,3 +4,6 @@
 [submodule "simple-reachability"]
 	path = simple-reachability
 	url = https://github.com/vonunwerth/simple-reachability.git
+[submodule "relaxed_ik"]
+	path = relaxed_ik
+	url = https://github.com/UBC-OpenRobotics/relaxed_ik.git

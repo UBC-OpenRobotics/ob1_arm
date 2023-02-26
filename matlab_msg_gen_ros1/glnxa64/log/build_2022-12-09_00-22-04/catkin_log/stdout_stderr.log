@@ -1,0 +1,336 @@
+[0/1] Re-running CMake...
+-- Using CATKIN_DEVEL_PREFIX: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/devel
+-- Using CMAKE_PREFIX_PATH: /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1;/usr/local/MATLAB/R2022b/toolbox/ros/mlroscpp/custom_messages
+-- This workspace overlays: /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1;/usr/local/MATLAB/R2022b/toolbox/ros/mlroscpp/custom_messages
+-- Using PYTHON_EXECUTABLE: /home/yelwishahy/.matlab/R2022b/ros1/glnxa64/venv/bin/python3
+-- Using Debian Python package layout
+-- Using empy: /home/yelwishahy/.matlab/R2022b/ros1/glnxa64/venv/lib/python3.9/site-packages/em.py
+-- Using CATKIN_ENABLE_TESTING: off
+-- catkin 0.8.10
+-- BUILD_SHARED_LIBS is on
+-- BUILD_SHARED_LIBS is on
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- ~~  traversing 3 packages in topological order:
+-- ~~  - ob1_arm_control
+-- ~~  - ob1_arm_hw_interface
+-- ~~  - relaxed_ik
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- +++ processing catkin package: 'ob1_arm_control'
+-- ==> add_subdirectory(ob1_arm_control)
+CMake Warning at /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsg-extras.cmake:49 (message):
+  Unknown message generator specified in ROS_LANG_DISABLE: geneus
+Call Stack (most recent call first):
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsgConfig.cmake:222 (include)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/gencpp/cmake/gencppConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/message_generation/cmake/message_generationConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/catkin/cmake/catkinConfig.cmake:76 (find_package)
+  ob1_arm_control/CMakeLists.txt:20 (find_package)
+
+
+CMake Warning at /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsg-extras.cmake:49 (message):
+  Unknown message generator specified in ROS_LANG_DISABLE: genlisp
+Call Stack (most recent call first):
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsgConfig.cmake:222 (include)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/gencpp/cmake/gencppConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/message_generation/cmake/message_generationConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/catkin/cmake/catkinConfig.cmake:76 (find_package)
+  ob1_arm_control/CMakeLists.txt:20 (find_package)
+
+
+CMake Warning at /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsg-extras.cmake:49 (message):
+  Unknown message generator specified in ROS_LANG_DISABLE: gennodejs
+Call Stack (most recent call first):
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsgConfig.cmake:222 (include)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/gencpp/cmake/gencppConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/message_generation/cmake/message_generationConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/catkin/cmake/catkinConfig.cmake:76 (find_package)
+  ob1_arm_control/CMakeLists.txt:20 (find_package)
+
+
+-- Using these message generators: gencpp;genpy
+-- ob1_arm_control: 1 messages, 2 services
+-- +++ processing catkin package: 'ob1_arm_hw_interface'
+-- ==> add_subdirectory(ob1_arm_hw_interface)
+CMake Warning at /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsg-extras.cmake:49 (message):
+  Unknown message generator specified in ROS_LANG_DISABLE: geneus
+Call Stack (most recent call first):
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsgConfig.cmake:222 (include)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/gencpp/cmake/gencppConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/message_generation/cmake/message_generationConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/catkin/cmake/catkinConfig.cmake:76 (find_package)
+  ob1_arm_hw_interface/CMakeLists.txt:20 (find_package)
+
+
+CMake Warning at /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsg-extras.cmake:49 (message):
+  Unknown message generator specified in ROS_LANG_DISABLE: genlisp
+Call Stack (most recent call first):
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsgConfig.cmake:222 (include)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/gencpp/cmake/gencppConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/message_generation/cmake/message_generationConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/catkin/cmake/catkinConfig.cmake:76 (find_package)
+  ob1_arm_hw_interface/CMakeLists.txt:20 (find_package)
+
+
+CMake Warning at /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsg-extras.cmake:49 (message):
+  Unknown message generator specified in ROS_LANG_DISABLE: gennodejs
+Call Stack (most recent call first):
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsgConfig.cmake:222 (include)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/gencpp/cmake/gencppConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/message_generation/cmake/message_generationConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/catkin/cmake/catkinConfig.cmake:76 (find_package)
+  ob1_arm_hw_interface/CMakeLists.txt:20 (find_package)
+
+
+-- Using these message generators: gencpp;genpy
+-- ob1_arm_hw_interface: 2 messages, 0 services
+-- +++ processing catkin package: 'relaxed_ik'
+-- ==> add_subdirectory(relaxed_ik)
+CMake Warning at /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsg-extras.cmake:49 (message):
+  Unknown message generator specified in ROS_LANG_DISABLE: geneus
+Call Stack (most recent call first):
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsgConfig.cmake:222 (include)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/gencpp/cmake/gencppConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/message_generation/cmake/message_generationConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/catkin/cmake/catkinConfig.cmake:76 (find_package)
+  relaxed_ik/CMakeLists.txt:20 (find_package)
+
+
+CMake Warning at /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsg-extras.cmake:49 (message):
+  Unknown message generator specified in ROS_LANG_DISABLE: genlisp
+Call Stack (most recent call first):
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsgConfig.cmake:222 (include)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/gencpp/cmake/gencppConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/message_generation/cmake/message_generationConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/catkin/cmake/catkinConfig.cmake:76 (find_package)
+  relaxed_ik/CMakeLists.txt:20 (find_package)
+
+
+CMake Warning at /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsg-extras.cmake:49 (message):
+  Unknown message generator specified in ROS_LANG_DISABLE: gennodejs
+Call Stack (most recent call first):
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/genmsgConfig.cmake:222 (include)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/gencpp/cmake/gencppConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/message_generation/cmake/message_generationConfig.cmake:197 (find_package)
+  /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/catkin/cmake/catkinConfig.cmake:76 (find_package)
+  relaxed_ik/CMakeLists.txt:20 (find_package)
+
+
+-- Using these message generators: gencpp;genpy
+-- relaxed_ik: 2 messages, 1 services
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build
+ninja: no work to do.
+[1/15] cd /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/ob1_arm_hw_interface && /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/catkin_generated/env_cached.sh /home/yelwishahy/.matlab/R2022b/ros1/glnxa64/venv/bin/python3 /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/../../../lib/genmsg/genmsg_check_deps.py ob1_arm_hw_interface /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/src/ob1_arm_hw_interface/msg/armCmd.msg
+[2/15] cd /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/ob1_arm_control && /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/catkin_generated/env_cached.sh /home/yelwishahy/.matlab/R2022b/ros1/glnxa64/venv/bin/python3 /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/../../../lib/genmsg/genmsg_check_deps.py ob1_arm_control /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/src/ob1_arm_control/srv/MatlabIKService.srv
+[3/15] cd /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/ob1_arm_control && /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/catkin_generated/env_cached.sh /home/yelwishahy/.matlab/R2022b/ros1/glnxa64/venv/bin/python3 /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/../../../lib/genmsg/genmsg_check_deps.py ob1_arm_control /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/src/ob1_arm_control/msg/JointTarget.msg
+[4/15] cd /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/ob1_arm_control && /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/catkin_generated/env_cached.sh /home/yelwishahy/.matlab/R2022b/ros1/glnxa64/venv/bin/python3 /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/../../../lib/genmsg/genmsg_check_deps.py ob1_arm_control /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/src/ob1_arm_control/srv/IKPointsService.srv geometry_msgs/Quaternion:geometry_msgs/Point:geometry_msgs/Pose:ob1_arm_control/JointTarget
+[5/15] cd /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/relaxed_ik && /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/catkin_generated/env_cached.sh /home/yelwishahy/.matlab/R2022b/ros1/glnxa64/venv/bin/python3 /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/../../../lib/genmsg/genmsg_check_deps.py relaxed_ik /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/src/relaxed_ik/msg/EEPoseGoals.msg std_msgs/Header:geometry_msgs/Point:geometry_msgs/Quaternion:geometry_msgs/Pose
+[6/15] cd /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/relaxed_ik && /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/catkin_generated/env_cached.sh /home/yelwishahy/.matlab/R2022b/ros1/glnxa64/venv/bin/python3 /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/../../../lib/genmsg/genmsg_check_deps.py relaxed_ik /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/src/relaxed_ik/msg/JointAngles.msg std_msgs/Header:std_msgs/Float32
+[7/15] cd /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/relaxed_ik && /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/catkin_generated/env_cached.sh /home/yelwishahy/.matlab/R2022b/ros1/glnxa64/venv/bin/python3 /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/../../../lib/genmsg/genmsg_check_deps.py relaxed_ik /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/src/relaxed_ik/srv/RelaxedIKService.srv geometry_msgs/Quaternion:std_msgs/Header:relaxed_ik/EEPoseGoals:relaxed_ik/JointAngles:geometry_msgs/Pose:geometry_msgs/Point:std_msgs/Float32
+[8/15] cd /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/ob1_arm_hw_interface && /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build/catkin_generated/env_cached.sh /home/yelwishahy/.matlab/R2022b/ros1/glnxa64/venv/bin/python3 /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/share/genmsg/cmake/../../../lib/genmsg/genmsg_check_deps.py ob1_arm_hw_interface /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/src/ob1_arm_hw_interface/msg/armState.msg
+[9/15] Generating Python code from SRV ob1_arm_control/MatlabIKService
+[10/15] Generating Python srv __init__.py for ob1_arm_control
+[11/15] Generating Python msg __init__.py for ob1_arm_control
+[12/15] Generating C++ code from ob1_arm_control/MatlabIKService.srv
+[13/15] Building CXX object ob1_arm_control/CMakeFiles/ob1_arm_control_matlab.dir/src/ob1_arm_control_MatlabIKService_service.cpp.o
+In file included from /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/boost/include/boost/smart_ptr/detail/sp_thread_sleep.hpp:22,
+                 from /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/boost/include/boost/smart_ptr/detail/yield_k.hpp:23,
+                 from /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/boost/include/boost/smart_ptr/detail/spinlock_gcc_atomic.hpp:14,
+                 from /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/boost/include/boost/smart_ptr/detail/spinlock.hpp:42,
+                 from /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/boost/include/boost/smart_ptr/detail/spinlock_pool.hpp:25,
+                 from /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/boost/include/boost/smart_ptr/shared_ptr.hpp:65,
+                 from /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/boost/include/boost/shared_ptr.hpp:53,
+                 from /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/boost/include/boost/date_time/time_clock.hpp:53,
+                 from /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/boost/include/boost/date_time/posix_time/posix_time_types.hpp:46,
+                 from /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/boost/include/boost/date_time/posix_time/time_formatters.hpp:52,
+                 from /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/boost/include/boost/date_time/posix_time/posix_time.hpp:60,
+                 from /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/boost/include/boost/date_time/local_time/local_time.hpp:47,
+                 from /usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/boost/include/boost/date_time.hpp:51,
+                 from /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/src/ob1_arm_control/src/ob1_arm_control_MatlabIKService_service.cpp:3:
+/usr/local/MATLAB/R2022b/sys/ros1/glnxa64/ros1/boost/include/boost/bind.hpp:72:1: note: #pragma message: The practice of declaring the Bind placeholders (_1, _2, ...) in the global namespace is deprecated. Please use <boost/bind/bind.hpp> + using namespace mwboost::placeholders, or define BOOST_BIND_GLOBAL_PLACEHOLDERS to retain the current behavior.
+   72 | BOOST_PRAGMA_MESSAGE(
+      | ^~~~~~~~~~~~~~~~~~~~
+[14/15] Linking CXX shared library /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/devel/lib/libob1_arm_control_matlab.so
+[14/15] Install the project...
+-- Install configuration: "Release"
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/_setup_util.py
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/env.sh
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/setup.bash
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/local_setup.bash
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/setup.sh
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/local_setup.sh
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/setup.zsh
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/local_setup.zsh
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/.rosinstall
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/ob1_arm_control/msg/JointTarget.msg
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/ob1_arm_control/srv/IKPointsService.srv
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/ob1_arm_control/srv/MatlabIKService.srv
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/ob1_arm_control/cmake/ob1_arm_control-msg-paths.cmake
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/ob1_arm_control
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/ob1_arm_control/MatlabIKService.h
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/ob1_arm_control/IKPointsServiceRequest.h
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/ob1_arm_control/IKPointsService.h
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/ob1_arm_control/IKPointsServiceResponse.h
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/ob1_arm_control/MatlabIKServiceResponse.h
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/ob1_arm_control/JointTarget.h
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/ob1_arm_control/MatlabIKServiceRequest.h
+Listing '/home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/devel/lib/python3/dist-packages/ob1_arm_control'...
+Listing '/home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/devel/lib/python3/dist-packages/ob1_arm_control/msg'...
+Compiling '/home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/devel/lib/python3/dist-packages/ob1_arm_control/msg/__init__.py'...
+Listing '/home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/devel/lib/python3/dist-packages/ob1_arm_control/srv'...
+Compiling '/home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/devel/lib/python3/dist-packages/ob1_arm_control/srv/_MatlabIKService.py'...
+Compiling '/home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/devel/lib/python3/dist-packages/ob1_arm_control/srv/__init__.py'...
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/__init__.py
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/srv
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/srv/_MatlabIKService.py
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/srv/_IKPointsService.py
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/srv/__init__.py
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/srv/__pycache__
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/srv/__pycache__/_MatlabIKService.cpython-39.pyc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/srv/__pycache__/_IKPointsService.cpython-39.pyc
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/srv/__pycache__/__init__.cpython-39.pyc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/__pycache__
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/__pycache__/__init__.cpython-39.pyc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/msg
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/msg/_JointTarget.py
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/msg/__init__.py
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/msg/__pycache__
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/msg/__pycache__/_JointTarget.cpython-39.pyc
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_control/msg/__pycache__/__init__.cpython-39.pyc
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/pkgconfig/ob1_arm_control.pc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/ob1_arm_control/cmake/ob1_arm_control-msg-extras.cmake
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/ob1_arm_control/cmake/ob1_arm_controlConfig.cmake
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/ob1_arm_control/cmake/ob1_arm_controlConfig-version.cmake
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/ob1_arm_control/package.xml
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/ob1_arm_control
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/ob1_arm_control/visibility_control.h
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/libob1_arm_control_matlab.so
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m/
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen/+ob1_arm_control
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen/+ob1_arm_control/IKPointsServiceResponse.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen/+ob1_arm_control/MatlabIKServiceRequest.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen/+ob1_arm_control/IKPointsServiceRequest.m
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen/+ob1_arm_control/MatlabIKServiceResponse.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen/+ob1_arm_control/JointTarget.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages/+ob1_arm_control
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages/+ob1_arm_control/matlabIKServiceResponse.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages/+ob1_arm_control/jointTarget.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages/+ob1_arm_control/matlabIKServiceRequest.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages/+ob1_arm_control/iKPointsServiceResponse.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages/+ob1_arm_control/iKPointsServiceRequest.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/ob1_arm_hw_interface/msg/armCmd.msg
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/ob1_arm_hw_interface/msg/armState.msg
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/ob1_arm_hw_interface/cmake/ob1_arm_hw_interface-msg-paths.cmake
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/ob1_arm_hw_interface
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/ob1_arm_hw_interface/armState.h
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/ob1_arm_hw_interface/armCmd.h
+Listing '/home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/devel/lib/python3/dist-packages/ob1_arm_hw_interface'...
+Listing '/home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/devel/lib/python3/dist-packages/ob1_arm_hw_interface/msg'...
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_hw_interface
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_hw_interface/__init__.py
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_hw_interface/__pycache__
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_hw_interface/__pycache__/__init__.cpython-39.pyc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_hw_interface/msg
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_hw_interface/msg/_armState.py
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_hw_interface/msg/__init__.py
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_hw_interface/msg/__pycache__
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_hw_interface/msg/__pycache__/_armState.cpython-39.pyc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_hw_interface/msg/__pycache__/_armCmd.cpython-39.pyc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_hw_interface/msg/__pycache__/__init__.cpython-39.pyc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/ob1_arm_hw_interface/msg/_armCmd.py
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/pkgconfig/ob1_arm_hw_interface.pc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/ob1_arm_hw_interface/cmake/ob1_arm_hw_interface-msg-extras.cmake
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/ob1_arm_hw_interface/cmake/ob1_arm_hw_interfaceConfig.cmake
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/ob1_arm_hw_interface/cmake/ob1_arm_hw_interfaceConfig-version.cmake
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/ob1_arm_hw_interface/package.xml
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/ob1_arm_hw_interface
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/ob1_arm_hw_interface/visibility_control.h
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/libob1_arm_hw_interface_matlab.so
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m/
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen/+ob1_arm_hw_interface
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen/+ob1_arm_hw_interface/armState.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen/+ob1_arm_hw_interface/armCmd.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages/+ob1_arm_hw_interface
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages/+ob1_arm_hw_interface/armState.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages/+ob1_arm_hw_interface/armCmd.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/relaxed_ik/msg/EEPoseGoals.msg
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/relaxed_ik/msg/JointAngles.msg
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/relaxed_ik/srv/RelaxedIKService.srv
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/relaxed_ik/cmake/relaxed_ik-msg-paths.cmake
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/relaxed_ik
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/relaxed_ik/EEPoseGoals.h
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/relaxed_ik/JointAngles.h
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/relaxed_ik/RelaxedIKServiceResponse.h
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/relaxed_ik/RelaxedIKServiceRequest.h
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/relaxed_ik/RelaxedIKService.h
+Listing '/home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/devel/lib/python3/dist-packages/relaxed_ik'...
+Listing '/home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/devel/lib/python3/dist-packages/relaxed_ik/msg'...
+Listing '/home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/devel/lib/python3/dist-packages/relaxed_ik/srv'...
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/__init__.py
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/srv
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/srv/__init__.py
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/srv/__pycache__
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/srv/__pycache__/_RelaxedIKService.cpython-39.pyc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/srv/__pycache__/__init__.cpython-39.pyc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/srv/_RelaxedIKService.py
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/__pycache__
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/__pycache__/__init__.cpython-39.pyc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/msg
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/msg/_EEPoseGoals.py
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/msg/__init__.py
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/msg/__pycache__
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/msg/__pycache__/_EEPoseGoals.cpython-39.pyc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/msg/__pycache__/_JointAngles.cpython-39.pyc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/msg/__pycache__/__init__.cpython-39.pyc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/python3/dist-packages/relaxed_ik/msg/_JointAngles.py
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/pkgconfig/relaxed_ik.pc
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/relaxed_ik/cmake/relaxed_ik-msg-extras.cmake
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/relaxed_ik/cmake/relaxed_ikConfig.cmake
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/relaxed_ik/cmake/relaxed_ikConfig-version.cmake
+-- Installing: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/share/relaxed_ik/package.xml
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/relaxed_ik
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/include/relaxed_ik/visibility_control.h
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/lib/librelaxed_ik_matlab.so
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m/
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen/+relaxed_ik
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen/+relaxed_ik/JointAngles.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen/+relaxed_ik/RelaxedIKServiceRequest.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen/+relaxed_ik/RelaxedIKServiceResponse.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+msggen/+relaxed_ik/EEPoseGoals.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages/+relaxed_ik
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages/+relaxed_ik/jointAngles.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages/+relaxed_ik/eEPoseGoals.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages/+relaxed_ik/relaxedIKServiceRequest.m
+-- Up-to-date: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install/m//+ros/+internal/+ros/+custommessages/+relaxed_ik/relaxedIKServiceResponse.m
+Base path: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64
+Source space: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/src
+Build space: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build
+Devel space: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/devel
+Install space: /home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/install
+####
+#### Running command: "ninja build.ninja" in "/home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build"
+####
+####
+#### Running command: "ninja install install -j8 -l8" in "/home/yelwishahy/UBCOpenRobotics/ob1_arm/src/matlab_msg_gen_ros1/glnxa64/build"
+####
