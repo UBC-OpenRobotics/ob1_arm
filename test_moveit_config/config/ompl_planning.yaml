@@ -154,7 +154,7 @@ arm:
     - LazyPRMstar
     - SPARS
     - SPARStwo
-  projection_evaluator: joints(ob1_arm_base_shoulder_joint,ob1_arm_shoulder_arm_joint)
+  projection_evaluator: joints(ob1_arm_fixed_base_joint,ob1_arm_base_shoulder_joint)
   longest_valid_segment_fraction: 0.005
 gripper:
   planner_configs:
