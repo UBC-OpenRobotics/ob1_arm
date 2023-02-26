@@ -146,7 +146,7 @@ def test_quaternion_doublesort(setup_teardown):
         "average tolerance is not within specified goal tolerance"
 
 def test_allclose_array():
-    arr1, _ = np.random.rand(6)
+    arr1 = np.random.rand(6)[0]
     arr2 = deepcopy(arr1)
     assert all_close(arr1,arr2,0)
 
