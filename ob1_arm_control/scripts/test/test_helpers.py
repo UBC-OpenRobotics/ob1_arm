@@ -1,14 +1,29 @@
-from __future__ import print_function
-import time
-from arm_commander import ArmCommander
 from moveit_commander.conversions import pose_to_list
 import numpy as np
-from math import pi, tau, dist, fabs, cos
+from math import dist, fabs, cos
 import geometry_msgs
 from geometry_msgs.msg import PoseStamped
-import pytest
-import logging
-from tf_helpers import *
+from util.tf_helpers import *
+import time
+
+def spawn_random_sphere(arm_commander, r):
+    """
+    @brief spawn random sphere in scene with name 'sphere'
+    @param r: float sphere radium in metres
+    """
+    p = PoseStamped()
+    p.header.frame_id = arm_commander.robot.get_planning_frame()
+    p.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
+    p.pose.orientation.w = 1
+    arm_commander.scene.add_sphere("sphere",p,r)
+    time.sleep(2)
+
+def clear_scene(arm_commander):
+    objs = arm_commander.scene.get_objects()
+    for o in list(objs.items()):
+        obj= o[1]
+        arm_commander.detach_object(obj)
+    arm_commander.scene.clear()
 
 def all_close(goal, actual, tolerance):
     """

@@ -21,11 +21,11 @@ from moveit_msgs.msg import CollisionObject
 from shape_msgs.msg import SolidPrimitive
 import time
 import tf
-from tf_helpers import *
+from util.tf_helpers import *
 from ob1_arm_control.srv import IKPointsServiceRequest
-from ikpoints_service import ikpoints_service_client
+from arm_commander.ikpoints_service import ikpoints_service_client
 from relaxed_ik.srv import RelaxedIKService, RelaxedIKServiceRequest
-from service_clients import relaxedik_service_client, matlabik_service_client
+from arm_commander.ik_service_clients import relaxedik_service_client, matlabik_service_client
 import pyquaternion as pyq
 from functools import cmp_to_key
 
@@ -37,7 +37,7 @@ class ArmCommander:
     _num_joints = 0
 
     #move group parameters
-    _sample_timeout = 1
+    _sample_timeout = 0.1
     _sample_attempts = 5
     _goal_tolerance = 0.01
     _joint_tolerance = 0.001
@@ -51,7 +51,7 @@ class ArmCommander:
     GRIPPER_RCLAW_LINK_NAME = "ob1_arm_rclaw_link"
     WORLD_REF_FRAME = "world"
  
-    def __init__(self, sample_timeout=1, sample_attempts=5, goal_tolerance=0.01, joint_tolerance=0.001):
+    def __init__(self, sample_timeout=0.1, sample_attempts=5, goal_tolerance=0.01, joint_tolerance=0.001):
         '''
         @brief init arm command object, moveit commander, scene and movegroups for arm and arm gripper
         '''

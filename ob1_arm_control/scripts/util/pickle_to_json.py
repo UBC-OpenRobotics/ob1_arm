@@ -1,10 +1,8 @@
 #! /usr/bin/env python
 import glob
 import json
-import orjson
 import rospkg
 import pickle
-from geometry_msgs.msg import Pose, PoseStamped
 from rospy_msg_converter import convert_ros_message_to_dictionary
 
 rp = rospkg.RosPack()

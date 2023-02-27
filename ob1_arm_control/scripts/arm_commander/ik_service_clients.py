@@ -3,7 +3,7 @@ from relaxed_ik.srv import RelaxedIKService, RelaxedIKServiceRequest
 from ob1_arm_control.srv import MatlabIKService, MatlabIKServiceRequest
 from geometry_msgs.msg import Pose
 from tf import transformations
-from tf_helpers import point_to_list, quat_to_list
+from util.tf_helpers import point_to_list, quat_to_list
 import rospy
 
 def matlabik_service_client(pose, weights, num_joints=5, timeout=10):

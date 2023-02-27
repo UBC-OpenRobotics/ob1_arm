@@ -1,20 +1,16 @@
 import random
-import json
 import orjson
 import time
-from typing import Literal
 import numpy as np
 import pickle
-from scipy.spatial import KDTree, distance
-import _compat_pickle
-from rospy_msg_converter import convert_dictionary_to_ros_message
+from scipy.spatial import KDTree
+from util.rospy_msg_converter import convert_dictionary_to_ros_message
 import multiprocessing as mp
 from threading import Thread
 from geometry_msgs.msg import Pose, Point, Quaternion
 import h5py
 import pyquaternion as pyq
 from functools import cmp_to_key
-import math
 
 
 #Author: Yousif El-Wishahy

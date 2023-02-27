@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import rospy
 import rospkg
-from ikpoints import IKPoints
+from arm_commander.ikpoints import IKPoints
 import time
 import numpy as np
 from ob1_arm_control.msg import JointTarget
