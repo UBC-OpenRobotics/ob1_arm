@@ -1,4 +1,10 @@
 #! /usr/bin/env python
+"""
+Author: Yousif El-Wishahy
+Email: yel.wishahy@gmail.com 
+
+Visualize a set of reachable points. Either in rviz or matplotlib
+"""
 from __future__ import print_function
 import time
 import rospy

@@ -1,4 +1,11 @@
 #! /usr/bin/env python
+"""
+Author: Yousif El-Wishahy
+Email: yel.wishahy@gmail.com 
+
+Module containing ik points (forward kinematics database) service clients 
+"""
+
 import rospy
 import rospkg
 from arm_commander.ikpoints import IKPoints

@@ -1,3 +1,10 @@
+"""
+Author: Yousif El-Wishahy
+Email: yel.wishahy@gmail.com 
+
+Transform and transform tree related helper functions for Ob1 Arm control and test software
+"""
+
 import tf
 from tf import transformations
 import rospy

@@ -1,3 +1,10 @@
+"""
+Author: Yousif El-Wishahy
+Email: yel.wishahy@gmail.com 
+
+Module containing inverse kinematics service clients to be used with MoveIT
+"""
+
 from relaxed_ik.msg import EEPoseGoals, JointAngles
 from relaxed_ik.srv import RelaxedIKService, RelaxedIKServiceRequest
 from ob1_arm_control.srv import MatlabIKService, MatlabIKServiceRequest

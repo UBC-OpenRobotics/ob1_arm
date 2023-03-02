@@ -3,7 +3,7 @@
 Author: Yousif El-Wishahy
 Email: yel.wishahy@gmail.com 
 
-Arm commander class for controlling UBC Open Robotics' Ob1 Arm
+Module containing arm commander class for controlling UBC Open Robotics' Ob1 Arm
 """
 ###########################################################33
 from __future__ import print_function

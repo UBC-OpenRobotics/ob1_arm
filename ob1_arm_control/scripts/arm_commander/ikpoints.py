@@ -1,3 +1,10 @@
+"""
+Author: Yousif El-Wishahy
+Email: yel.wishahy@gmail.com 
+
+Forward kinematics database for testing the ob1_arm
+"""
+
 import random
 import orjson
 import time
@@ -407,10 +414,6 @@ class IKPoints():
         """
         dist,_= self.position_kdtree.query(pt)
         return dist <= tolerance
-
-        
-
-
 
 
 

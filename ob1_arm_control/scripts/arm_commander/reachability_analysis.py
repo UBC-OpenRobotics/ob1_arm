@@ -1,4 +1,11 @@
 #! /usr/bin/env python
+"""
+Author: Yousif El-Wishahy
+Email: yel.wishahy@gmail.com 
+
+Reachability analysis for a multi-dof robotic arm by generating a forward kinematics cartesian database from a generated joint space.
+"""
+
 from __future__ import print_function
 import time
 import rospy
