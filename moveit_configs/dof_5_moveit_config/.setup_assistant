@@ -1,11 +1,11 @@
 moveit_setup_assistant_config:
   URDF:
     package: ob1_arm_description
-    relative_path: urdf/main.xacro
+    relative_path: urdf/5_dof/main_5dof.xacro
     xacro_args: ""
   SRDF:
     relative_path: config/robot.srdf
   CONFIG:
     author_name: Yousif El-Wishahy
     author_email: yel.wishahy@gmail.com
-    generated_timestamp: 1674945200
+    generated_timestamp: 1677723711

@@ -39,20 +39,8 @@ Visualization Manager:
       Enabled: true
       Name: MotionPlanning
       Planned Path:
-<<<<<<< HEAD
-        Color Enabled: false
-        Interrupt Display: false
-        Links:
-          All Links Enabled: true
-          Expand Joint Details: false
-          Expand Link Details: false
-          Expand Tree: false
-          Link Tree Style: Links in Alphabetic Order
-        Loop Animation: false
-=======
         Links: ~
         Loop Animation: true
->>>>>>> origin/main
         Robot Alpha: 0.5
         Show Robot Collision: false
         Show Robot Visual: true
@@ -85,83 +73,9 @@ Visualization Manager:
         Voxel Rendering: Occupied Voxels
       Scene Robot:
         Attached Body Color: 150; 50; 150
-<<<<<<< HEAD
-        Links:
-          All Links Enabled: true
-          Expand Joint Details: false
-          Expand Link Details: false
-          Expand Tree: false
-          Link Tree Style: Links in Alphabetic Order
-        Robot Alpha: 0.5
-        Show Robot Collision: false
-        Show Robot Visual: true
-      Value: true
-      Velocity_Scaling_Factor: 0.1
-    - Class: moveit_rviz_plugin/PlanningScene
-      Enabled: true
-      Move Group Namespace: ""
-      Name: PlanningScene
-      Planning Scene Topic: move_group/monitored_planning_scene
-      Robot Description: robot_description
-      Scene Geometry:
-        Scene Alpha: 0.8999999761581421
-        Scene Color: 50; 230; 50
-        Scene Display Time: 0.009999999776482582
-        Show Scene Geometry: true
-        Voxel Coloring: Z-Axis
-        Voxel Rendering: Occupied Voxels
-      Scene Robot:
-        Attached Body Color: 150; 50; 150
-        Links:
-          All Links Enabled: true
-          Expand Joint Details: false
-          Expand Link Details: false
-          Expand Tree: false
-          Link Tree Style: Links in Alphabetic Order
-        Robot Alpha: 1
-        Show Robot Collision: false
-        Show Robot Visual: true
-      Value: true
-    - Class: rviz/TF
-      Enabled: true
-      Frame Timeout: 120
-      Frames:
-        All Enabled: false
-        ob1_arm_arm_link:
-          Value: false
-        ob1_arm_base_link:
-          Value: false
-        ob1_arm_eef_link:
-          Value: true
-        ob1_arm_elbow_link:
-          Value: false
-        ob1_arm_forearm_link:
-          Value: false
-        ob1_arm_gripper_base_link:
-          Value: false
-        ob1_arm_lclaw_link:
-          Value: false
-        ob1_arm_rclaw_link:
-          Value: false
-        ob1_arm_shoulder_link:
-          Value: false
-        world:
-          Value: true
-      Marker Alpha: 1
-      Marker Scale: 1
-      Name: TF
-      Show Arrows: true
-      Show Axes: true
-      Show Names: true
-      Tree:
-        world:
-          {}
-      Update Interval: 0
-=======
         Links: ~
         Robot Alpha: 0.5
         Show Scene Robot: true
->>>>>>> origin/main
       Value: true
   Enabled: true
   Global Options:
@@ -213,10 +127,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1291
-<<<<<<< HEAD
-  X: 204
-  Y: 74
-=======
   X: 454
   Y: 25
->>>>>>> origin/main
