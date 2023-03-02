@@ -2,7 +2,7 @@
 Author: Yousif El-Wishahy
 Email: yel.wishahy@gmail.com 
 
-Module containing inverse kinematics service clients to be used with MoveIT
+Module containing inverse kinematics service clients to be used with MoveIt!
 """
 
 from relaxed_ik.msg import EEPoseGoals, JointAngles

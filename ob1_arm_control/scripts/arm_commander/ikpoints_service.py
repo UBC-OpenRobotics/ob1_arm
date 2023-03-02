@@ -3,7 +3,7 @@
 Author: Yousif El-Wishahy
 Email: yel.wishahy@gmail.com 
 
-Module containing ik points (forward kinematics database) service clients 
+Service client for ikpoints database
 """
 
 import rospy
