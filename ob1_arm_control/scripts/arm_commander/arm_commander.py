@@ -36,12 +36,6 @@ class ArmCommander:
     _gripper_joint_limits = []
     _num_joints = 0
 
-    #move group parameters
-    _sample_timeout = 0.1
-    _sample_attempts = 5
-    _goal_tolerance = 0.01
-    _joint_tolerance = 0.001
-
     #group and link anmes
     ARM_GROUP_NAME = "arm"
     GRIPPER_GROUP_NAME = "gripper"
@@ -51,7 +45,7 @@ class ArmCommander:
     GRIPPER_RCLAW_LINK_NAME = "ob1_arm_rclaw_link"
     WORLD_REF_FRAME = "world"
  
-    def __init__(self, sample_timeout=0.1, sample_attempts=5, goal_tolerance=0.01, joint_tolerance=0.001):
+    def __init__(self, sample_timeout=0.1, sample_attempts=5, goal_tolerance=0.001, joint_tolerance=0.001):
         '''
         @brief init arm command object, moveit commander, scene and movegroups for arm and arm gripper
         '''

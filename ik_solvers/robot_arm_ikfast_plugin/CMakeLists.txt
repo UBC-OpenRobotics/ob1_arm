@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.3)
-project(ob1_arm_arm_ikfast_plugin)
+project(robot_arm_ikfast_plugin)
 
 find_package(catkin REQUIRED COMPONENTS
   moveit_core
@@ -17,8 +17,8 @@ include_directories(SYSTEM ${catkin_INCLUDE_DIRS})
 
 catkin_package()
 
-set(IKFAST_LIBRARY_NAME ob1_arm_arm_moveit_ikfast_plugin)
-add_library(${IKFAST_LIBRARY_NAME} src/ob1_arm_arm_ikfast_moveit_plugin.cpp)
+set(IKFAST_LIBRARY_NAME robot_arm_moveit_ikfast_plugin)
+add_library(${IKFAST_LIBRARY_NAME} src/robot_arm_ikfast_moveit_plugin.cpp)
 target_link_libraries(${IKFAST_LIBRARY_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES})
 # suppress warnings about unused variables in OpenRave's solver code
 target_compile_options(${IKFAST_LIBRARY_NAME} PRIVATE -Wno-unused-variable -Wno-unused-parameter)
@@ -31,7 +31,7 @@ install(TARGETS
 
 install(
   FILES
-  ob1_arm_arm_moveit_ikfast_plugin_description.xml
+  robot_arm_moveit_ikfast_plugin_description.xml
   DESTINATION
   ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

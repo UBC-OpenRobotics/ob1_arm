@@ -20,6 +20,6 @@
 
 - [MoveIt Configuaration and RVIZ](./moveit_configs/README/README.md)
 
-- [IKFast Documentation](./moveit_configs/README/README_ikfast.md)
+- [IKFast Documentation](./ik_solvers/robot_arm_ikfast_plugin/README.md)
     
 #todo: create documentation for other packages

@@ -20,5 +20,5 @@
   <!-- Add MoveGroup capabilities specific to this pipeline -->
   <!-- <param name="capabilities" value="" /> -->
 
-  <rosparam command="load" file="$(find 5dof_moveit_config)/config/chomp_planning.yaml" />
+  <rosparam command="load" file="$(find dof_5_moveit_config)/config/chomp_planning.yaml" />
 </launch>

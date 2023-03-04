@@ -5,5 +5,5 @@
 	path = simple-reachability
 	url = https://github.com/vonunwerth/simple-reachability.git
 [submodule "relaxed_ik"]
-	path = relaxed_ik
+	path = ik_solvers/relaxed_ik
 	url = https://github.com/UBC-OpenRobotics/relaxed_ik.git

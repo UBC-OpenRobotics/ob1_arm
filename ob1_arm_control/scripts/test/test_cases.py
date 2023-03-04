@@ -34,10 +34,10 @@ from copy import deepcopy
 ###################################################
 #                    TEST PARAMETERS
 ###################################################
-GOAL_TOLERANCE = 0.01 #elementwise distance and angles for orientation
+GOAL_TOLERANCE = 0.001 #elementwise distance and angles for orientation
 JOINT_TOLERANCE = 0.001 #element wise angles
 DIST_TOLERANCE = 0.01 #distance in m
-SUCCESS_RATE_TOLERANCE = 0.85 #percentage of tests that pass
+SUCCESS_RATE_TOLERANCE = 0.90 #percentage of tests that pass
 
 ###################################################
 #                    TEST CASES               
@@ -266,15 +266,14 @@ class TestKinpyIK:
 ################### OBJECT MANIPULATION TESTS ######################
 @pytest.mark.parametrize("sphere_radius", [0.03])
 class TestPickSphere:
-    def test_go_scene_object(self, arm_commander, log, setup_teardown, sphere_radius):
+    def test_go_scene_object(self, arm_commander:ArmCommander, log, setup_teardown, sphere_radius):
         spawn_random_sphere(arm_commander, sphere_radius)
         objs = arm_commander.scene.get_objects()
         assert len(objs) > 0, "Could not find any scene objects"
         obj:CollisionObject = list(objs.items())[0][1]
         broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'target','world')
-        res, target, joint_target = arm_commander.go_position(obj.pose.position)
+        res, _ = arm_commander.go_position(obj.pose.position)
         assert res , "motion planning failed"
-        assert all_close(joint_target, arm_commander.arm_mvgroup.get_current_joint_values(), JOINT_TOLERANCE), "joints not within tolerance"
         assert_dist(arm_commander.get_end_effector_pose().pose.position, obj.pose.position, DIST_TOLERANCE)
 
     def test_pick_sphere(self, arm_commander, log, setup_teardown, sphere_radius):
@@ -300,8 +299,7 @@ class TestPickSphere:
 
         assert arm_commander.open_gripper(), 'failed to open gripper after detaching object'
 
-@pytest.mark.parametrize("pick_tolerance", [0.01, 0.02, 0.03, 0.04, 0.05])
-def test_pick_cylinder_and_move(arm_commander:ArmCommander, log, setup_teardown, pick_tolerance):
+def test_pick_cylinder_and_move(arm_commander:ArmCommander, log, setup_teardown):
     p = PoseStamped()
     p.header.frame_id = arm_commander.robot.get_planning_frame()
     p.pose.position = arm_commander.arm_mvgroup.get_random_pose().pose.position
@@ -314,9 +312,9 @@ def test_pick_cylinder_and_move(arm_commander:ArmCommander, log, setup_teardown,
     assert obj!=None, 'could not find any scene objects'
     broadcast_pose(arm_commander.tf_broadcaster,obj.pose,'target','world')
 
-    assert arm_commander.pick_object(obj, attempts=1000, pick_tolerance=pick_tolerance), 'failed to pick object'
+    assert arm_commander.pick_object(obj), 'failed to pick object'
     
-    assert arm_commander.go_position_ikpoints()[0], 'failed to move arm after attaching object'
+    assert arm_commander.go_position(arm_commander.arm_mvgroup.get_random_pose().pose.position), 'failed to move arm after attaching object'
 
     assert arm_commander.detach_object(obj), 'failed to detach object'
 

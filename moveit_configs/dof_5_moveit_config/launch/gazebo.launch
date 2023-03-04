@@ -13,7 +13,7 @@
   </include>
 
   <!-- send robot urdf to param server -->
-  <param name="robot_description" textfile="$(find 5dof_moveit_config)/config/gazebo_robot.urdf" />
+  <param name="robot_description" command="xacro  '$(find ob1_arm_description)/urdf/5_dof/main_5dof.xacro'" />
 
   <!-- unpause only after loading robot model -->
   <arg name="unpause" value="$(eval '' if arg('paused') else '-unpause')" />
@@ -23,7 +23,7 @@
     respawn="false" output="screen" />
 
   <!-- Load joint controller parameters for Gazebo -->
-  <rosparam file="$(find 5dof_moveit_config)/config/gazebo_controllers.yaml" />
+  <rosparam file="$(find dof_5_moveit_config)/config/gazebo_controllers.yaml" />
   <!-- Spawn Gazebo ROS controllers -->
   <node name="gazebo_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller" />
   <!-- Load ROS controllers -->

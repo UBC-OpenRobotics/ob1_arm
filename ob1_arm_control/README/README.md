@@ -31,19 +31,31 @@ See pytest docs https://docs.pytest.org/en/7.1.x/contents.html.
 $pip install pytest
 ```
 
+You can also install option, but very useful addons
+```
+$pip install pytest-repeat pytest-html
+```
+
 ## Running pytest test cases
 
-Run pytest command
+### Run pytest command
 
 ```
 pytest -o log_cli=true -q <path to pytest_arm.py>
 ```
+`-q` quiet (decreased verbosity in command line logs)
 
-`-o` enables live logging.
+`-o` override configurations
 
-`-k 'test case name pattern' ` allows for selection of a specific test case from the file.
+`-k 'test case name pattern'` allows for selection of a specific test case from the file.
 
-eg. 
+`--count=<# of times>` repeat tests multiple times
+
+`--repeat-scope={function,class,module,session}` scope of test reptition 
+
+`--html=<filename>.html` generate an html test report in current directory
+
+### examples 
 
 This command will run all test cases with object in their name:
 ```
@@ -61,18 +73,10 @@ pip install pytest-repeat
 pytest -o log_cli=true -q src/ob1_arm_control/scripts/pytest_arm.py -k 'object' --count=10
 ```
 
-## For older test cases
-Run:
+Putting it all together: Run go target tests with quiet and log_cli modes on, repeat each test function 10 times and generate a report named `test_6dof_report.html`
 ```
-$ chmod +x test_arm.py
+pytest -o log_cli=true -q src/ob1_arm_control/scripts/test/test_cases.py -k 'GoTarget' --count=10 --repeat-scope=function --html=test_6dof_report.html
 ```
-
-To run the test file, ensure the workspace has been built and sourced correctly and then run:
-```
-$ rosrun ob1_arm_control test_arm.py
-```
-
-*TODO: In the future consider a more robust testing method and seperating test cases into different files, and perhaps selecting test cases as launch parameters at the command line.*
 
 
 
