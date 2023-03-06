@@ -32,7 +32,7 @@ ros-noetic-moveit-commander
 ## 4. Clone ob1_arm repo
 
 ### 4a. Create directory
-Create a work directory in the location of your choosing, usually in home `~/`. A convential name suggestion is `ob1_arm`.
+Create a work directory in the location of your choosing, usually in home `~/`. Name suggestions: `ob1_arm` or `arm_ws` or `ob1_arm_ws`. The remainder of the setup guide will use the workspace name `ob1_arm`.
 
 ### 4b. Clone the repo
 Next, clone the repo using the following command:
@@ -40,7 +40,7 @@ Next, clone the repo using the following command:
 git clone --recurse-submodules -j8 https://github.com/UBC-OpenRobotics/ob1_arm.git src
 ```
 
-After cloning the repo, there should be a src folder with the contents of the repo inside and your directory structure should look like this:
+After cloning the repo, there should be a src folder with the contents of the repo inside and your directory structure should look like this. **Note: The directory structure in the src folder may differ due to code changes**:
 
 ```
 ob1_arm

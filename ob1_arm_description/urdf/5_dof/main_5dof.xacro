@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robot">
+
+    <!-- ################################################### -->
+    <!-- # include statements, much like import statements -->
+    <!-- ################################################### -->
+    <xacro:include filename="$(find ob1_arm_description)/urdf/5_dof/ob1_arm_5dof.xacro"/>
+    <xacro:include filename="$(find ob1_arm_description)/urdf/gripper.xacro"/>
+
+    <xacro:property name="prefix" value="ob1_arm" />
+
+    <!-- arm and gripper urdfs -->
+    <xacro:arm prefix="${prefix}"/>
+    <xacro:gripper prefix="${prefix}"/>
+
+    <!-- arm - gripper joint -->
+    <joint name="${prefix}_forearm_gripper_joint" type="revolute">
+        <origin xyz="-2.46331e-16 -0.155 0.08285" rpy="-1.5708 0.278795 3.7292e-15" />
+        <parent link="${prefix}_forearm_link" />
+        <child link="${prefix}_gripper_base_link" />
+        <axis xyz="0 0 1"/>
+        <limit effort="1" velocity="20" lower="-3.14" upper="3.14"/>
+        <joint_properties friction="0.0"/>
+        <dynamics D="1" K="7000" mu_coulomb="0" mu_viscous="16" damping="0.003" friction="0.0"/>
+    </joint>
+
+    <!-- connect the arm to world with fixed joint -->
+
+    <link name="world"/>
+    <joint name="base" type="fixed">
+        <parent link="world" />
+        <child link="${prefix}_base_link" />
+    </joint>
+
+</robot>
