@@ -7,10 +7,27 @@ Step by step guide to setup and troubleshoot this repo in order to get all the o
 Make sure you're running an **Ubuntu 20.04 (codename: focal)** installation. ROS Noetic only works on this version. Additionally, python 3.8 is reccomended for this setup, but you can probably get by with older or newer python 3 versions (keep this in mind though, when you run into python issues).
 
 ## 1. Basics
-Install git, curl, and python3.8
+Install git, curl
 ```
-sudo apt-get install git curl python3.8
+sudo apt-get install git curl
 ```
+### 1.1 Install Python3.8 with pyenv (Optional)
+Install python3.8 (if it is not installed). There are multiple ways to do this, but I reccomend to use pyenv, a convenient python version management tool https://github.com/pyenv/pyenv#installation.
+
+Install pyenv
+```
+$ curl https://pyenv.run | bash
+```
+Add the following to your ~/.bashrc file. You can use nano to edit files. I.e. `nano ~/.bashrc`.
+```
+export PYENV_ROOT="$HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+```
+Restart your shell.
+```exec "$SHELL"```
+Install python 3.8 with pyenv.
+```pyenv install 3.8```
 
 ## 2. Install ROS Noetic
 Follow ALL the instructions [found here](http://wiki.ros.org/noetic/Installation/Ubuntu) to install ros noetic.
