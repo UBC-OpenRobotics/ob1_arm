@@ -30,20 +30,18 @@ Install python 3.8 with pyenv.
 ```pyenv install 3.8```
 
 ## 2. Install ROS Noetic
-Follow ALL the instructions [found here](http://wiki.ros.org/noetic/Installation/Ubuntu) to install ros noetic.
+If you have not done so, run this command to install the full desktop version of ros noetic (reccomended).
+```
+wget -c https://raw.githubusercontent.com/qboticslabs/ros_install_noetic/master/ros_install_noetic.sh && chmod +x ./ros_install_noetic.sh && ./ros_install_noetic.sh
+```
 
-*Note:* 
-Installinng the full desktop version will take more space and time, you also don't need the majority of the packages it installs.
+If this fails, follow ALL the instructions [found here](http://wiki.ros.org/noetic/Installation/Ubuntu) to install ros noetic.
 
-## 3. Install ROS Noetic Dependencies
+## 3. Install ROS dependencies
 The ob1_arm uses rviz, gazebo, moveit, moveit planners, ros control, and several other ros packages. Run the following command to install them.
 
 ```
-sudo apt-get install ros-noetic-rviz ros-noetic-gazebo-ros-pkgs \ 
-ros-noetic-moveit ros-noetic-gazebo-ros-control ros-noetic-ros-controllers \
-ros-noetic-rqt-joint-trajectory-controller ros-noetic-moveit-planners \
-ros-noetic-moveit-fake-controller-manager libgflags-dev ros-noetic-rosparam-shortcuts \
-ros-noetic-moveit-commander
+sudo apt-get install ros-noetic-rviz ros-noetic-gazebo-ros-pkgs ros-noetic-moveit ros-noetic-gazebo-ros-control ros-noetic-ros-controllers ros-noetic-rqt-joint-trajectory-controller ros-noetic-moveit-planners ros-noetic-moveit-fake-controller-manager libgflags-dev ros-noetic-rosparam-shortcuts ros-noetic-moveit-commander
 ```
 
 ## 4. Clone ob1_arm repo
@@ -60,32 +58,74 @@ git clone --recurse-submodules -j8 https://github.com/UBC-OpenRobotics/ob1_arm.g
 After cloning the repo, there should be a src folder with the contents of the repo inside and your directory structure should look like this. **Note: The directory structure in the src folder may differ due to code changes**:
 
 ```
-ob1_arm
+<ws name>
 └── src
+    ├── Pipfile
+    ├── Pipfile.lock
+    ├── README.md
+    ├── ik_solvers
+    ├── moveit_configs
     ├── ob1_arm_control
     ├── ob1_arm_description
     ├── ob1_arm_gazebo
     ├── ob1_arm_hw_interface
-    ├── ob1_arm_mobile_moveit_config
-    ├── ob1_arm_moveit_config
-    ├── README.md
-    ├── requirements.txt
     ├── ros_control_boilerplate
-    ├── setup.md
-    └── test_moveit_config
+    └── setup.md
 ```
 
 ## 5. Install python dependencies
-There is a `requirements.txt` file in the cloned src folder that contains the required python packages to install. You can pass this file to pip directly to install them.
+There is a `Pipfile` file in the cloned src folder that contains the required python packages to install. We will use pipenv for python package management.
+
+https://pipenv.pypa.io/en/latest/
+
+Install pipenv with 
 ```
-pip install --upgrade -r <path to src>/requirements.txt
+pip install pipenv
 ```
+ or 
+ ```
+ sudo apt-get install pipenv
+ ```
+
+Navigate to src/ and run the following command: 
+```
+pipenv install
+```
+
+Note, when running python code, always ensure you are in the pipenv shell by running 
+```
+pipenv shell
+``` 
+in your terminal.
 
 ## 6. Build the ob1_arm workspace
 Next, we will use catkin to build all the required packages. Navigate to top level directory `ob1_arm` and run 
 
 ```
 catkin build
+```
+
+After building the workspace, the file structure should look something like this:
+```
+<arm_ws name>
+├── build
+│   ├── ...
+├── devel
+│   ├── ...
+├── logs
+│   ├── ...
+└── src
+    ├── Pipfile
+    ├── Pipfile.lock
+    ├── README.md
+    ├── ik_solvers
+    ├── moveit_configs
+    ├── ob1_arm_control
+    ├── ob1_arm_description
+    ├── ob1_arm_gazebo
+    ├── ob1_arm_hw_interface
+    ├── ros_control_boilerplate
+    └── setup.md
 ```
 
 ## 7. Source workspace
@@ -109,6 +149,8 @@ roslaunch ob1_arm_moveit_config demo.launch
 ```
 
 # Troubleshooting
-
-WIP
+Some issues I encountered before:
+* Error: missing glfags when building workspace
+    * solution: run ```sudo apt-get install libgflags-dev```
+    * based on https://github.com/gflags/gflags/blob/master/INSTALL.md
 
