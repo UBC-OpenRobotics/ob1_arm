@@ -36,6 +36,15 @@
   <!-- in kg-->
   <!-- Hokuyo Laser scanner -->
   <!-- Macro for calculating inertia of cylinder -->
+  
+  <!--
+  <link name="world"/>
+    <joint name="base" type="fixed">
+        <parent link="world" />
+        <child link="base_footprint" />
+    </joint>
+  -->
+
   <!-- BASE-FOOTPRINT -->
   <!-- base_footprint is a fictitious link(frame) that is on the ground right below base_link origin -->
   <link name="base_footprint">
@@ -55,7 +64,7 @@
     <turnGravityOff>false</turnGravityOff>
   </gazebo>
   <joint name="base_footprint_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="0 0 0.04"/>
+    <origin rpy="0 0 0" xyz="0 0 0.09319"/> <!--changed z coordinate-->
     <parent link="base_footprint"/>
     <child link="base_link"/>
   </joint>
@@ -71,7 +80,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <cylinder length="0.02" radius="0.15"/>
+        <cylinder length="0.02" radius="0.15"/> <!--box: x = 0.5132 m ,y = 0.5132 m, z = 1.27976 m-->
       </geometry>
       <material name="${base_name}_White"/>
     </visual>
@@ -91,14 +100,14 @@
     <visual>
       <origin rpy="1.57079632679 0  0 " xyz="0 0 0"/>
       <geometry>
-        <cylinder length="0.02" radius="0.04"/>
+        <cylinder length="0.02" radius="0.09319"/> <!--changed radius-->
       </geometry>
       <material name="${base_name}_Red"/>
     </visual>
     <collision>
       <origin rpy="1.57079632679 0 0 " xyz="0 0 0"/>
       <geometry>
-        <cylinder length="0.02" radius="0.04"/>
+        <cylinder length="0.02" radius="0.09319"/> <!--changed radius-->
       </geometry>
     </collision>
     <inertial>
@@ -119,7 +128,7 @@
   <joint name="front_right_wheel_joint" type="continuous">
     <parent link="base_link"/>
     <child link="front_right_wheel"/>
-    <origin rpy="0 0 0" xyz="0.0 0.15 0.0"/>
+    <origin rpy="0 0 0" xyz="0.0 0.308 0.0"/> <!--changed y coordinate-->
     <axis rpy="0  0" xyz="0 1 0"/>
     <limit effort="100" velocity="100"/>
     <joint_properties damping="0.0" friction="0.0"/>
@@ -138,14 +147,14 @@
     <visual>
       <origin rpy="1.57079632679 0  0 " xyz="0 0 0"/>
       <geometry>
-        <cylinder length="0.02" radius="0.04"/>
+        <cylinder length="0.02" radius="0.09319"/> <!--changed radius-->
       </geometry>
       <material name="${base_name}_Red"/>
     </visual>
     <collision>
       <origin rpy="1.57079632679 0 0 " xyz="0 0 0"/>
       <geometry>
-        <cylinder length="0.02" radius="0.04"/>
+        <cylinder length="0.02" radius="0.09319"/> <!--changed radius-->
       </geometry>
     </collision>
     <inertial>
@@ -166,7 +175,7 @@
   <joint name="front_left_wheel_joint" type="continuous">
     <parent link="base_link"/>
     <child link="front_left_wheel"/>
-    <origin rpy="0 0 0" xyz="0.0 -0.15 0.0"/>
+    <origin rpy="0 0 0" xyz="0.0 -0.308 0.0"/> <!--changed y coordinate-->
     <axis rpy="0  0" xyz="0 1 0"/>
     <limit effort="100" velocity="100"/>
     <joint_properties damping="0.0" friction="0.0"/>
