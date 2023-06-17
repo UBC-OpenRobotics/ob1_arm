@@ -67,10 +67,12 @@ print("")
 grippergroup.set_planning_time(60)
 grippergroup.set_num_planning_attempts(10)
 
-joint_goal = grippergroup.get_current_joint_values()
-gripper_pose = [0.0, 0.025, -0.025]
+print(grippergroup.get_joints())
 
-grippergroup.set_joint_value_target([0.0, 0.030, -0.030])
+joint_goal = grippergroup.get_current_joint_values()
+gripper_pose = [0.025, -0.025]
+
+grippergroup.set_joint_value_target(gripper_pose)
 grippergroup.go()
 grippergroup.stop()
 
