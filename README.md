@@ -10,7 +10,7 @@
 ### 1. [Setup Guide](./setup.md)
 
 ### 2. Arm Control Packages
-- [Arm Commander](./ob1_arm_control/README/README.md)
+- [Arm Commander](./ob1_arm_control/README.md)
 
 - [Testing](WIP)
 

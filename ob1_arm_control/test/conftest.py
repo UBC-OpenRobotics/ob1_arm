@@ -2,7 +2,7 @@
 #                    IMPORTS        
 ###################################################
 import pytest
-from arm_commander.arm_commander import ArmCommander
+from ob1_arm_control.arm_commander import ArmCommander
 import numpy as np
 import logging
 from test_helpers import *
