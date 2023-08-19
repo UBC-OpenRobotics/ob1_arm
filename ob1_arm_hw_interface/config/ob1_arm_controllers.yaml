@@ -8,11 +8,12 @@ generic_hw_control_loop:
 # Settings for ros_control hardware interface (used in generic_hw_interface.cpp)
 hardware_interface:
    joints:
-      - base_shoulder_joint
-      - shoulder_arm_joint
-      - arm_elbow_joint
-      - elbow_forearm_joint
-      - wrist
+      - ob1_arm_fixed_base_joint
+      - ob1_arm_base_shoulder_joint
+      - ob1_arm_shoulder_arm_joint
+      - ob1_arm_arm_elbow_joint
+      - ob1_arm_elbow_forearm_joint
+      - ob1_arm_forearm_gripper_joint
 
 # Publish all joint states ----------------------------------
 # Creates the /joint_states topic necessary in ROS
@@ -26,9 +27,10 @@ position_trajectory_controller:
    type: position_controllers/JointTrajectoryController
    # These joints can likely just be copied from the hardware_interface list above
    joints:
-      - base_shoulder_joint
-      - shoulder_arm_joint
-      - arm_elbow_joint
-      - elbow_forearm_joint
-      - wrist
+      - ob1_arm_fixed_base_joint
+      - ob1_arm_base_shoulder_joint
+      - ob1_arm_shoulder_arm_joint
+      - ob1_arm_arm_elbow_joint
+      - ob1_arm_elbow_forearm_joint
+      - ob1_arm_forearm_gripper_joint
   
