@@ -1,3 +1,5 @@
+#include <AccelStepper.h>
+#include <MultiStepper.h>
 #include <Arduino.h>
 #include "Stepper.h"
 #include <ros.h>
@@ -10,20 +12,29 @@
 //##################################
 
 // bicep 
-#define pulse_1 3
-#define dir_1 4
+#define stepPin_1 3
+#define dirPin_1 4
+#define steps_per_rev_1 4000
 // bicep 
-#define pulse_2 5
-#define dir_2 6
+#define stepPin_2 5
+#define dirPin_2 6
+#define steps_per_rev_2 4000
 // shoulder 
-#define pulse_3 7
-#define dir_3 8
-
-// enable all steppers
-#define enable 13
-// steps per rev:
-#define STEPSPERREV 4000
-
+#define stepPin_3 7
+#define dirPin_3 8
+#define steps_per_rev_3 4000
+//
+#define stepPin_4 9
+#define dirPin_4 10
+#define steps_per_rev_4 4000
+//
+#define stepPin_5 11
+#define dirPin_5 12
+#define steps_per_rev_5 4000
+//
+#define stepPin_6 13
+#define dirPin_6 14
+#define steps_per_rev_6 4000
 
 //function prototypes
 void armCmdCb( const ob1_arm_hw_interface::armCmd &msg);
@@ -43,15 +54,16 @@ ros::Publisher p("/arduino/armState", &armState);
 
 ros::Subscriber<ob1_arm_hw_interface::armCmd> s("/arduino/armCmd", &armCmdCb);
 
-int PULpin[3] = {pulse_1, pulse_2, pulse_3};
-int DIRpin[3] = {dir_1, dir_2, dir_3};
+  
+// instantiate steppers
+AccelStepper stepper1(AccelStepper::DRIVER, stepPin_1, dirPin_1);
+AccelStepper stepper2(AccelStepper::DRIVER, stepPin_2, dirPin_2);
+AccelStepper stepper3(AccelStepper::DRIVER, stepPin_3, dirPin_3);
+AccelStepper stepper4(AccelStepper::DRIVER, stepPin_4, dirPin_4);
+AccelStepper stepper5(AccelStepper::DRIVER, stepPin_5, dirPin_5);
+AccelStepper stepper6(AccelStepper::DRIVER, stepPin_6, dirPin_6);
 
-// make 3 stepper objects
-// Stepper.Stepper(int _enable, int _pulse, int _dir, int _steps) 
-
-Stepper mySteppers[3] = {Stepper(enable, PULpin[0], DIRpin[0], STEPSPERREV),
-                         Stepper(enable, PULpin[1], DIRpin[1], STEPSPERREV),
-                         Stepper(enable, PULpin[2], DIRpin[2], STEPSPERREV)};
+MultiStepper steppers;
 
 //##################################
 //functions
@@ -68,17 +80,32 @@ void setup() {
   nh.advertise(p);
   nh.subscribe(s);
   nh.negotiateTopics();
+
+  // set parameters for the steppers
+  stepper1.setMaxSpeed(200.0);
+  stepper2.setMaxSpeed(200.0);
+  stepper3.setMaxSpeed(200.0);
+  stepper4.setMaxSpeed(200.0);
+  stepper5.setMaxSpeed(200.0);
+  stepper6.setMaxSpeed(200.0);
+
+  stepper1.setAcceleration(100.0);
+  stepper2.setAcceleration(100.0);
+  stepper3.setAcceleration(100.0);
+  stepper4.setAcceleration(100.0);
+  stepper5.setAcceleration(100.0);
+  stepper6.setAcceleration(100.0);
+
+  //add steppers to multistepper 
+  steppers.addStepper(stepper1);
+  steppers.addStepper(stepper2);
+  steppers.addStepper(stepper3);
+  steppers.addStepper(stepper4);
+  steppers.addStepper(stepper5);
+  steppers.addStepper(stepper6);
 }
 
 void loop() {
-
-  /*
-    TODO: 
-      * set up encoders --> they will be posn_actual's
-      * serial input --> input a nx6 array of joint angles (degrees)
-      *   currently this is produced by the input_sim.py script
-      *   one at a time (they are all one degree at a time)
-  */
 
   /*
   Write serial to send current joint positions
@@ -86,44 +113,24 @@ void loop() {
 
   if (rcv_cnt > last_rcv_cnt) {
     last_rcv_cnt++;
-    mySteppers[0].stepCW(4000);
-  
-    // if(position_goal[0] != position_measured[0]){
-    //   //if position is not where you want it to be, step one time
-    //   if((position_goal[0] - position_measured[0]) > 0){
-    //     mySteppers[0].stepCW(1);
-    //   }
-    //   if((position_goal[0] - position_measured[0]) < 0){
-    //     mySteppers[0].stepCCW(1);
-    //   }
-    //   if((position_goal[0] - position_measured[0]) == 0){
-    //     Serial.println("motor_1 is in desired posn");
-    //   }
-    // }
-    // if(position_goal[1] != position_measured[1]){
-    //   //if position is not where you want it to be, step one time
-    //   if((position_goal[1] - position_measured[1]) > 0){
-    //     mySteppers[1].stepCW(1);
-    //   }
-    //   if((position_goal[1] - position_measured[1]) < 0){
-    //     mySteppers[1].stepCCW(1);
-    //   }
-    //   if((position_goal[1] - position_measured[1]) == 0){
-    //     Serial.println("motor_2 is in desired posn");
-    //   }
-    // }
+    long position_goal[6]; 
+    //needs to make the msg into the proper type?
+    for(int i = 0; i < num_joints; i++){
+      position_goal[i] = armState.angle[i];
+    }
+    // move joints based on position_goal
+    steppers.moveTo(position_goal); //set position goal for each motor based off of the ROS message
 
-    // if(position_goal[2] != position_measured[2]){
-    //   //if position is not where you want it to be, step one time
-    //   if((position_goal[2] - position_measured[2]) > 0){
-    //     mySteppers[2].stepCW(1);
-    //   }
-    //   if((position_goal[2] - position_measured[2]) < 0){
-    //     mySteppers[2].stepCCW(1);
-    //   }
-    //   if((position_goal[2] - position_measured[2]) == 0){
-    //     Serial.println("motor_3 is in desired posn");
-    //   }
+    //set velocity goal for each movement as specified in ros msg
+    stepper1.setSpeed(armState.vel[0]);
+    stepper2.setSpeed(armState.vel[1]); 
+    stepper3.setSpeed(armState.vel[2]);
+    stepper4.setSpeed(armState.vel[3]);
+    stepper5.setSpeed(armState.vel[4]); 
+    stepper6.setSpeed(armState.vel[5]);
+
+    //run steppers based on set speed
+    steppers.runSpeedToPosition(); // Blocks until all are in position
     }
   
     nh.spinOnce();
